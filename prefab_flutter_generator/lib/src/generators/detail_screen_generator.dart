@@ -97,18 +97,35 @@ class DetailScreenGenerator extends GeneratorForAnnotation<View> {
   void _writeDetailScreenClass(EntityManifest manifest, StringBuffer buffer) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
+    final hasParent = manifest.hasParent;
+    final parentParamName = manifest.parentParamName;
+    final parentParamType =
+        hasParent ? manifest.parentField!.dartType : null;
 
     buffer.writeln('class ${entity}DetailScreen extends ConsumerWidget {');
     buffer.writeln('  final Object id;');
+    if (hasParent) {
+      buffer.writeln('  final $parentParamType $parentParamName;');
+    }
     buffer.writeln();
-    buffer
-        .writeln('  const ${entity}DetailScreen({super.key, required this.id});');
+    if (hasParent) {
+      buffer.writeln(
+          '  const ${entity}DetailScreen({super.key, required this.id, required this.$parentParamName});');
+    } else {
+      buffer.writeln(
+          '  const ${entity}DetailScreen({super.key, required this.id});');
+    }
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln(
         '  Widget build(BuildContext context, WidgetRef ref) {');
-    buffer.writeln(
-        '    final ${entityLower}Async = ref.watch(${entityLower}DetailProvider(id));');
+    if (hasParent) {
+      buffer.writeln(
+          '    final ${entityLower}Async = ref.watch(${entityLower}DetailProvider((id, $parentParamName)));');
+    } else {
+      buffer.writeln(
+          '    final ${entityLower}Async = ref.watch(${entityLower}DetailProvider(id));');
+    }
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
