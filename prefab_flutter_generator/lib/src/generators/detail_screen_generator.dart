@@ -55,11 +55,13 @@ class DetailScreenGenerator extends GeneratorForAnnotation<View> {
   // ---------------------------------------------------------------------------
 
   void _writeHeader(StringBuffer buffer) {
+    const separator =
+        '// **************************************************************************';
     buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('// ');
-    buffer.writeln('// *' * 38);
+    buffer.writeln('//');
+    buffer.writeln(separator);
     buffer.writeln('// DetailScreenGenerator');
-    buffer.writeln('// *' * 38);
+    buffer.writeln(separator);
     buffer.writeln();
   }
 
