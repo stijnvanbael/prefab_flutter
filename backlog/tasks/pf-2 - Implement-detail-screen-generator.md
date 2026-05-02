@@ -1,7 +1,7 @@
 ---
 id: PF-2
 title: Implement detail screen generator
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-05-02 06:03'
 updated_date: '2026-05-02 06:03'

@@ -1,0 +1,7 @@
+name: prefab_flutter
+description: Annotations for the prefab_flutter code generator. Declare @View, @Update, @Delete, @FormField and @Parent on your entity classes to drive code generation.
+version: 0.1.0
+homepage: https://github.com/stijnvanbael/prefab_flutter
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
