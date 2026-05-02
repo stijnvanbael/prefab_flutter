@@ -1,7 +1,7 @@
 ---
 id: PF-3
 title: Generate $prefabRoutes top-level list
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-05-02 06:04'
 labels: []
@@ -16,7 +16,7 @@ The router.dart in the example uses $prefabRoutes to register all routes with Go
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 $prefabRoutes list is generated and contains all entity routes
-- [ ] #2 The example router.dart compiles and navigates correctly using $prefabRoutes
-- [ ] #3 Multiple entities produce one combined $prefabRoutes list
+- [x] #1 $prefabRoutes list is generated and contains all entity routes
+- [x] #2 The example router.dart compiles and navigates correctly using $prefabRoutes
+- [x] #3 Multiple entities produce one combined $prefabRoutes list
 <!-- AC:END -->
