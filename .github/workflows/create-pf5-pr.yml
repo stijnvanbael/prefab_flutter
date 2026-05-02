@@ -2,6 +2,9 @@ name: Create PF-5 PR
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - copilot/pf-5-analyse-and-implement
 
 permissions:
   pull-requests: write
