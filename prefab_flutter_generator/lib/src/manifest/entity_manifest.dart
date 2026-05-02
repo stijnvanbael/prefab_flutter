@@ -66,7 +66,10 @@ class EntityManifest {
   bool get hasParent => parentField != null;
 
   /// Lower-camel-case name of the parent entity, derived from the [@Parent]
-  /// field name by stripping a trailing `'Id'` suffix.
+  /// field name by stripping a trailing `'Id'` suffix (case-sensitive).
+  ///
+  /// **Convention**: the [@Parent] field must be named `{parentEntityLower}Id`
+  /// (e.g. `postId` for a `Post` parent, `orderId` for an `Order` parent).
   ///
   /// Example: `'postId'` → `'post'`.
   String? get parentEntityNameLower {

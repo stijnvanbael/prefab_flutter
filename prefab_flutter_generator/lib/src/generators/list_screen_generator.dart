@@ -39,9 +39,20 @@ class ListScreenGenerator extends Generator {
     buffer.writeln();
 
     for (final manifest in manifests) {
-      final parentManifest = manifest.parentEntityNameLower != null
-          ? byName[manifest.parentEntityNameLower!]
-          : null;
+      final parentName = manifest.parentEntityNameLower;
+      EntityManifest? parentManifest;
+      if (parentName != null) {
+        parentManifest = byName[parentName];
+        if (parentManifest == null) {
+          throw InvalidGenerationSourceError(
+            'Entity "${manifest.entityName}" has a @Parent field referencing '
+            '"$parentName", but no @View-annotated class with that name was '
+            'found in the same source file. Define the parent entity in the '
+            'same source file as its children.',
+            element: null,
+          );
+        }
+      }
       _writeListScreenClass(manifest, parentManifest, buffer);
       buffer.writeln();
     }
