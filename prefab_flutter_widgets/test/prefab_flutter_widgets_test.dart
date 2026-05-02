@@ -4,7 +4,7 @@ import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
 void main() {
   group('PrefabPage', () {
     test('totalPages rounds up', () {
-      final page = PrefabPage<int>(
+      const page = PrefabPage<int>(
         items: [1, 2, 3],
         totalItems: 25,
         page: 0,
@@ -14,7 +14,7 @@ void main() {
     });
 
     test('totalPages is 0 when pageSize is 0', () {
-      final page = PrefabPage<int>(
+      const page = PrefabPage<int>(
         items: [],
         totalItems: 0,
         page: 0,
@@ -24,7 +24,7 @@ void main() {
     });
 
     test('hasPreviousPage is false on first page', () {
-      final page = PrefabPage<int>(
+      const page = PrefabPage<int>(
         items: [],
         totalItems: 10,
         page: 0,
@@ -34,7 +34,7 @@ void main() {
     });
 
     test('hasNextPage is false on last page', () {
-      final page = PrefabPage<int>(
+      const page = PrefabPage<int>(
         items: [],
         totalItems: 10,
         page: 1,

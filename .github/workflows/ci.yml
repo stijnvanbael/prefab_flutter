@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main", "copilot/**" ]
+  pull_request:
+    branches: [ "main" ]
+
+# Restrict default GITHUB_TOKEN permissions to read-only.
+permissions:
+  contents: read
+
+jobs:
+  # -------------------------------------------------------------------------
+  # prefab_flutter — pure-Dart annotations package
+  # -------------------------------------------------------------------------
+  prefab_flutter:
+    name: prefab_flutter (analyze)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prefab_flutter
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Analyze
+        run: dart analyze --fatal-infos
+
+  # -------------------------------------------------------------------------
+  # prefab_flutter_generator — build_runner code generator (pure Dart)
+  # -------------------------------------------------------------------------
+  prefab_flutter_generator:
+    name: prefab_flutter_generator (analyze + test)
+    runs-on: ubuntu-latest
+    needs: prefab_flutter
+    defaults:
+      run:
+        working-directory: prefab_flutter_generator
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Analyze
+        run: dart analyze --fatal-infos
+
+      - name: Run tests
+        run: dart test
+
+  # -------------------------------------------------------------------------
+  # prefab_flutter_widgets — Flutter runtime widgets package
+  # -------------------------------------------------------------------------
+  prefab_flutter_widgets:
+    name: prefab_flutter_widgets (analyze + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prefab_flutter_widgets
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests
+        run: flutter test

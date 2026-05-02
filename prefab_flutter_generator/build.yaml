@@ -1,0 +1,42 @@
+builders:
+  detail_screen_builder:
+    import: "package:prefab_flutter_generator/builder.dart"
+    builder_factories: ["detailScreenBuilder"]
+    build_extensions: {".dart": [".detail_screen.dart"]}
+    auto_apply: dependents
+    build_to: source
+
+  list_screen_builder:
+    import: "package:prefab_flutter_generator/builder.dart"
+    builder_factories: ["listScreenBuilder"]
+    build_extensions: {".dart": [".list_screen.dart"]}
+    auto_apply: dependents
+    build_to: source
+
+  form_screen_builder:
+    import: "package:prefab_flutter_generator/builder.dart"
+    builder_factories: ["formScreenBuilder"]
+    build_extensions: {".dart": [".form_screen.dart"]}
+    auto_apply: dependents
+    build_to: source
+
+  provider_builder:
+    import: "package:prefab_flutter_generator/builder.dart"
+    builder_factories: ["providerBuilder"]
+    build_extensions: {".dart": [".provider.dart"]}
+    auto_apply: dependents
+    build_to: source
+
+  api_client_builder:
+    import: "package:prefab_flutter_generator/builder.dart"
+    builder_factories: ["apiClientBuilder"]
+    build_extensions: {".dart": [".api_client.dart"]}
+    auto_apply: dependents
+    build_to: source
+
+  routes_builder:
+    import: "package:prefab_flutter_generator/builder.dart"
+    builder_factories: ["routesBuilder"]
+    build_extensions: {".dart": [".routes.dart"]}
+    auto_apply: dependents
+    build_to: source

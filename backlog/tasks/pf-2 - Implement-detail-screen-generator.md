@@ -1,7 +1,7 @@
 ---
 id: PF-2
 title: Implement detail screen generator
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-05-02 06:03'
 updated_date: '2026-05-02 06:03'
@@ -17,9 +17,9 @@ The generated routes and list screen navigate to EntityDetailScreen (e.g. Produc
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 DetailScreenGenerator emits a ConsumerWidget showing all non-hidden fields
-- [ ] #2 Each field is rendered as a labelled read-only tile
-- [ ] #3 AppBar title uses the entity title from @View
-- [ ] #4 Edit and Delete actions wired from the detail screen when @Update/@Delete are present
-- [ ] #5 DetailScreenGenerator is registered in builder.dart alongside existing generators
+- [x] #1 DetailScreenGenerator emits a ConsumerWidget showing all non-hidden fields
+- [x] #2 Each field is rendered as a labelled read-only tile
+- [x] #3 AppBar title uses the entity title from @View
+- [x] #4 Edit and Delete actions wired from the detail screen when @Update/@Delete are present
+- [x] #5 DetailScreenGenerator is registered in builder.dart alongside existing generators
 <!-- AC:END -->
