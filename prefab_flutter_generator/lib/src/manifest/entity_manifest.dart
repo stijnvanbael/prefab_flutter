@@ -51,8 +51,7 @@ class EntityManifest {
       fields.where((f) => !f.hidden && !f.isParent).toList();
 
   /// All fields that should appear in the form screen (non-hidden, non-parent).
-  List<FieldManifest> get formFields =>
-      fields.where((f) => !f.hidden && !f.isParent).toList();
+  List<FieldManifest> get formFields => visibleFields;
 
   /// Name of the first visible field, used as the item label in delete dialogs.
   /// Falls back to `'id'` when no visible fields are declared.

@@ -224,7 +224,9 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
             r"                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value ?? '')) return 'Invalid email address';");
       case Validator.positiveNumber:
         buffer.writeln(
-            "                if (double.tryParse(value ?? '') == null || double.parse(value!) <= 0) return 'Must be a positive number';");
+            "                final n = double.tryParse(value ?? '');");
+        buffer.writeln(
+            "                if (n == null || n <= 0) return 'Must be a positive number';");
       case Validator.url:
         buffer.writeln(
             "                final uri = Uri.tryParse(value ?? '');");
