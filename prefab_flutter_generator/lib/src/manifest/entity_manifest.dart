@@ -105,6 +105,13 @@ class EntityManifest {
           .whereType<Validator>()
           .toList();
 
+      final widgetName = reader.read('widget').objectValue.variable?.name;
+      final fieldWidget = widgetName != null
+          ? FieldWidget.values.byName(widgetName)
+          : FieldWidget.auto;
+
+      final isEnum = field.type.element is EnumElement;
+
       fields.add(FieldManifest(
         name: field.name,
         label: label,
@@ -112,6 +119,8 @@ class EntityManifest {
         isParent: isParent,
         dartType: field.type.getDisplayString(withNullability: false),
         validators: validators,
+        fieldWidget: fieldWidget,
+        isEnum: isEnum,
       ));
     }
 

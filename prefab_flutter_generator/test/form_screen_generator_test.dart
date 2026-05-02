@@ -150,6 +150,92 @@ class Contact {
 }
 ''';
 
+/// Entity with a bool field — should produce SwitchListTile by default (AC#1).
+const _boolSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Setting', path: 'settings')
+@Update()
+class Setting {
+  @FormField(label: 'Is Active')
+  final bool isActive;
+
+  Setting({required this.isActive});
+}
+''';
+
+/// Entity with a DateTime field — should produce a date picker (AC#2).
+const _dateTimeSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Event', path: 'events')
+@Update()
+class Event {
+  @FormField(label: 'Start Date')
+  final DateTime startDate;
+
+  Event({required this.startDate});
+}
+''';
+
+/// Entity with FieldWidget.multilineText — multi-line TextFormField (AC#3).
+const _multilineSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Article', path: 'articles')
+@Update()
+class Article {
+  @FormField(label: 'Body', widget: FieldWidget.multilineText)
+  final String body;
+
+  Article({required this.body});
+}
+''';
+
+/// Entity with FieldWidget.password — obscured TextFormField (AC#4).
+const _passwordSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Account', path: 'accounts')
+@Update()
+class Account {
+  @FormField(label: 'Password', widget: FieldWidget.password)
+  final String password;
+
+  Account({required this.password});
+}
+''';
+
+/// Entity with an enum field — should produce DropdownButtonFormField (AC#5).
+const _enumSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+enum Status { active, inactive }
+
+@View(title: 'Task', path: 'tasks')
+@Update()
+class Task {
+  @FormField(label: 'Status')
+  final Status status;
+
+  Task({required this.status});
+}
+''';
+
+/// Entity with FieldWidget.toggle on a String field — Switch regardless of type (AC#6).
+const _toggleSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Flag', path: 'flags')
+@Update()
+class Flag {
+  @FormField(label: 'Enabled', widget: FieldWidget.toggle)
+  final String enabled;
+
+  Flag({required this.enabled});
+}
+''';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -314,6 +400,104 @@ void main() {
           'a|lib/contact.form_screen.dart': decodedMatches(allOf(
             contains('value == null || value.isEmpty'),
             contains('RegExp('),
+          )),
+        },
+      );
+    });
+
+    // PF-5 AC#1 — bool field renders SwitchListTile by default
+
+    test('PF-5 AC#1 — bool field renders SwitchListTile by default', () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/setting.dart', _boolSource),
+        outputs: {
+          'a|lib/setting.form_screen.dart': decodedMatches(allOf(
+            contains('SwitchListTile('),
+            contains('_isActiveValue'),
+            isNot(contains('TextEditingController')),
+          )),
+        },
+      );
+    });
+
+    // PF-5 AC#2 — DateTime field renders a date picker
+
+    test('PF-5 AC#2 — DateTime field renders a date picker', () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/event.dart', _dateTimeSource),
+        outputs: {
+          'a|lib/event.form_screen.dart': decodedMatches(allOf(
+            contains('showDatePicker('),
+            contains('_startDateValue'),
+            contains('readOnly: true'),
+          )),
+        },
+      );
+    });
+
+    // PF-5 AC#3 — FieldWidget.multilineText renders a multi-line TextFormField
+
+    test(
+        'PF-5 AC#3 — FieldWidget.multilineText renders a multi-line TextFormField',
+        () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/article.dart', _multilineSource),
+        outputs: {
+          'a|lib/article.form_screen.dart': decodedMatches(allOf(
+            contains('maxLines: null'),
+            contains('TextInputType.multiline'),
+          )),
+        },
+      );
+    });
+
+    // PF-5 AC#4 — FieldWidget.password renders an obscured TextFormField
+
+    test('PF-5 AC#4 — FieldWidget.password renders an obscured TextFormField',
+        () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/account.dart', _passwordSource),
+        outputs: {
+          'a|lib/account.form_screen.dart': decodedMatches(
+            contains('obscureText: true'),
+          ),
+        },
+      );
+    });
+
+    // PF-5 AC#5 — enum field renders DropdownButtonFormField
+
+    test('PF-5 AC#5 — enum field renders DropdownButtonFormField', () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/task.dart', _enumSource),
+        outputs: {
+          'a|lib/task.form_screen.dart': decodedMatches(allOf(
+            contains('DropdownButtonFormField<Status>'),
+            contains('Status.values'),
+            contains('DropdownMenuItem<Status>'),
+          )),
+        },
+      );
+    });
+
+    // PF-5 AC#6 — FieldWidget.toggle renders SwitchListTile regardless of type
+
+    test(
+        'PF-5 AC#6 — FieldWidget.toggle renders SwitchListTile regardless of type',
+        () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/flag.dart', _toggleSource),
+        outputs: {
+          'a|lib/flag.form_screen.dart': decodedMatches(allOf(
+            contains('SwitchListTile('),
+            contains('_enabledValue'),
+            isNot(contains('TextEditingController')),
           )),
         },
       );
