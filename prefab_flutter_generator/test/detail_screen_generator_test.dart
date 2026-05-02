@@ -144,9 +144,9 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.detail_screen.dart': contains(
+          'a|lib/product.detail_screen.dart': decodedMatches(contains(
             'class ProductDetailScreen extends ConsumerWidget',
-          ),
+          )),
         },
       );
     });
@@ -156,9 +156,9 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.detail_screen.dart': contains(
+          'a|lib/product.detail_screen.dart': decodedMatches(contains(
             "const Text('Product')",
-          ),
+          )),
         },
       );
     });
@@ -169,12 +169,12 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.detail_screen.dart': allOf(
+          'a|lib/product.detail_screen.dart': decodedMatches(allOf(
             contains("const Text('Name')"),
             contains('product.name.toString()'),
             contains("const Text('Price')"),
             contains('product.price.toString()'),
-          ),
+          )),
         },
       );
     });
@@ -184,9 +184,9 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.detail_screen.dart': isNot(
+          'a|lib/product.detail_screen.dart': decodedMatches(isNot(
             contains('internalCode'),
-          ),
+          )),
         },
       );
     });
@@ -197,10 +197,10 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.detail_screen.dart': allOf(
+          'a|lib/product.detail_screen.dart': decodedMatches(allOf(
             contains('Icons.edit'),
             contains("/products/\$id/edit"),
-          ),
+          )),
         },
       );
     });
@@ -211,10 +211,10 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.detail_screen.dart': allOf(
+          'a|lib/product.detail_screen.dart': decodedMatches(allOf(
             contains('Icons.delete'),
             contains('showPrefabDeleteDialog'),
-          ),
+          )),
         },
       );
     });
@@ -224,7 +224,7 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/tag.dart', _tagSource),
         outputs: {
-          'a|lib/tag.detail_screen.dart': isNot(contains('Icons.edit')),
+          'a|lib/tag.detail_screen.dart': decodedMatches(isNot(contains('Icons.edit'))),
         },
       );
     });
@@ -234,7 +234,7 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/tag.dart', _tagSource),
         outputs: {
-          'a|lib/tag.detail_screen.dart': isNot(contains('Icons.delete')),
+          'a|lib/tag.detail_screen.dart': decodedMatches(isNot(contains('Icons.delete'))),
         },
       );
     });
@@ -246,9 +246,9 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/order.dart', _orderSource),
         outputs: {
-          'a|lib/order.detail_screen.dart': contains(
+          'a|lib/order.detail_screen.dart': decodedMatches(contains(
             "const Text('Customer Name')",
-          ),
+          )),
         },
       );
     });
@@ -258,11 +258,11 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.detail_screen.dart': allOf(
+          'a|lib/product.detail_screen.dart': decodedMatches(allOf(
             contains("import 'package:flutter/material.dart'"),
             contains(
                 "import 'package:flutter_riverpod/flutter_riverpod.dart'"),
-          ),
+          )),
         },
       );
     });
@@ -272,8 +272,8 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.detail_screen.dart':
-              contains("import 'package:go_router/go_router.dart'"),
+          'a|lib/product.detail_screen.dart': decodedMatches(
+              contains("import 'package:go_router/go_router.dart'")),
         },
       );
     });
@@ -283,8 +283,8 @@ void main() {
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/tag.dart', _tagSource),
         outputs: {
-          'a|lib/tag.detail_screen.dart':
-              isNot(contains("import 'package:go_router/go_router.dart'")),
+          'a|lib/tag.detail_screen.dart': decodedMatches(
+              isNot(contains("import 'package:go_router/go_router.dart'"))),
         },
       );
     });
