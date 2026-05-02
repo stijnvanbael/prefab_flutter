@@ -20,6 +20,12 @@ class FieldManifest {
   /// Validation rules applied to this field in the form screen.
   final List<Validator> validators;
 
+  /// Widget hint from the [@FormField.widget] annotation.
+  final FieldWidget fieldWidget;
+
+  /// When `true` the Dart type of the field is an enum.
+  final bool isEnum;
+
   const FieldManifest({
     required this.name,
     required this.label,
@@ -27,5 +33,7 @@ class FieldManifest {
     required this.isParent,
     required this.dartType,
     this.validators = const [],
+    this.fieldWidget = FieldWidget.auto,
+    this.isEnum = false,
   });
 }

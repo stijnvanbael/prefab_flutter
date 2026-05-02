@@ -6,6 +6,9 @@ import 'package:source_gen/source_gen.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/field_manifest.dart';
 
+/// Resolved widget kind after applying [FieldWidget.auto] type inference.
+enum _WidgetKind { text, multilineText, password, datePicker, dropdown, toggle }
+
 /// Generates `{Entity}CreateScreen` and `{Entity}EditScreen` [ConsumerWidget]s
 /// for every class annotated with [@View] that also carries [@Update].
 class FormScreenGenerator extends GeneratorForAnnotation<View> {
@@ -42,6 +45,25 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     buffer.writeln();
     _writeEditScreen(manifest, buffer);
     return buffer.toString();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Widget kind resolution
+  // ---------------------------------------------------------------------------
+
+  _WidgetKind _resolveWidgetKind(FieldManifest field) {
+    return switch (field.fieldWidget) {
+      FieldWidget.multilineText => _WidgetKind.multilineText,
+      FieldWidget.password => _WidgetKind.password,
+      FieldWidget.datePicker => _WidgetKind.datePicker,
+      FieldWidget.dropdown => _WidgetKind.dropdown,
+      FieldWidget.toggle => _WidgetKind.toggle,
+      FieldWidget.auto => switch (field.dartType) {
+          'bool' => _WidgetKind.toggle,
+          'DateTime' => _WidgetKind.datePicker,
+          _ => field.isEnum ? _WidgetKind.dropdown : _WidgetKind.text,
+        },
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -142,15 +164,30 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     buffer.writeln('  final _formKey = GlobalKey<FormState>();');
 
     for (final field in fields) {
-      buffer.writeln(
-          '  final _${field.name}Controller = TextEditingController();');
+      final kind = _resolveWidgetKind(field);
+      switch (kind) {
+        case _WidgetKind.toggle:
+          buffer.writeln('  bool _${field.name}Value = false;');
+        case _WidgetKind.datePicker:
+          buffer.writeln(
+              '  final _${field.name}Controller = TextEditingController();');
+          buffer.writeln('  DateTime? _${field.name}Value;');
+        case _WidgetKind.dropdown:
+          buffer.writeln('  ${field.dartType}? _${field.name}Value;');
+        default:
+          buffer.writeln(
+              '  final _${field.name}Controller = TextEditingController();');
+      }
     }
 
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln('  void dispose() {');
     for (final field in fields) {
-      buffer.writeln('    _${field.name}Controller.dispose();');
+      final kind = _resolveWidgetKind(field);
+      if (kind != _WidgetKind.toggle && kind != _WidgetKind.dropdown) {
+        buffer.writeln('    _${field.name}Controller.dispose();');
+      }
     }
     buffer.writeln('    super.dispose();');
     buffer.writeln('  }');
@@ -188,31 +225,121 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
   }
 
   // ---------------------------------------------------------------------------
-  // Individual form field
+  // Individual form field — dispatches to the correct widget writer
   // ---------------------------------------------------------------------------
 
   void _writeFormField(FieldManifest field, StringBuffer buffer) {
+    switch (_resolveWidgetKind(field)) {
+      case _WidgetKind.toggle:
+        _writeSwitchField(field, buffer);
+      case _WidgetKind.datePicker:
+        _writeDatePickerField(field, buffer);
+      case _WidgetKind.dropdown:
+        _writeDropdownField(field, buffer);
+      case _WidgetKind.multilineText:
+        _writeMultilineTextField(field, buffer);
+      case _WidgetKind.password:
+        _writePasswordField(field, buffer);
+      case _WidgetKind.text:
+        _writeTextField(field, buffer);
+    }
+  }
+
+  void _writeTextField(FieldManifest field, StringBuffer buffer) {
     buffer.writeln('            TextFormField(');
-    buffer.writeln(
-        '              controller: _${field.name}Controller,');
+    buffer.writeln('              controller: _${field.name}Controller,');
     buffer.writeln(
         "              decoration: const InputDecoration(labelText: '${field.label}'),");
+    _writeValidators(field, buffer);
+    buffer.writeln('            ),');
+  }
 
-    if (field.validators.isNotEmpty) {
-      buffer.writeln('              validator: (value) {');
-      for (final validator in field.validators) {
-        _writeValidatorCheck(validator, buffer);
-      }
-      buffer.writeln('                return null;');
-      buffer.writeln('              },');
-    }
+  void _writeMultilineTextField(FieldManifest field, StringBuffer buffer) {
+    buffer.writeln('            TextFormField(');
+    buffer.writeln('              controller: _${field.name}Controller,');
+    buffer.writeln('              maxLines: null,');
+    buffer.writeln('              keyboardType: TextInputType.multiline,');
+    buffer.writeln(
+        "              decoration: const InputDecoration(labelText: '${field.label}'),");
+    _writeValidators(field, buffer);
+    buffer.writeln('            ),');
+  }
 
+  void _writePasswordField(FieldManifest field, StringBuffer buffer) {
+    buffer.writeln('            TextFormField(');
+    buffer.writeln('              controller: _${field.name}Controller,');
+    buffer.writeln('              obscureText: true,');
+    buffer.writeln(
+        "              decoration: const InputDecoration(labelText: '${field.label}'),");
+    _writeValidators(field, buffer);
+    buffer.writeln('            ),');
+  }
+
+  void _writeDatePickerField(FieldManifest field, StringBuffer buffer) {
+    buffer.writeln('            TextFormField(');
+    buffer.writeln('              controller: _${field.name}Controller,');
+    buffer.writeln('              readOnly: true,');
+    buffer.writeln(
+        "              decoration: const InputDecoration(labelText: '${field.label}'),");
+    buffer.writeln('              onTap: () async {');
+    buffer.writeln('                final picked = await showDatePicker(');
+    buffer.writeln('                  context: context,');
+    buffer.writeln(
+        '                  initialDate: _${field.name}Value ?? DateTime.now(),');
+    buffer.writeln('                  firstDate: DateTime(2000),');
+    buffer.writeln('                  lastDate: DateTime(2100),');
+    buffer.writeln('                );');
+    buffer.writeln('                if (picked != null) {');
+    buffer.writeln('                  setState(() {');
+    buffer.writeln('                    _${field.name}Value = picked;');
+    buffer.writeln(
+        '                    _${field.name}Controller.text = picked.toIso8601String();');
+    buffer.writeln('                  });');
+    buffer.writeln('                }');
+    buffer.writeln('              },');
+    _writeValidators(field, buffer);
+    buffer.writeln('            ),');
+  }
+
+  void _writeDropdownField(FieldManifest field, StringBuffer buffer) {
+    final type = field.dartType;
+    buffer.writeln('            DropdownButtonFormField<$type>(');
+    buffer.writeln('              value: _${field.name}Value,');
+    buffer.writeln(
+        "              decoration: const InputDecoration(labelText: '${field.label}'),");
+    buffer.writeln(
+        '              items: $type.values.map((v) => DropdownMenuItem<$type>(');
+    buffer.writeln('                value: v,');
+    buffer.writeln('                child: Text(v.name),');
+    buffer.writeln('              )).toList(),');
+    buffer.writeln(
+        '              onChanged: (v) => setState(() => _${field.name}Value = v),');
+    _writeValidators(field, buffer);
+    buffer.writeln('            ),');
+  }
+
+  void _writeSwitchField(FieldManifest field, StringBuffer buffer) {
+    buffer.writeln('            SwitchListTile(');
+    buffer.writeln("              title: const Text('${field.label}'),");
+    buffer.writeln('              value: _${field.name}Value,');
+    buffer.writeln(
+        '              onChanged: (v) => setState(() => _${field.name}Value = v),');
     buffer.writeln('            ),');
   }
 
   // ---------------------------------------------------------------------------
   // Validator check lines
   // ---------------------------------------------------------------------------
+
+  void _writeValidators(FieldManifest field, StringBuffer buffer) {
+    if (field.validators.isEmpty) return;
+    buffer.writeln('              validator: (value) {');
+    for (final validator in field.validators) {
+      _writeValidatorCheck(validator, buffer);
+    }
+    buffer.writeln('                return null;');
+    buffer.writeln('              },');
+  }
 
   void _writeValidatorCheck(Validator validator, StringBuffer buffer) {
     switch (validator) {
