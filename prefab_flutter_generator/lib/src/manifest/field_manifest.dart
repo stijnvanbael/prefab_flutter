@@ -1,3 +1,5 @@
+import 'package:prefab_flutter/prefab_flutter.dart';
+
 /// Describes a single field on an entity class as understood by the generators.
 class FieldManifest {
   /// Dart field name (e.g. `'firstName'`).
@@ -15,11 +17,15 @@ class FieldManifest {
   /// Dart type display string (e.g. `'String'`, `'int'`, `'bool'`).
   final String dartType;
 
+  /// Validation rules applied to this field in the form screen.
+  final List<Validator> validators;
+
   const FieldManifest({
     required this.name,
     required this.label,
     required this.hidden,
     required this.isParent,
     required this.dartType,
+    this.validators = const [],
   });
 }
