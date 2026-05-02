@@ -49,26 +49,31 @@ class _PrefabSearchBarState extends State<PrefabSearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      onChanged: widget.onChanged,
-      decoration: InputDecoration(
-        hintText: widget.hintText,
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon: _controller.text.isNotEmpty
-            ? IconButton(
-                icon: const Icon(Icons.clear),
-                tooltip: 'Clear search',
-                onPressed: () {
-                  _controller.clear();
-                  widget.onChanged?.call('');
-                },
-              )
-            : null,
-        border: const OutlineInputBorder(),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-      ),
+    return ListenableBuilder(
+      listenable: _controller,
+      builder: (context, _) {
+        return TextField(
+          controller: _controller,
+          onChanged: widget.onChanged,
+          decoration: InputDecoration(
+            hintText: widget.hintText,
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: _controller.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    tooltip: 'Clear search',
+                    onPressed: () {
+                      _controller.clear();
+                      widget.onChanged?.call('');
+                    },
+                  )
+                : null,
+            border: const OutlineInputBorder(),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          ),
+        );
+      },
     );
   }
 }
