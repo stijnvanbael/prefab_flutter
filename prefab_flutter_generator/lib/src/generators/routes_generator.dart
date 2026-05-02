@@ -12,7 +12,7 @@ import 'package:source_gen/source_gen.dart';
 /// NOTE: Full implementation is tracked in a separate backlog task.
 class RoutesGenerator extends GeneratorForAnnotation<View> {
   @override
-  String generateForAnnotatedNode(
+  String generateForAnnotatedElement(
     Element element,
     ConstantReader annotation,
     BuildStep buildStep,

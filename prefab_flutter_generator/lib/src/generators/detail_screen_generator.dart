@@ -18,7 +18,7 @@ import '../manifest/field_manifest.dart';
 ///   [@Delete] is present.
 class DetailScreenGenerator extends GeneratorForAnnotation<View> {
   @override
-  String generateForAnnotatedNode(
+  String generateForAnnotatedElement(
     Element element,
     ConstantReader annotation,
     BuildStep buildStep,
@@ -30,7 +30,7 @@ class DetailScreenGenerator extends GeneratorForAnnotation<View> {
       );
     }
 
-    final manifest = EntityManifest.from(element as ClassElement, annotation);
+    final manifest = EntityManifest.from(element, annotation);
 
     // Derive a relative import for the entity source file.
     final inputPath = buildStep.inputId.path; // e.g. lib/src/product.dart
