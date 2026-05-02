@@ -50,6 +50,9 @@ class EntityManifest {
   List<FieldManifest> get visibleFields =>
       fields.where((f) => !f.hidden && !f.isParent).toList();
 
+  /// All fields that should appear in the form screen (non-hidden, non-parent).
+  List<FieldManifest> get formFields => visibleFields;
+
   /// Name of the first visible field, used as the item label in delete dialogs.
   /// Falls back to `'id'` when no visible fields are declared.
   String get firstLabelFieldName =>
@@ -88,12 +91,27 @@ class EntityManifest {
       final hidden = reader.read('hidden').boolValue;
       final isParent = _parentChecker.hasAnnotationOf(field);
 
+      final validatorsObjList = reader.read('validators').listValue;
+      final validators = validatorsObjList
+          .map((obj) {
+            final name = obj.variable?.name;
+            if (name == null) return null;
+            try {
+              return Validator.values.byName(name);
+            } catch (_) {
+              return null;
+            }
+          })
+          .whereType<Validator>()
+          .toList();
+
       fields.add(FieldManifest(
         name: field.name,
         label: label,
         hidden: hidden,
         isParent: isParent,
         dartType: field.type.getDisplayString(withNullability: false),
+        validators: validators,
       ));
     }
 
