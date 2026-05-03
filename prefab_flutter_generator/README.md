@@ -1,6 +1,6 @@
 # prefab_flutter_generator
 
-Code generator for [`prefab_flutter`](../prefab_flutter). Reads
+Code generator for [`prefab_flutter`](https://pub.dev/packages/prefab_flutter). Reads
 `@View`-annotated Dart classes and emits six categories of source files:
 
 | Builder factory       | Output extension      | Description                                         |
