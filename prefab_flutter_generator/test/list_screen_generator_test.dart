@@ -42,11 +42,15 @@ class FormField {
   final FieldWidget widget;
   final List<Validator> validators;
   final bool hidden;
+  final bool searchable;
+  final bool sortable;
   const FormField({
     this.label,
     this.widget = FieldWidget.auto,
     this.validators = const [],
     this.hidden = false,
+    this.searchable = false,
+    this.sortable = false,
   });
 }
 ''',
@@ -110,6 +114,51 @@ class Comment {
   final String content;
 
   Comment({required this.id, required this.postId, required this.content});
+}
+''';
+
+/// Entity with a searchable field — should produce a search bar (AC#1).
+const _searchableSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Product', path: 'products')
+class Product {
+  final int id;
+
+  @FormField(label: 'Name', searchable: true)
+  final String name;
+
+  Product({required this.id, required this.name});
+}
+''';
+
+/// Entity with a sortable field — should produce sort controls (AC#2).
+const _sortableSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Product', path: 'products')
+class Product {
+  final int id;
+
+  @FormField(label: 'Name', sortable: true)
+  final String name;
+
+  Product({required this.id, required this.name});
+}
+''';
+
+/// Entity with both searchable and sortable fields.
+const _searchableSortableSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Article', path: 'articles')
+class Article {
+  final int id;
+
+  @FormField(label: 'Title', searchable: true, sortable: true)
+  final String title;
+
+  Article({required this.id, required this.title});
 }
 ''';
 
@@ -262,6 +311,136 @@ void main() {
           'a|lib/post.list_screen.dart': decodedMatches(
             contains('ref.watch(postsProvider)'),
           ),
+        },
+      );
+    });
+
+    // AC#1 — search bar is generated when searchable fields exist
+
+    test('AC#1 — search bar is generated when a field has searchable: true',
+        () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _searchableSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(allOf(
+            contains('TextField('),
+            contains('_searchQuery'),
+          )),
+        },
+      );
+    });
+
+    test(
+        'AC#1 — search bar filters using the searchable field value',
+        () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _searchableSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(allOf(
+            contains('_searchQuery.isNotEmpty'),
+            contains('product.name.toString().toLowerCase()'),
+          )),
+        },
+      );
+    });
+
+    test(
+        'AC#1 — list screen becomes ConsumerStatefulWidget when searchable',
+        () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _searchableSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(
+            contains(
+                'class ProductListScreen extends ConsumerStatefulWidget'),
+          ),
+        },
+      );
+    });
+
+    test('AC#1 — no search bar when no field has searchable: true', () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(
+            isNot(contains('_searchQuery')),
+          ),
+        },
+      );
+    });
+
+    // AC#2 — sort column is generated when sortable fields exist
+
+    test('AC#2 — sort control is generated when a field has sortable: true',
+        () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _sortableSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(allOf(
+            contains('DropdownButton<String>('),
+            contains('_sortColumn'),
+          )),
+        },
+      );
+    });
+
+    test(
+        'AC#2 — sort dropdown includes a menu item for each sortable field',
+        () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _sortableSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(allOf(
+            contains("DropdownMenuItem(value: 'name'"),
+            contains("Text('Name')"),
+          )),
+        },
+      );
+    });
+
+    test('AC#2 — sort applies compareTo on the sortable field value', () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _sortableSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(
+            contains('a.name.toString().compareTo(b.name.toString())'),
+          ),
+        },
+      );
+    });
+
+    test('AC#2 — no sort control when no field has sortable: true', () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(
+            isNot(contains('_sortColumn')),
+          ),
+        },
+      );
+    });
+
+    test(
+        'AC#1+AC#2 — screen has both search bar and sort control when '
+        'fields are both searchable and sortable', () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/article.dart', _searchableSortableSource),
+        outputs: {
+          'a|lib/article.list_screen.dart': decodedMatches(allOf(
+            contains('TextField('),
+            contains('_searchQuery'),
+            contains('DropdownButton<String>('),
+            contains('_sortColumn'),
+          )),
         },
       );
     });

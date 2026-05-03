@@ -23,10 +23,20 @@ class FormField {
   /// When `true` the field is excluded from both the form and detail screens.
   final bool hidden;
 
+  /// When `true` a search bar is included in the generated list screen that
+  /// filters items by this field's value.
+  final bool searchable;
+
+  /// When `true` a sort control is included in the generated list screen that
+  /// allows sorting items by this field.
+  final bool sortable;
+
   const FormField({
     this.label,
     this.widget = FieldWidget.auto,
     this.validators = const [],
     this.hidden = false,
+    this.searchable = false,
+    this.sortable = false,
   });
 }
