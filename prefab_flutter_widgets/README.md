@@ -19,10 +19,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  prefab_flutter_widgets:
-    git:
-      url: https://github.com/stijnvanbael/prefab_flutter
-      path: prefab_flutter_widgets
+  prefab_flutter_widgets: ^0.1.0
 ```
 
 Then import it:
