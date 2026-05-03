@@ -639,16 +639,12 @@ void main() {
       );
     });
 
-    test('PF-8 — CreateScreen state does not contain _prefilled flag',
+    test('PF-8 — EditScreen state contains _prefilled flag and _prefillControllers method',
         () async {
       await testBuilder(
         formScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _requiredSource),
         outputs: {
-          // The _prefilled flag must only appear in the edit state, not the
-          // create state. Since both are emitted in the same file we verify
-          // that exactly the edit provider watch appears (one occurrence) and
-          // the create body does not reference the detail provider.
           'a|lib/product.form_screen.dart': decodedMatches(allOf(
             contains('bool _prefilled = false'),
             contains('_prefillControllers'),
