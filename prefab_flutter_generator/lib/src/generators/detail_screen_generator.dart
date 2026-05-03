@@ -88,6 +88,11 @@ class DetailScreenGenerator extends GeneratorForAnnotation<View> {
 
     // Relative import for the entity file.
     buffer.writeln("import '$sourceFileName';");
+
+    // Providers (productDetailProvider, productsProvider, etc.) live in the
+    // generated provider file.
+    final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
+    buffer.writeln("import '$base.provider.dart';");
   }
 
   // ---------------------------------------------------------------------------

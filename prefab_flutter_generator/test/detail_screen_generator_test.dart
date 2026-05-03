@@ -288,5 +288,17 @@ void main() {
         },
       );
     });
+
+    test('PF-9 — generated file imports the provider file', () async {
+      await testBuilder(
+        detailScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.detail_screen.dart': decodedMatches(
+            contains("import 'product.provider.dart'"),
+          ),
+        },
+      );
+    });
   });
 }

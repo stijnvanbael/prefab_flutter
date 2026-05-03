@@ -1,0 +1,26 @@
+name: prefab_flutter_example
+description: Example Flutter app demonstrating prefab_flutter code generation with a full Products CRUD flow.
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  prefab_flutter:
+    path: ../prefab_flutter
+  prefab_flutter_widgets:
+    path: ../prefab_flutter_widgets
+  flutter_riverpod: ^2.5.0
+  go_router: ^14.0.0
+  dio: ^5.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.0
+  prefab_flutter_generator:
+    path: ../prefab_flutter_generator
+  flutter_lints: ^3.0.0

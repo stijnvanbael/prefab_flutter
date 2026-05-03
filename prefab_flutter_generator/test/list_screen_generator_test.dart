@@ -265,5 +265,48 @@ void main() {
         },
       );
     });
+
+    // PF-9 — FAB for Create when @Update is present
+
+    const productWithUpdateSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Product', path: 'products')
+@Update()
+class Product {
+  final int id;
+
+  @FormField(label: 'Name')
+  final String name;
+
+  Product({required this.id, required this.name});
+}
+''';
+
+    test('PF-9 — FAB is generated when @Update is present', () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', productWithUpdateSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(allOf(
+            contains('FloatingActionButton('),
+            contains("'/products/create'"),
+            contains('Icons.add'),
+          )),
+        },
+      );
+    });
+
+    test('PF-9 — no FAB when @Update is absent', () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(
+            isNot(contains('FloatingActionButton')),
+          ),
+        },
+      );
+    });
   });
 }

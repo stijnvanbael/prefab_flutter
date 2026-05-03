@@ -73,6 +73,7 @@ class ProviderGenerator extends Generator {
     final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
     buffer.writeln("import '$base.dart';");
     buffer.writeln("import '$base.api_client.dart';");
+    buffer.writeln("import 'dio_provider.dart';");
   }
 
   // ---------------------------------------------------------------------------
