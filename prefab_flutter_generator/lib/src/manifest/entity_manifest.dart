@@ -58,6 +58,33 @@ class EntityManifest {
   String get firstLabelFieldName =>
       visibleFields.isNotEmpty ? visibleFields.first.name : 'id';
 
+  /// The first field annotated with [@Parent], if any.
+  FieldManifest? get parentField =>
+      fields.where((f) => f.isParent).firstOrNull;
+
+  /// Whether this entity has a parent reference.
+  bool get hasParent => parentField != null;
+
+  /// Lower-camel-case name of the parent entity, derived from the [@Parent]
+  /// field name by stripping a trailing `'Id'` suffix (case-sensitive).
+  ///
+  /// **Convention**: the [@Parent] field must be named `{parentEntityLower}Id`
+  /// (e.g. `postId` for a `Post` parent, `orderId` for an `Order` parent).
+  ///
+  /// Example: `'postId'` → `'post'`.
+  String? get parentEntityNameLower {
+    final pf = parentField;
+    if (pf == null) return null;
+    final name = pf.name;
+    if (name.endsWith('Id')) return name.substring(0, name.length - 2);
+    return name;
+  }
+
+  /// The Dart parameter name used for the parent ID (same as the field name).
+  ///
+  /// Example: `'postId'`.
+  String? get parentParamName => parentField?.name;
+
   // ---------------------------------------------------------------------------
   // Factory
   // ---------------------------------------------------------------------------

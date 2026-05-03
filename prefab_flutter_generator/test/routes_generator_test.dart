@@ -128,6 +128,39 @@ class Tag {
 }
 ''';
 
+/// A parent entity (Post) and a child entity (Comment) with @Parent.
+const _parentChildSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Post', path: 'posts')
+@Update()
+@Delete()
+class Post {
+  final int id;
+
+  @FormField(label: 'Title')
+  final String title;
+
+  Post({required this.id, required this.title});
+}
+
+@View(title: 'Comment', path: 'comments')
+@Update()
+@Delete()
+class Comment {
+  final int id;
+
+  @Parent()
+  @FormField(hidden: true)
+  final int postId;
+
+  @FormField(label: 'Content')
+  final String content;
+
+  Comment({required this.id, required this.postId, required this.content});
+}
+''';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -351,6 +384,126 @@ class Plain {}
 ''',
         },
         outputs: {},
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // @Parent — nested resource routes (AC#1 of PF-6)
+    // -------------------------------------------------------------------------
+
+    test(
+        'AC#1 @Parent — child entity (Comment) is NOT emitted as a root route',
+        () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/post.dart', _parentChildSource),
+        outputs: {
+          'a|lib/post.routes.dart': decodedMatches(
+            isNot(contains("path: '/comments'")),
+          ),
+        },
+      );
+    });
+
+    test(
+        'AC#1 @Parent — parent entity (Post) uses a named id param '
+        'to avoid collisions with nested child :id', () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/post.dart', _parentChildSource),
+        outputs: {
+          'a|lib/post.routes.dart': decodedMatches(
+            contains("path: ':postId'"),
+          ),
+        },
+      );
+    });
+
+    test(
+        'AC#1 @Parent — child list route is nested under parent :id route',
+        () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/post.dart', _parentChildSource),
+        outputs: {
+          'a|lib/post.routes.dart': decodedMatches(
+            contains("path: 'comments'"),
+          ),
+        },
+      );
+    });
+
+    test(
+        'AC#1 @Parent — child ListScreen receives the parent ID from route',
+        () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/post.dart', _parentChildSource),
+        outputs: {
+          'a|lib/post.routes.dart': decodedMatches(
+            contains("CommentListScreen(postId: state.pathParameters['postId']!)"),
+          ),
+        },
+      );
+    });
+
+    test(
+        'AC#1 @Parent — child DetailScreen receives both id and parent ID',
+        () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/post.dart', _parentChildSource),
+        outputs: {
+          'a|lib/post.routes.dart': decodedMatches(allOf(
+            contains("CommentDetailScreen("),
+            contains("postId: state.pathParameters['postId']!"),
+          )),
+        },
+      );
+    });
+
+    test(
+        'AC#1 @Parent — parent root route is still present at the top level',
+        () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/post.dart', _parentChildSource),
+        outputs: {
+          'a|lib/post.routes.dart': decodedMatches(
+            contains("path: '/posts'"),
+          ),
+        },
+      );
+    });
+
+    test(
+        'AC#1 @Parent — create route for child entity passes parent ID',
+        () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/post.dart', _parentChildSource),
+        outputs: {
+          'a|lib/post.routes.dart': decodedMatches(allOf(
+            contains("CommentCreateScreen("),
+            contains("postId: state.pathParameters['postId']!"),
+          )),
+        },
+      );
+    });
+
+    test(
+        'AC#1 @Parent — edit route for child entity passes both id and parent ID',
+        () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/post.dart', _parentChildSource),
+        outputs: {
+          'a|lib/post.routes.dart': decodedMatches(allOf(
+            contains("CommentEditScreen("),
+            contains("id: state.pathParameters['id']!"),
+            contains("postId: state.pathParameters['postId']!"),
+          )),
+        },
       );
     });
   });
