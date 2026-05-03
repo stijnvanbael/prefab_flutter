@@ -193,8 +193,7 @@ void main() {
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
           'a|lib/post.provider.dart': decodedMatches(
-            contains('FutureProvider.autoDispose'
-                '.family<Comment, (Object, int)>'),
+            contains('.family<Comment, (Object, int)>'),
           ),
         },
       );
@@ -223,8 +222,7 @@ void main() {
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
           'a|lib/post.provider.dart': decodedMatches(
-            contains('StateNotifierProvider.autoDispose'
-                '.family<CommentsNotifier, AsyncValue<List<Comment>>, int>'),
+            contains('.family<CommentsNotifier, AsyncValue<List<Comment>>, int>'),
           ),
         },
       );

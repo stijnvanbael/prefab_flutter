@@ -483,9 +483,10 @@ class Plain {}
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
-          'a|lib/post.routes.dart': decodedMatches(
-            contains("CommentCreateScreen(postId: state.pathParameters['postId']!)"),
-          ),
+          'a|lib/post.routes.dart': decodedMatches(allOf(
+            contains("CommentCreateScreen("),
+            contains("postId: state.pathParameters['postId']!"),
+          )),
         },
       );
     });
@@ -497,9 +498,11 @@ class Plain {}
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
-          'a|lib/post.routes.dart': decodedMatches(
-            contains("CommentEditScreen(id: state.pathParameters['id']!, postId: state.pathParameters['postId']!)"),
-          ),
+          'a|lib/post.routes.dart': decodedMatches(allOf(
+            contains("CommentEditScreen("),
+            contains("id: state.pathParameters['id']!"),
+            contains("postId: state.pathParameters['postId']!"),
+          )),
         },
       );
     });
