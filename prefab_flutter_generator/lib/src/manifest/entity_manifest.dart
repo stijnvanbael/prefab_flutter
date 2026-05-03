@@ -33,6 +33,12 @@ class EntityManifest {
   /// All fields declared with [@FormField] in source order.
   final List<FieldManifest> fields;
 
+  /// The first field that is **not** annotated with [@FormField] (e.g. `id`).
+  ///
+  /// Generators use this to include the primary-key field in save-button
+  /// constructor calls even though it is not editable by the user.
+  final FieldManifest? idField;
+
   EntityManifest({
     required this.entityName,
     required this.title,
@@ -40,6 +46,7 @@ class EntityManifest {
     required this.hasUpdate,
     required this.hasDelete,
     required this.fields,
+    this.idField,
   }) : entityNameLower = _toLowerCamel(entityName);
 
   // ---------------------------------------------------------------------------
@@ -101,12 +108,24 @@ class EntityManifest {
     final hasUpdate = _updateChecker.hasAnnotationOf(element);
     final hasDelete = _deleteChecker.hasAnnotationOf(element);
 
+    FieldManifest? idField;
     final fields = <FieldManifest>[];
     for (final field in element.fields) {
       if (field.isStatic || field.isSynthetic) continue;
 
       final formFieldAnnotation = _formFieldChecker.firstAnnotationOf(field);
-      if (formFieldAnnotation == null) continue;
+      if (formFieldAnnotation == null) {
+        // First non-@FormField field is treated as the id field.
+        idField ??= FieldManifest(
+          name: field.name,
+          label: field.name,
+          hidden: true,
+          isParent: false,
+          dartType: field.type.getDisplayString(withNullability: false),
+          isEnum: field.type.element is EnumElement,
+        );
+        continue;
+      }
 
       final reader = ConstantReader(formFieldAnnotation);
 
@@ -158,6 +177,7 @@ class EntityManifest {
       hasUpdate: hasUpdate,
       hasDelete: hasDelete,
       fields: fields,
+      idField: idField,
     );
   }
 

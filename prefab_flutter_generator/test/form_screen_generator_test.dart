@@ -652,5 +652,123 @@ void main() {
         },
       );
     });
+
+    // PF-9 — Save button calls provider create / update
+
+    test('PF-9 — CreateScreen save button calls provider.create', () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _requiredSource),
+        outputs: {
+          'a|lib/product.form_screen.dart': decodedMatches(allOf(
+            contains('productsProvider.notifier'),
+            contains('.create(entity)'),
+          )),
+        },
+      );
+    });
+
+    test('PF-9 — EditScreen save button calls provider.update', () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _requiredSource),
+        outputs: {
+          'a|lib/product.form_screen.dart': decodedMatches(allOf(
+            contains('productsProvider.notifier'),
+            contains('.update(entity)'),
+          )),
+        },
+      );
+    });
+
+    test('PF-9 — EditScreen data callback exposes item for constructor',
+        () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _requiredSource),
+        outputs: {
+          'a|lib/product.form_screen.dart': decodedMatches(
+            contains('data: (item) =>'),
+          ),
+        },
+      );
+    });
+
+    test('PF-9 — save button pops after saving', () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _requiredSource),
+        outputs: {
+          'a|lib/product.form_screen.dart': decodedMatches(allOf(
+            contains('context.mounted'),
+            contains('context.pop()'),
+          )),
+        },
+      );
+    });
+
+    test('PF-9 — CreateScreen uses zero id for entity with id field', () async {
+      const _productWithIdSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Product', path: 'products')
+@Update()
+class Product {
+  final int id;
+
+  @FormField(label: 'Name')
+  final String name;
+
+  Product({required this.id, required this.name});
+}
+''';
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productWithIdSource),
+        outputs: {
+          'a|lib/product.form_screen.dart': decodedMatches(
+            contains('id: 0,'),
+          ),
+        },
+      );
+    });
+
+    test('PF-9 — EditScreen uses item.id for entity with id field', () async {
+      const _productWithIdSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Product', path: 'products')
+@Update()
+class Product {
+  final int id;
+
+  @FormField(label: 'Name')
+  final String name;
+
+  Product({required this.id, required this.name});
+}
+''';
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productWithIdSource),
+        outputs: {
+          'a|lib/product.form_screen.dart': decodedMatches(
+            contains('id: item.id,'),
+          ),
+        },
+      );
+    });
+
+    test('PF-9 — double field uses double.parse in constructor call', () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _positiveNumberSource),
+        outputs: {
+          'a|lib/product.form_screen.dart': decodedMatches(
+            contains('double.parse(_priceController.text)'),
+          ),
+        },
+      );
+    });
   });
 }

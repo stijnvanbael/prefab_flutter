@@ -164,6 +164,19 @@ class ListScreenGenerator extends Generator {
     buffer.writeln(
         "        error: (error, stackTrace) => Center(child: Text('Error: \$error')),");
     buffer.writeln('      ),');
+
+    if (manifest.hasUpdate) {
+      final createPath = hasParent
+          ? '/${parentPath}/\$$parentParamName/${manifest.path}/create'
+          : '/${manifest.path}/create';
+      buffer.writeln('      floatingActionButton: FloatingActionButton(');
+      buffer.writeln(
+          "        onPressed: () => context.push('$createPath'),");
+      buffer.writeln(
+          '        child: const Icon(Icons.add),');
+      buffer.writeln('      ),');
+    }
+
     buffer.writeln('    );');
     buffer.writeln('  }');
     buffer.writeln('}');

@@ -239,7 +239,7 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     for (final field in manifest.formFields) {
       _writeFormField(field, buffer);
     }
-    _writeSaveButton(saveButtonLabel, buffer);
+    _writeSaveButton(saveButtonLabel, manifest, isEdit: false, buffer: buffer);
     buffer.writeln('          ],');
     buffer.writeln('        ),');
     buffer.writeln('      ),');
@@ -270,7 +270,7 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
         '        loading: () => const Center(child: CircularProgressIndicator()),');
     buffer.writeln(
         '        error: (e, _) => Center(child: Text(e.toString())),');
-    buffer.writeln('        data: (_) => Form(');
+    buffer.writeln('        data: (item) => Form(');
     buffer.writeln('          key: _formKey,');
     buffer.writeln('          child: ListView(');
     buffer.writeln('            padding: const EdgeInsets.all(16),');
@@ -278,7 +278,7 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     for (final field in manifest.formFields) {
       _writeFormField(field, buffer);
     }
-    _writeSaveButton(saveButtonLabel, buffer);
+    _writeSaveButton(saveButtonLabel, manifest, isEdit: true, buffer: buffer);
     buffer.writeln('            ],');
     buffer.writeln('          ),');
     buffer.writeln('        ),');
@@ -286,15 +286,92 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     buffer.writeln('    );');
   }
 
-  void _writeSaveButton(String saveButtonLabel, StringBuffer buffer) {
+  void _writeSaveButton(
+    String saveButtonLabel,
+    EntityManifest manifest,
+    {required bool isEdit, required StringBuffer buffer}
+  ) {
+    final entityLower = manifest.entityNameLower;
+    final entityName = manifest.entityName;
+    final notifier = manifest.hasParent
+        ? '${entityLower}sProvider(widget.${manifest.parentParamName}).notifier'
+        : '${entityLower}sProvider.notifier';
+    final action = isEdit ? 'update' : 'create';
+
     buffer.writeln('            ElevatedButton(');
-    buffer.writeln('              onPressed: () {');
-    buffer.writeln('                if (_formKey.currentState!.validate()) {');
-    buffer.writeln('                  context.pop();');
+    buffer.writeln('              onPressed: () async {');
+    buffer.writeln(
+        '                if (_formKey.currentState!.validate()) {');
+
+    // Build the entity constructor call.
+    if (isEdit) {
+      buffer.writeln('                  final entity = $entityName(');
+      final idField = manifest.idField;
+      if (idField != null) {
+        buffer.writeln('                    ${idField.name}: item.${idField.name},');
+      }
+      for (final field in manifest.formFields) {
+        buffer.writeln(
+            '                    ${field.name}: ${_fieldValueExpression(field)},');
+      }
+      buffer.writeln('                  );');
+    } else {
+      buffer.writeln('                  final entity = $entityName(');
+      final idField = manifest.idField;
+      if (idField != null) {
+        buffer.writeln(
+            '                    ${idField.name}: ${_zeroValue(idField)},');
+      }
+      for (final field in manifest.formFields) {
+        buffer.writeln(
+            '                    ${field.name}: ${_fieldValueExpression(field)},');
+      }
+      buffer.writeln('                  );');
+    }
+
+    buffer.writeln(
+        '                  await ref.read($notifier).$action(entity);');
+    buffer.writeln(
+        '                  if (context.mounted) context.pop();');
     buffer.writeln('                }');
     buffer.writeln('              },');
     buffer.writeln("              child: const Text('$saveButtonLabel'),");
     buffer.writeln('            ),');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Field value / zero-value helpers
+  // ---------------------------------------------------------------------------
+
+  /// Returns the Dart expression that reads the current form-field value for
+  /// [field] from the generated state variable or controller.
+  String _fieldValueExpression(FieldManifest field) {
+    final kind = _resolveWidgetKind(field);
+    return switch (kind) {
+      _WidgetKind.toggle => '_${field.name}Value',
+      _WidgetKind.datePicker => '_${field.name}Value ?? DateTime.now()',
+      _WidgetKind.dropdown =>
+        '_${field.name}Value ?? ${field.dartType}.values.first',
+      _ => switch (field.dartType) {
+          'int' => 'int.parse(_${field.name}Controller.text)',
+          'double' => 'double.parse(_${field.name}Controller.text)',
+          'num' => 'num.parse(_${field.name}Controller.text)',
+          _ => '_${field.name}Controller.text',
+        },
+    };
+  }
+
+  /// Returns a Dart literal that is a valid "empty" value for [field]'s type.
+  String _zeroValue(FieldManifest field) {
+    return switch (field.dartType) {
+      'int' => '0',
+      'double' => '0.0',
+      'num' => '0',
+      'bool' => 'false',
+      'String' => "''",
+      'DateTime' => 'DateTime.now()',
+      _ => field.isEnum ? '${field.dartType}.values.first' : 'null',
+    };
   }
 
   // ---------------------------------------------------------------------------
