@@ -321,9 +321,9 @@ void main() {
         () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _searchableSource),
+        _assets('a', 'lib/searchable.dart', _searchableSource),
         outputs: {
-          'a|lib/product.list_screen.dart': decodedMatches(allOf(
+          'a|lib/searchable.list_screen.dart': decodedMatches(allOf(
             contains('TextField('),
             contains('_searchQuery'),
           )),
@@ -336,9 +336,9 @@ void main() {
         () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _searchableSource),
+        _assets('a', 'lib/searchable.dart', _searchableSource),
         outputs: {
-          'a|lib/product.list_screen.dart': decodedMatches(allOf(
+          'a|lib/searchable.list_screen.dart': decodedMatches(allOf(
             contains('_searchQuery.isNotEmpty'),
             contains('product.name.toString().toLowerCase().contains(query)'),
           )),
@@ -351,9 +351,9 @@ void main() {
         () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _searchableSource),
+        _assets('a', 'lib/searchable.dart', _searchableSource),
         outputs: {
-          'a|lib/product.list_screen.dart': decodedMatches(
+          'a|lib/searchable.list_screen.dart': decodedMatches(
             contains(
                 'class ProductListScreen extends ConsumerStatefulWidget'),
           ),
@@ -379,9 +379,9 @@ void main() {
         () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _sortableSource),
+        _assets('a', 'lib/sortable.dart', _sortableSource),
         outputs: {
-          'a|lib/product.list_screen.dart': decodedMatches(allOf(
+          'a|lib/sortable.list_screen.dart': decodedMatches(allOf(
             contains('DropdownButton<String>('),
             contains('_sortColumn'),
           )),
@@ -394,9 +394,9 @@ void main() {
         () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _sortableSource),
+        _assets('a', 'lib/sortable.dart', _sortableSource),
         outputs: {
-          'a|lib/product.list_screen.dart': decodedMatches(allOf(
+          'a|lib/sortable.list_screen.dart': decodedMatches(allOf(
             contains("DropdownMenuItem(value: 'name'"),
             contains("Text('Name')"),
           )),
@@ -407,9 +407,9 @@ void main() {
     test('AC#2 — sort applies compareTo on the sortable field value', () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _sortableSource),
+        _assets('a', 'lib/sortable.dart', _sortableSource),
         outputs: {
-          'a|lib/product.list_screen.dart': decodedMatches(
+          'a|lib/sortable.list_screen.dart': decodedMatches(
             contains('a.name.toString().compareTo(b.name.toString())'),
           ),
         },
