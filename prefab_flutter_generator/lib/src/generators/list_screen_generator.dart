@@ -167,7 +167,7 @@ class ListScreenGenerator extends Generator {
 
     if (manifest.hasUpdate) {
       final createPath = hasParent
-          ? '/${parentPath}/\$$parentParamName/${manifest.path}/create'
+          ? '/$parentPath/\$$parentParamName/${manifest.path}/create'
           : '/${manifest.path}/create';
       buffer.writeln('      floatingActionButton: FloatingActionButton(');
       buffer.writeln(

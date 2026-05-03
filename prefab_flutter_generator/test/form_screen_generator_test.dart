@@ -708,7 +708,7 @@ void main() {
     });
 
     test('PF-9 — CreateScreen uses zero id for entity with id field', () async {
-      const _productWithIdSource = r'''
+      const productWithIdSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Product', path: 'products')
@@ -724,7 +724,7 @@ class Product {
 ''';
       await testBuilder(
         formScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _productWithIdSource),
+        _assets('a', 'lib/product.dart', productWithIdSource),
         outputs: {
           'a|lib/product.form_screen.dart': decodedMatches(
             contains('id: 0,'),
@@ -734,7 +734,7 @@ class Product {
     });
 
     test('PF-9 — EditScreen uses item.id for entity with id field', () async {
-      const _productWithIdSource = r'''
+      const productWithIdSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Product', path: 'products')
@@ -750,7 +750,7 @@ class Product {
 ''';
       await testBuilder(
         formScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _productWithIdSource),
+        _assets('a', 'lib/product.dart', productWithIdSource),
         outputs: {
           'a|lib/product.form_screen.dart': decodedMatches(
             contains('id: item.id,'),

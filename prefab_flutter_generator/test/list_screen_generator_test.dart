@@ -268,7 +268,7 @@ void main() {
 
     // PF-9 — FAB for Create when @Update is present
 
-    const _productWithUpdateSource = r'''
+    const productWithUpdateSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Product', path: 'products')
@@ -286,7 +286,7 @@ class Product {
     test('PF-9 — FAB is generated when @Update is present', () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _productWithUpdateSource),
+        _assets('a', 'lib/product.dart', productWithUpdateSource),
         outputs: {
           'a|lib/product.list_screen.dart': decodedMatches(allOf(
             contains('FloatingActionButton('),
