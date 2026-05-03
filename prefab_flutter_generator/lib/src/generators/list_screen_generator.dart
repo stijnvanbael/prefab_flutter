@@ -291,9 +291,11 @@ class ListScreenGenerator extends Generator {
     if (hasSearchable) {
       buffer.writeln(
           '                if (_searchQuery.isNotEmpty) {');
+      buffer.writeln(
+          '                  final query = _searchQuery.toLowerCase();');
       final searchConditions = searchableFields
           .map((f) =>
-              '$entityLower.${f.name}.toString().toLowerCase().contains(_searchQuery.toLowerCase())')
+              '$entityLower.${f.name}.toString().toLowerCase().contains(query)')
           .join(' ||\n                    ');
       buffer.writeln(
           '                  filtered = filtered.where(($entityLower) =>');

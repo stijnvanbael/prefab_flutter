@@ -340,7 +340,7 @@ void main() {
         outputs: {
           'a|lib/product.list_screen.dart': decodedMatches(allOf(
             contains('_searchQuery.isNotEmpty'),
-            contains('product.name.toString().toLowerCase()'),
+            contains('product.name.toString().toLowerCase().contains(query)'),
           )),
         },
       );
