@@ -86,10 +86,12 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
   // ---------------------------------------------------------------------------
 
   void _writeImports(String sourceFileName, StringBuffer buffer) {
+    final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
     buffer.writeln("import 'package:flutter/material.dart';");
     buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
     buffer.writeln("import 'package:go_router/go_router.dart';");
     buffer.writeln("import '$sourceFileName';");
+    buffer.writeln("import '$base.provider.dart';");
   }
 
   // ---------------------------------------------------------------------------
@@ -114,6 +116,7 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
       stateClassName: '_${entity}CreateScreenState',
       widgetClassName: '${entity}CreateScreen',
       saveButtonLabel: 'Create',
+      isEdit: false,
       buffer: buffer,
     );
   }
@@ -142,6 +145,7 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
       stateClassName: '_${entity}EditScreenState',
       widgetClassName: '${entity}EditScreen',
       saveButtonLabel: 'Save',
+      isEdit: true,
       buffer: buffer,
     );
   }
@@ -155,6 +159,7 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     required String stateClassName,
     required String widgetClassName,
     required String saveButtonLabel,
+    required bool isEdit,
     required StringBuffer buffer,
   }) {
     final fields = manifest.formFields;
@@ -162,6 +167,10 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     buffer.writeln(
         'class $stateClassName extends ConsumerState<$widgetClassName> {');
     buffer.writeln('  final _formKey = GlobalKey<FormState>();');
+
+    if (isEdit) {
+      buffer.writeln('  bool _prefilled = false;');
+    }
 
     for (final field in fields) {
       final kind = _resolveWidgetKind(field);
@@ -191,9 +200,33 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     }
     buffer.writeln('    super.dispose();');
     buffer.writeln('  }');
+
+    if (isEdit) {
+      buffer.writeln();
+      _writePrefillControllers(manifest, buffer);
+    }
+
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln('  Widget build(BuildContext context) {');
+
+    if (isEdit) {
+      _writeEditBuildBody(manifest, saveButtonLabel, buffer);
+    } else {
+      _writeCreateBuildBody(manifest, saveButtonLabel, buffer);
+    }
+
+    buffer.writeln('  }');
+    buffer.writeln('}');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build body helpers
+  // ---------------------------------------------------------------------------
+
+  /// Emits the body of [build] for the Create screen (no provider prefill).
+  void _writeCreateBuildBody(
+      EntityManifest manifest, String saveButtonLabel, StringBuffer buffer) {
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
@@ -203,11 +236,57 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     buffer.writeln('        child: ListView(');
     buffer.writeln('          padding: const EdgeInsets.all(16),');
     buffer.writeln('          children: [');
-
-    for (final field in fields) {
+    for (final field in manifest.formFields) {
       _writeFormField(field, buffer);
     }
+    _writeSaveButton(saveButtonLabel, buffer);
+    buffer.writeln('          ],');
+    buffer.writeln('        ),');
+    buffer.writeln('      ),');
+    buffer.writeln('    );');
+  }
 
+  /// Emits the body of [build] for the Edit screen: watches the detail
+  /// provider, prefills controllers once, and wraps the form in
+  /// [AsyncValue.when].
+  void _writeEditBuildBody(
+      EntityManifest manifest, String saveButtonLabel, StringBuffer buffer) {
+    final entityLower = manifest.entityNameLower;
+
+    buffer.writeln(
+        '    final asyncItem = ref.watch(${entityLower}DetailProvider(widget.id));');
+    buffer.writeln('    asyncItem.whenData((item) {');
+    buffer.writeln('      if (!_prefilled) {');
+    buffer.writeln('        _prefilled = true;');
+    buffer.writeln('        _prefillControllers(item);');
+    buffer.writeln('      }');
+    buffer.writeln('    });');
+    buffer.writeln('    return Scaffold(');
+    buffer.writeln('      appBar: AppBar(');
+    buffer.writeln("        title: const Text('${manifest.title}'),");
+    buffer.writeln('      ),');
+    buffer.writeln('      body: asyncItem.when(');
+    buffer.writeln(
+        '        loading: () => const Center(child: CircularProgressIndicator()),');
+    buffer.writeln(
+        '        error: (e, _) => Center(child: Text(e.toString())),');
+    buffer.writeln('        data: (_) => Form(');
+    buffer.writeln('          key: _formKey,');
+    buffer.writeln('          child: ListView(');
+    buffer.writeln('            padding: const EdgeInsets.all(16),');
+    buffer.writeln('            children: [');
+    for (final field in manifest.formFields) {
+      _writeFormField(field, buffer);
+    }
+    _writeSaveButton(saveButtonLabel, buffer);
+    buffer.writeln('            ],');
+    buffer.writeln('          ),');
+    buffer.writeln('        ),');
+    buffer.writeln('      ),');
+    buffer.writeln('    );');
+  }
+
+  void _writeSaveButton(String saveButtonLabel, StringBuffer buffer) {
     buffer.writeln('            ElevatedButton(');
     buffer.writeln('              onPressed: () {');
     buffer.writeln('                if (_formKey.currentState!.validate()) {');
@@ -216,12 +295,40 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     buffer.writeln('              },');
     buffer.writeln("              child: const Text('$saveButtonLabel'),");
     buffer.writeln('            ),');
-    buffer.writeln('          ],');
-    buffer.writeln('        ),');
-    buffer.writeln('      ),');
-    buffer.writeln('    );');
+  }
+
+  // ---------------------------------------------------------------------------
+  // _prefillControllers method generation
+  // ---------------------------------------------------------------------------
+
+  void _writePrefillControllers(EntityManifest manifest, StringBuffer buffer) {
+    final entity = manifest.entityName;
+    final fields = manifest.formFields;
+
+    buffer.writeln('  void _prefillControllers($entity item) {');
+    for (final field in fields) {
+      final kind = _resolveWidgetKind(field);
+      switch (kind) {
+        case _WidgetKind.toggle:
+          buffer.writeln('    _${field.name}Value = item.${field.name};');
+        case _WidgetKind.datePicker:
+          buffer.writeln('    _${field.name}Value = item.${field.name};');
+          buffer.writeln(
+              '    _${field.name}Controller.text = item.${field.name}.toIso8601String();');
+        case _WidgetKind.dropdown:
+          buffer.writeln('    _${field.name}Value = item.${field.name};');
+        default:
+          // text, multilineText, password
+          if (field.dartType == 'String') {
+            buffer
+                .writeln('    _${field.name}Controller.text = item.${field.name};');
+          } else {
+            buffer.writeln(
+                '    _${field.name}Controller.text = item.${field.name}.toString();');
+          }
+      }
+    }
     buffer.writeln('  }');
-    buffer.writeln('}');
   }
 
   // ---------------------------------------------------------------------------
