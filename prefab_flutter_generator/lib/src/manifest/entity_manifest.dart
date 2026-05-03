@@ -48,7 +48,7 @@ class EntityManifest {
 
   /// All fields that should appear in the detail screen (non-hidden, non-parent).
   List<FieldManifest> get visibleFields =>
-      fields.where((f) => !f.hidden && !f.isParent).toList();
+      fields.where(_isVisible).toList();
 
   /// All fields that should appear in the form screen (non-hidden, non-parent).
   List<FieldManifest> get formFields => visibleFields;
@@ -57,6 +57,22 @@ class EntityManifest {
   /// Falls back to `'id'` when no visible fields are declared.
   String get firstLabelFieldName =>
       visibleFields.isNotEmpty ? visibleFields.first.name : 'id';
+
+  /// Whether any visible field is marked as searchable.
+  bool get hasSearchable => fields.any((f) => f.searchable && _isVisible(f));
+
+  /// Whether any visible field is marked as sortable.
+  bool get hasSortable => fields.any((f) => f.sortable && _isVisible(f));
+
+  /// All visible fields marked as searchable.
+  List<FieldManifest> get searchableFields =>
+      fields.where((f) => f.searchable && _isVisible(f)).toList();
+
+  /// All visible fields marked as sortable.
+  List<FieldManifest> get sortableFields =>
+      fields.where((f) => f.sortable && _isVisible(f)).toList();
+
+  static bool _isVisible(FieldManifest f) => !f.hidden && !f.isParent;
 
   /// The first field annotated with [@Parent], if any.
   FieldManifest? get parentField =>
@@ -139,6 +155,9 @@ class EntityManifest {
 
       final isEnum = field.type.element is EnumElement;
 
+      final searchable = reader.peek('searchable')?.boolValue ?? false;
+      final sortable = reader.peek('sortable')?.boolValue ?? false;
+
       fields.add(FieldManifest(
         name: field.name,
         label: label,
@@ -148,6 +167,8 @@ class EntityManifest {
         validators: validators,
         fieldWidget: fieldWidget,
         isEnum: isEnum,
+        searchable: searchable,
+        sortable: sortable,
       ));
     }
 

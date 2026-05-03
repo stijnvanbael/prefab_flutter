@@ -26,6 +26,14 @@ class FieldManifest {
   /// When `true` the Dart type of the field is an enum.
   final bool isEnum;
 
+  /// When `true` a search bar is included in the generated list screen that
+  /// filters items by this field's value.
+  final bool searchable;
+
+  /// When `true` a sort control is included in the generated list screen that
+  /// allows sorting items by this field.
+  final bool sortable;
+
   const FieldManifest({
     required this.name,
     required this.label,
@@ -35,5 +43,7 @@ class FieldManifest {
     this.validators = const [],
     this.fieldWidget = FieldWidget.auto,
     this.isEnum = false,
+    this.searchable = false,
+    this.sortable = false,
   });
 }
