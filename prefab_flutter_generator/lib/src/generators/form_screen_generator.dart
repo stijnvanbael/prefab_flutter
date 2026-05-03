@@ -239,7 +239,7 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     for (final field in manifest.formFields) {
       _writeFormField(field, buffer);
     }
-    _writeSaveButton(saveButtonLabel, manifest, isEdit: false, buffer: buffer);
+    _writeSaveButton(saveButtonLabel, manifest, false, buffer);
     buffer.writeln('          ],');
     buffer.writeln('        ),');
     buffer.writeln('      ),');
@@ -278,7 +278,7 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     for (final field in manifest.formFields) {
       _writeFormField(field, buffer);
     }
-    _writeSaveButton(saveButtonLabel, manifest, isEdit: true, buffer: buffer);
+    _writeSaveButton(saveButtonLabel, manifest, true, buffer);
     buffer.writeln('            ],');
     buffer.writeln('          ),');
     buffer.writeln('        ),');
@@ -289,7 +289,8 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
   void _writeSaveButton(
     String saveButtonLabel,
     EntityManifest manifest,
-    {required bool isEdit, required StringBuffer buffer}
+    bool isEdit,
+    StringBuffer buffer,
   ) {
     final entityLower = manifest.entityNameLower;
     final entityName = manifest.entityName;
