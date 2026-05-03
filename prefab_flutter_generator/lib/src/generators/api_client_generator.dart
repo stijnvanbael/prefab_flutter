@@ -158,7 +158,7 @@ class ApiClientGenerator extends Generator {
     buffer.writeln(
         '  Future<$entity> update($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
     buffer.writeln(
-        "    final response = await _dio.put('$urlBase/\$\{${manifest.entityNameLower}.id\}', data: ${manifest.entityNameLower});");
+        "    final response = await _dio.put('$urlBase/\${${manifest.entityNameLower}.id}', data: ${manifest.entityNameLower});");
     buffer.writeln('    return response.data as $entity;');
     buffer.writeln('  }');
     buffer.writeln();
@@ -167,7 +167,7 @@ class ApiClientGenerator extends Generator {
     buffer.writeln(
         '  Future<void> delete($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
     buffer.writeln(
-        "    await _dio.delete('$urlBase/\$\{${manifest.entityNameLower}.id\}');");
+        "    await _dio.delete('$urlBase/\${${manifest.entityNameLower}.id}');");
     buffer.writeln('  }');
 
     buffer.writeln('}');

@@ -109,8 +109,8 @@ class ListScreenGenerator extends Generator {
     final parentPath =
         parentManifest?.path ?? '${manifest.parentEntityNameLower}s';
     final itemPath = hasParent
-        ? '/$parentPath/\$$parentParamName/${manifest.path}/\${${entityLower}.id}'
-        : '/${manifest.path}/\${${entityLower}.id}';
+        ? '/$parentPath/\$$parentParamName/${manifest.path}/\${$entityLower.id}'
+        : '/${manifest.path}/\${$entityLower.id}';
 
     buffer.writeln('class ${entity}ListScreen extends ConsumerWidget {');
     if (hasParent) {

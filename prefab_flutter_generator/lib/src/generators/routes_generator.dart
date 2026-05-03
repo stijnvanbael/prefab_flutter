@@ -144,26 +144,26 @@ class RoutesGenerator extends Generator {
     final i = _i(level);
 
     buffer.writeln('${i}GoRoute(');
-    buffer.writeln("${i}  path: '/$path',");
+    buffer.writeln("$i  path: '/$path',");
     buffer.writeln(
-        '${i}  builder: (context, state) => const ${entity}ListScreen(),');
-    buffer.writeln('${i}  routes: [');
+        '$i  builder: (context, state) => const ${entity}ListScreen(),');
+    buffer.writeln('$i  routes: [');
 
     // Detail route
-    buffer.writeln('${i}    GoRoute(');
-    buffer.writeln("${i}      path: ':$idParam',");
+    buffer.writeln('$i    GoRoute(');
+    buffer.writeln("$i      path: ':$idParam',");
     buffer.writeln(
         "        builder: (context, state) => ${entity}DetailScreen(id: state.pathParameters['$idParam']!),");
 
     final hasSubRoutes = manifest.hasUpdate || children.isNotEmpty;
     if (hasSubRoutes) {
-      buffer.writeln('${i}      routes: [');
+      buffer.writeln('$i      routes: [');
       if (manifest.hasUpdate) {
-        buffer.writeln('${i}        GoRoute(');
-        buffer.writeln("${i}          path: 'edit',");
+        buffer.writeln('$i        GoRoute(');
+        buffer.writeln("$i          path: 'edit',");
         buffer.writeln(
             "          builder: (context, state) => ${entity}EditScreen(id: state.pathParameters['$idParam']!),");
-        buffer.writeln('${i}        ),');
+        buffer.writeln('$i        ),');
       }
       // Nested child entity routes
       for (final child in children) {
@@ -175,22 +175,22 @@ class RoutesGenerator extends Generator {
           level: level + 4,
         );
       }
-      buffer.writeln('${i}      ],');
+      buffer.writeln('$i      ],');
     }
 
-    buffer.writeln('${i}    ),');
+    buffer.writeln('$i    ),');
 
     // Create route (only when @Update is present)
     if (manifest.hasUpdate) {
-      buffer.writeln('${i}    GoRoute(');
-      buffer.writeln("${i}      path: 'create',");
+      buffer.writeln('$i    GoRoute(');
+      buffer.writeln("$i      path: 'create',");
       buffer.writeln(
-          '${i}      builder: (context, state) => const ${entity}CreateScreen(),');
-      buffer.writeln('${i}    ),');
+          '$i      builder: (context, state) => const ${entity}CreateScreen(),');
+      buffer.writeln('$i    ),');
     }
 
-    buffer.writeln('${i}  ],');
-    buffer.writeln('${i}),');
+    buffer.writeln('$i  ],');
+    buffer.writeln('$i),');
   }
 
   // Writes a nested entity route (entity has @Parent).
@@ -212,26 +212,26 @@ class RoutesGenerator extends Generator {
     final i = _i(level);
 
     buffer.writeln('${i}GoRoute(');
-    buffer.writeln("${i}  path: '$path',");
+    buffer.writeln("$i  path: '$path',");
     buffer.writeln(
-        "${i}  builder: (context, state) => ${entity}ListScreen($parentParamName: state.pathParameters['$parentIdParam']!),");
-    buffer.writeln('${i}  routes: [');
+        "$i  builder: (context, state) => ${entity}ListScreen($parentParamName: state.pathParameters['$parentIdParam']!),");
+    buffer.writeln('$i  routes: [');
 
     // Detail route
-    buffer.writeln('${i}    GoRoute(');
-    buffer.writeln("${i}      path: ':$idParam',");
+    buffer.writeln('$i    GoRoute(');
+    buffer.writeln("$i      path: ':$idParam',");
     buffer.writeln(
         "        builder: (context, state) => ${entity}DetailScreen(id: state.pathParameters['$idParam']!, $parentParamName: state.pathParameters['$parentIdParam']!),");
 
     final hasSubRoutes = manifest.hasUpdate || children.isNotEmpty;
     if (hasSubRoutes) {
-      buffer.writeln('${i}      routes: [');
+      buffer.writeln('$i      routes: [');
       if (manifest.hasUpdate) {
-        buffer.writeln('${i}        GoRoute(');
-        buffer.writeln("${i}          path: 'edit',");
+        buffer.writeln('$i        GoRoute(');
+        buffer.writeln("$i          path: 'edit',");
         buffer.writeln(
             "          builder: (context, state) => ${entity}EditScreen(id: state.pathParameters['$idParam']!, $parentParamName: state.pathParameters['$parentIdParam']!),");
-        buffer.writeln('${i}        ),');
+        buffer.writeln('$i        ),');
       }
       for (final child in children) {
         _writeNestedEntityRoute(
@@ -242,21 +242,21 @@ class RoutesGenerator extends Generator {
           level: level + 4,
         );
       }
-      buffer.writeln('${i}      ],');
+      buffer.writeln('$i      ],');
     }
 
-    buffer.writeln('${i}    ),');
+    buffer.writeln('$i    ),');
 
     if (manifest.hasUpdate) {
-      buffer.writeln('${i}    GoRoute(');
-      buffer.writeln("${i}      path: 'create',");
+      buffer.writeln('$i    GoRoute(');
+      buffer.writeln("$i      path: 'create',");
       buffer.writeln(
-          "${i}      builder: (context, state) => ${entity}CreateScreen($parentParamName: state.pathParameters['$parentIdParam']!),");
-      buffer.writeln('${i}    ),');
+          "$i      builder: (context, state) => ${entity}CreateScreen($parentParamName: state.pathParameters['$parentIdParam']!),");
+      buffer.writeln('$i    ),');
     }
 
-    buffer.writeln('${i}  ],');
-    buffer.writeln('${i}),');
+    buffer.writeln('$i  ],');
+    buffer.writeln('$i),');
   }
 
   static String _i(int level) => '  ' * level;
