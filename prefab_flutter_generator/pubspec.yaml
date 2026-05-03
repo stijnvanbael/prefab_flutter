@@ -9,7 +9,8 @@ environment:
 dependencies:
   analyzer: '>=6.0.0 <8.0.0'
   build: ^2.4.0
-  prefab_flutter: ^0.1.0
+  prefab_flutter:
+    path: ../prefab_flutter
   source_gen: ^1.5.0
 
 dev_dependencies:
