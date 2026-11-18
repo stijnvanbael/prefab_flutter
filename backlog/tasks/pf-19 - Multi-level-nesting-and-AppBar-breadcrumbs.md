@@ -4,23 +4,25 @@ title: Multi-level nesting and AppBar breadcrumbs
 status: To Do
 assignee: []
 created_date: '2026-05-03 10:30'
-updated_date: '2026-05-03 10:30'
+updated_date: '2026-11-18 10:00'
 labels: []
-dependencies: []
+dependencies:
+  - PF-24
+  - PF-25
 ---
 
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-The @Parent mechanism currently supports exactly one level of nesting (e.g. Post → Comment). Extend RoutesGenerator, ApiClientGenerator, ProviderGenerator, and the list/detail screen generators to handle arbitrarily deep chains (e.g. Order → OrderLine → OrderLineNote). Additionally, generate an AppBar breadcrumb trail in list and detail screens when the nesting depth is two or more, so users can navigate back to any ancestor level without using the back button repeatedly.
+The @Parent mechanism supports one level of nesting (e.g. Post -> Comment). Extend all generators to arbitrarily deep chains (e.g. Order -> OrderLine -> OrderLineNote), and show breadcrumbs in list and detail screens from depth two, so users can jump back to any ancestor.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 EntityManifest resolves the full ancestor chain for an entity with multiple levels of @Parent references
-- [ ] #2 RoutesGenerator nests routes correctly for chains of depth >= 2
-- [ ] #3 ApiClientGenerator injects all ancestor ID path parameters for deeply nested entities
-- [ ] #4 ProviderGenerator threads all ancestor IDs through list, detail, create, update, and delete operations
-- [ ] #5 ListScreenGenerator and DetailScreenGenerator emit a breadcrumb row (e.g. TextButton chain) in the AppBar bottom when depth >= 2
-- [ ] #6 A unit test covers a three-level chain (grandparent → parent → child)
+- [ ] #1 EntityManifest resolves the full ancestor chain from @Parent(Type) references (PF-24)
+- [ ] #2 RoutesGenerator nests routes for chains of depth >= 2 with unique path parameter names per level
+- [ ] #3 ApiClientGenerator injects all ancestor ids as path parameters
+- [ ] #4 ProviderGenerator threads all ancestor ids through list, detail, create, update and delete
+- [ ] #5 List and detail screens show a breadcrumb row in the AppBar bottom when depth >= 2; ancestor labels come from the ancestors' detail providers
+- [ ] #6 A unit test covers a three-level chain
 <!-- AC:END -->

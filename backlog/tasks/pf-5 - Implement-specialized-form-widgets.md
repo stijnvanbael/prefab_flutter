@@ -1,10 +1,10 @@
 ---
 id: PF-5
 title: Implement specialized form widgets
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-05-02 06:04'
-updated_date: '2026-05-02 06:04'
+updated_date: '2026-11-18 10:00'
 labels: []
 dependencies: []
 ---
@@ -17,10 +17,16 @@ FormScreenGenerator always generates TextFormField regardless of FieldWidget hin
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 bool fields render a Switch widget by default
-- [ ] #2 DateTime fields render a date picker by default
-- [ ] #3 FieldWidget.multilineText renders a multi-line TextFormField
-- [ ] #4 FieldWidget.password renders an obscured TextFormField
-- [ ] #5 enum fields render a DropdownButtonFormField
-- [ ] #6 FieldWidget.toggle renders a Switch regardless of type
+- [x] #1 bool fields render a Switch widget by default
+- [x] #2 DateTime fields render a date picker by default
+- [x] #3 FieldWidget.multilineText renders a multi-line TextFormField
+- [x] #4 FieldWidget.password renders an obscured TextFormField
+- [x] #5 enum fields render a DropdownButtonFormField
+- [x] #6 FieldWidget.toggle renders a Switch regardless of type
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Implemented in FormScreenGenerator via _resolveWidgetKind.
+<!-- SECTION:NOTES:END -->

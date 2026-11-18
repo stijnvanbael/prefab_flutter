@@ -5,7 +5,8 @@ status: To Do
 assignee: []
 created_date: '2026-05-02 06:06'
 labels: []
-dependencies: []
+dependencies:
+  - PF-22
 ---
 
 ## Description
@@ -20,4 +21,6 @@ The prefab_flutter_example cannot compile or run because the runtime widgets lib
 - [ ] #2 App launches and displays the Products list screen
 - [ ] #3 Create, edit and delete product flows work against a mock or local backend
 - [ ] #4 README documents how to run the example
+- [ ] #5 CI runs build_runner on the example app and `flutter analyze --fatal-infos` on the result, so generated code that does not compile fails the build
+- [ ] #6 The example covers at least one top-level entity and one nested (@Parent) entity
 <!-- AC:END -->

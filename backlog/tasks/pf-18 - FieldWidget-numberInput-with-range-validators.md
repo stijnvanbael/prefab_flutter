@@ -4,23 +4,24 @@ title: FieldWidget.numberInput with range validators
 status: To Do
 assignee: []
 created_date: '2026-05-03 10:30'
-updated_date: '2026-05-03 10:30'
+updated_date: '2026-11-18 10:00'
 labels: []
-dependencies: []
+dependencies:
+  - PF-31
 ---
 
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Numeric fields (int, double) currently render a plain TextFormField with TextInputType.text and no numeric keyboard or formatting. Add FieldWidget.numberInput (auto-inferred for int and double when FieldWidget.auto is used) that sets keyboardType: TextInputType.number and attaches a FilteringTextInputFormatter. Extend the Validator enum with nonNegativeNumber, minValue, and maxValue to cover common range constraints.
+Numeric fields (int, double) render a plain text field with no numeric keyboard. Add FieldWidget.numberInput, inferred automatically for int and double. Range checks depend on parameterised validators (PF-31), because the Validator enum cannot carry values like minValue(n).
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 FieldWidget enum gains a numberInput value
-- [ ] #2 FieldWidget.auto infers numberInput for int and double Dart types
-- [ ] #3 The generated numberInput field sets keyboardType: TextInputType.numberWithOptions and a FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
-- [ ] #4 Validator enum gains nonNegativeNumber (value >= 0), minValue(n) (value >= n), and maxValue(n) (value <= n) entries
-- [ ] #5 FormScreenGenerator emits the correct inline validator checks for the new Validator values
-- [ ] #6 _prefillControllers correctly populates numberInput fields from int/double entity values using .toString()
+- [ ] #1 FieldWidget gains numberInput, and FieldWidget.auto infers it for int and double
+- [ ] #2 int fields use TextInputType.numberWithOptions(signed: true) and an input formatter that allows an optional leading minus and digits
+- [ ] #3 double fields use TextInputType.numberWithOptions(signed: true, decimal: true) and an input formatter that allows an optional leading minus, digits and at most one decimal separator
+- [ ] #4 A type check rejects values that do not parse as the field's type
+- [ ] #5 Range validators are available through PF-31: nonNegative, min(n) and max(n)
+- [ ] #6 _prefillControllers populates numberInput fields with .toString()
 <!-- AC:END -->

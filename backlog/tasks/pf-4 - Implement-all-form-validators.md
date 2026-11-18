@@ -1,7 +1,7 @@
 ---
 id: PF-4
 title: Implement all form validators
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-05-02 06:04'
 labels: []
@@ -16,8 +16,14 @@ FormScreenGenerator only generates an empty-check validator for every field. The
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Validator.required generates a non-empty check
-- [ ] #2 Validator.email generates a regex email check
-- [ ] #3 Validator.positiveNumber generates a > 0 numeric check
-- [ ] #4 Validator.url generates a Uri.tryParse validity check
+- [x] #1 Validator.required generates a non-empty check
+- [x] #2 Validator.email generates a regex email check
+- [x] #3 Validator.positiveNumber generates a > 0 numeric check
+- [x] #4 Validator.url generates a Uri.tryParse validity check
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Implemented in FormScreenGenerator._writeValidatorCheck. Parameterised validators (min/max, pattern, custom) are tracked in PF-31.
+<!-- SECTION:NOTES:END -->

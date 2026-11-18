@@ -4,7 +4,7 @@ title: More annotation default values
 status: To Do
 assignee: []
 created_date: '2026-05-03 10:30'
-updated_date: '2026-05-03 10:30'
+updated_date: '2026-11-18 10:00'
 labels: []
 dependencies: []
 ---
@@ -12,15 +12,15 @@ dependencies: []
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Several annotation parameters require developers to repeat information that can already be derived from the code. For example, @View requires an explicit title even though the class name can be converted to title case, and @View requires a path even though a plural kebab-case version of the class name is an obvious default. Similarly, @FormField.label already has a fallback in EntityManifest but is not documented as optional on the annotation itself. Audit all annotations and add sensible defaults so that the minimal annotation for a simple entity is as concise as possible.
+Several annotation parameters repeat information that can be derived from the code. @View requires a title even though the class name can be converted to title case, and a path even though a plural kebab-case version of the class name is an obvious default. Audit all annotations and add defaults so the minimal annotation for a simple entity is as short as possible.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 @View.title defaults to the class name converted to title case (e.g. ProductOrder → 'Product Order') when omitted
-- [ ] #2 @View.path defaults to a lowercased, hyphenated plural of the class name (e.g. ProductOrder → 'product-orders') when omitted
-- [ ] #3 @FormField.label is already derived from the field name in EntityManifest; this derivation is documented in the annotation's dartdoc as the default behaviour
-- [ ] #4 @FormField.widget defaults are documented: auto-inference rules (bool → toggle, DateTime → datePicker, int/double → numberInput after PF-18, enum → dropdown) are captured in the FieldWidget.auto dartdoc
-- [ ] #5 A minimal annotated entity compiles and generates correct screens using only @View() with no parameters
-- [ ] #6 Existing entities that already supply explicit values are unaffected
+- [ ] #1 @View.title defaults to the class name in title case (ProductOrder -> 'Product Order')
+- [ ] #2 @View.path defaults to the kebab-case plural of the class name (ProductOrder -> 'product-orders', Category -> 'categories'), using a small documented pluralisation rule
+- [ ] #3 The label default (field name in title case) is documented in the field annotation's dartdoc
+- [ ] #4 The FieldWidget.auto inference rules are documented in its dartdoc and in the user guide
+- [ ] #5 A minimal entity with only @View() and no parameters generates correct, compiling screens
+- [ ] #6 Entities that already supply explicit values are unaffected
 <!-- AC:END -->
