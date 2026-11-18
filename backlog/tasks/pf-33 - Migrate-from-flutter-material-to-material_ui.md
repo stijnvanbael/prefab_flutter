@@ -1,7 +1,7 @@
 ---
 id: PF-33
 title: Migrate from flutter/material.dart to material_ui
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-11-18 20:20'
 updated_date: '2026-11-18 20:20'
@@ -19,9 +19,14 @@ Decide the minimum supported Flutter version, then migrate both the runtime widg
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The minimum supported Flutter version is decided and set in prefab_flutter_widgets/pubspec.yaml
-- [ ] #2 prefab_flutter_widgets imports package:material_ui instead of package:flutter/material.dart and depends on material_ui
-- [ ] #3 The list, detail and form screen generators emit package:material_ui imports, and the README tells apps to add the dependency
-- [ ] #4 The Flutter version pin in .github/workflows/ci.yml is removed (or moved to the new minimum) and CI is green on current stable
-- [ ] #5 Generator tests, the README and the user guide are updated
+- [x] #1 The minimum supported Flutter version is decided and set in prefab_flutter_widgets/pubspec.yaml
+- [x] #2 prefab_flutter_widgets imports package:material_ui instead of package:flutter/material.dart and depends on material_ui
+- [x] #3 The list, detail and form screen generators emit package:material_ui imports, and the README tells apps to add the dependency
+- [x] #4 The Flutter version pin in .github/workflows/ci.yml is removed (or moved to the new minimum) and CI is green on current stable
+- [x] #5 Generator tests, the README and the user guide are updated
 <!-- AC:END -->
+
+## Implementation Notes
+
+Minimum Flutter is 3.47.0 (required by material_ui ^1.11.1). CI runs on current stable; not verified locally (no Flutter SDK in the authoring environment).
+

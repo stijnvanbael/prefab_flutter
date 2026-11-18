@@ -29,7 +29,7 @@ For installation and a minimal example, see the [README](../README.md#quick-star
 3. You register the generated routes with GoRouter and wrap the app in a
    Riverpod `ProviderScope`.
 
-The generated code depends on `flutter_riverpod`, `go_router`, `dio` and
+The generated code depends on `flutter_riverpod`, `go_router`, `dio`, `material_ui` (Flutter 3.47+) and
 `prefab_flutter_widgets`, so your app must depend on them too.
 
 ## Annotations
@@ -37,9 +37,9 @@ The generated code depends on `flutter_riverpod`, `go_router`, `dio` and
 All annotations come from `package:prefab_flutter/prefab_flutter.dart`.
 
 > `@FormField` has the same name as Flutter's `FormField` widget. In a file
-> that imports both `package:flutter/material.dart` and `prefab_flutter`,
+> that imports both `package:material_ui/material_ui.dart` and `prefab_flutter`,
 > hide one of them, e.g.
-> `import 'package:flutter/material.dart' hide FormField;`. Keeping entity
+> `import 'package:material_ui/material_ui.dart' hide FormField;`. Keeping entity
 > classes in files without Flutter imports avoids the problem.
 
 ### `@View` (class)
@@ -308,4 +308,3 @@ These are known gaps in the current pre-release. Each has a backlog task.
 | `Validator.required` on an enum dropdown emits `value.isEmpty` and does not compile | Leave validators off dropdown fields | PF-31 |
 | `@FormField` clashes with Flutter's `FormField` | `hide FormField` on one import | PF-30 |
 | Search, sort and pagination are not generated | — | PF-13 |
-| On Flutter 3.50+, generated screens import the deprecated `package:flutter/material.dart` and trigger deprecation warnings | Exclude generated files from analysis, or ignore `deprecated_member_use` for them | PF-33 |

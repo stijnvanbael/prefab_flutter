@@ -80,7 +80,7 @@ class ListScreenGenerator extends Generator {
   // ---------------------------------------------------------------------------
 
   void _writeImports(String sourceFileName, StringBuffer buffer) {
-    buffer.writeln("import 'package:flutter/material.dart';");
+    buffer.writeln("import 'package:material_ui/material_ui.dart';");
     buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
     buffer.writeln("import 'package:go_router/go_router.dart';");
     buffer.writeln();

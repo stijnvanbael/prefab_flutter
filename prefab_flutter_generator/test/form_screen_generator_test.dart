@@ -331,7 +331,7 @@ void main() {
         _assets('a', 'lib/product.dart', _requiredSource),
         outputs: {
           'a|lib/product.form_screen.dart': decodedMatches(allOf(
-            contains("import 'package:flutter/material.dart'"),
+            contains("import 'package:material_ui/material_ui.dart'"),
             contains(
                 "import 'package:flutter_riverpod/flutter_riverpod.dart'"),
           )),

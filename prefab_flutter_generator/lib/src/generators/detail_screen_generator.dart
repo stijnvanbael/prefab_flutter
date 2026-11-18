@@ -74,7 +74,7 @@ class DetailScreenGenerator extends GeneratorForAnnotation<View> {
     String sourceFileName,
     StringBuffer buffer,
   ) {
-    buffer.writeln("import 'package:flutter/material.dart';");
+    buffer.writeln("import 'package:material_ui/material_ui.dart';");
     buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
 
     if (manifest.hasUpdate || manifest.hasDelete) {
