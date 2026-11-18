@@ -41,3 +41,7 @@ Every change that affects users or the project's status MUST update the document
 Documentation describes what the code does **today**. Mention planned behaviour only with its backlog task id (e.g. "planned in PF-13").
 
 Before finishing a task, check: does `README.md` or `docs/user_guide.md` describe anything this change made untrue or incomplete?
+
+## PULL REQUESTS
+
+Always open a pull request into `main` once your work is committed and pushed — do not wait to be asked. If a pull request for the branch already exists, push to it instead of opening a new one. The description summarises the changes, lists the backlog tasks affected, and notes anything that was not verified.
