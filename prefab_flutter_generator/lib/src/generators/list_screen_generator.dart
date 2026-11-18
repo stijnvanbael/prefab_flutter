@@ -94,6 +94,11 @@ class ListScreenGenerator extends Generator {
     final itemPath =
         paths.itemPath(manifest, '\${$entityLower.${manifest.idFieldName}}');
 
+    final createPath = paths.createPath(manifest);
+    final providerRef = hasParent
+        ? '${entityLower}sProvider($parentParamName)'
+        : '${entityLower}sProvider';
+
     buffer.writeln('class ${entity}ListScreen extends ConsumerWidget {');
     if (hasParent) {
       buffer.writeln('  final $parentParamType $parentParamName;');
@@ -120,8 +125,21 @@ class ListScreenGenerator extends Generator {
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
     buffer.writeln('      ),');
+    if (manifest.hasUpdate) {
+      buffer.writeln('      floatingActionButton: FloatingActionButton(');
+      buffer.writeln("        tooltip: 'Create ${manifest.title}',");
+      buffer.writeln('        onPressed: () async {');
+      buffer.writeln("          await context.push('$createPath');");
+      buffer.writeln('          ref.invalidate($providerRef);');
+      buffer.writeln('        },');
+      buffer.writeln('        child: const Icon(Icons.add),');
+      buffer.writeln('      ),');
+    }
     buffer.writeln('      body: ${entityLower}sAsync.when(');
-    buffer.writeln('        data: (${entityLower}s) => ListView.builder(');
+    buffer
+        .writeln('        data: (${entityLower}s) => ${entityLower}s.isEmpty');
+    buffer.writeln("            ? const Center(child: Text('No items found'))");
+    buffer.writeln('            : ListView.builder(');
     buffer.writeln('          itemCount: ${entityLower}s.length,');
     buffer.writeln('          itemBuilder: (context, index) {');
     buffer.writeln('            final $entityLower = ${entityLower}s[index];');

@@ -195,8 +195,7 @@ void main() {
 
     // AC#4 — @Parent: list screen receives parent ID and passes to provider
 
-    test(
-        'AC#4 @Parent — list screen constructor requires the parent ID',
+    test('AC#4 @Parent — list screen constructor requires the parent ID',
         () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
@@ -210,8 +209,7 @@ void main() {
       );
     });
 
-    test(
-        'AC#4 @Parent — list screen stores the parent ID as a field',
+    test('AC#4 @Parent — list screen stores the parent ID as a field',
         () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
@@ -224,8 +222,7 @@ void main() {
       );
     });
 
-    test(
-        'AC#4 @Parent — list screen passes parent ID to the list provider',
+    test('AC#4 @Parent — list screen passes parent ID to the list provider',
         () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
@@ -252,8 +249,7 @@ void main() {
       );
     });
 
-    test(
-        'AC#4 @Parent — parent entity list screen watches non-family provider',
+    test('AC#4 @Parent — parent entity list screen watches non-family provider',
         () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
@@ -262,6 +258,75 @@ void main() {
           'a|lib/post.list_screen.dart': decodedMatches(
             contains('ref.watch(postsProvider)'),
           ),
+        },
+      );
+    });
+
+    // PF-26 — create entry point
+
+    const _editableProduct = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Product', path: 'products')
+@Update()
+class Product {
+  final int id;
+
+  @FormField(label: 'Name')
+  final String name;
+
+  Product({required this.id, required this.name});
+}
+''';
+
+    test('PF-26 AC#1 FAB pushes the create route and reloads the list',
+        () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _editableProduct),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(allOf(
+            contains('FloatingActionButton('),
+            contains("await context.push('/products/create');"),
+            contains('ref.invalidate(productsProvider);'),
+          )),
+        },
+      );
+    });
+
+    test('PF-26 AC#2 nested entity FAB pushes the nested create route',
+        () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/post.dart', _parentChildSource),
+        outputs: {
+          'a|lib/post.list_screen.dart': decodedMatches(allOf(
+            contains(r"await context.push('/posts/$postId/comments/create');"),
+            contains('ref.invalidate(commentsProvider(postId));'),
+          )),
+        },
+      );
+    });
+
+    test('PF-26 AC#4 list shows an empty state message', () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(
+            contains("Text('No items found')"),
+          ),
+        },
+      );
+    });
+
+    test('PF-26 AC#5 no FAB when the entity has no @Update', () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.list_screen.dart':
+              decodedMatches(isNot(contains('FloatingActionButton'))),
         },
       );
     });
