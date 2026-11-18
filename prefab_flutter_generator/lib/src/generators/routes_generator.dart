@@ -102,7 +102,7 @@ class RoutesGenerator extends Generator {
   }
 
   // ---------------------------------------------------------------------------
-  // $prefabRoutes getter
+  // Routes getter
   // ---------------------------------------------------------------------------
 
   /// Derives the getter name from the source file name, e.g.
