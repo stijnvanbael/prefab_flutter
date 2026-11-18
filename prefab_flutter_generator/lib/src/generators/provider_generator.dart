@@ -69,6 +69,8 @@ class ProviderGenerator extends Generator {
   void _writeImports(String sourceFileName, StringBuffer buffer) {
     buffer.writeln(
         "import 'package:flutter_riverpod/flutter_riverpod.dart';");
+    buffer.writeln(
+        "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';");
     buffer.writeln();
     final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
     buffer.writeln("import '$base.dart';");
@@ -201,6 +203,6 @@ class ProviderGenerator extends Generator {
     buffer.writeln();
     buffer.writeln(
         'final ${entityLower}ApiClientProvider = Provider.autoDispose<${entity}ApiClient>(');
-    buffer.writeln('  (ref) => ${entity}ApiClient(ref.watch(dioProvider)));');
+    buffer.writeln('  (ref) => ${entity}ApiClient(ref.watch(prefabDioProvider)));');
   }
 }
