@@ -139,7 +139,7 @@ class ApiClientGenerator extends Generator {
 
     // getById
     buffer.writeln(
-        '  Future<$entity> getById(Object id$parentParamTrailing) async {');
+        '  Future<$entity> getById(${manifest.idType} id$parentParamTrailing) async {');
     buffer.writeln("    final response = await _dio.get('$urlBase/\$id');");
     buffer.writeln('    return response.data as $entity;');
     buffer.writeln('  }');
@@ -158,7 +158,7 @@ class ApiClientGenerator extends Generator {
     buffer.writeln(
         '  Future<$entity> update($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
     buffer.writeln(
-        "    final response = await _dio.put('$urlBase/\${${manifest.entityNameLower}.id}', data: ${manifest.entityNameLower});");
+        "    final response = await _dio.put('$urlBase/\${${manifest.entityNameLower}.${manifest.idFieldName}}', data: ${manifest.entityNameLower});");
     buffer.writeln('    return response.data as $entity;');
     buffer.writeln('  }');
     buffer.writeln();
@@ -167,7 +167,7 @@ class ApiClientGenerator extends Generator {
     buffer.writeln(
         '  Future<void> delete($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
     buffer.writeln(
-        "    await _dio.delete('$urlBase/\${${manifest.entityNameLower}.id}');");
+        "    await _dio.delete('$urlBase/\${${manifest.entityNameLower}.${manifest.idFieldName}}');");
     buffer.writeln('  }');
 
     buffer.writeln('}');

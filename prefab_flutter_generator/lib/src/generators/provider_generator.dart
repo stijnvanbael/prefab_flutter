@@ -17,7 +17,7 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 ///
 /// When the entity carries a [@Parent]-annotated field, every provider accepts
 /// the parent ID and threads it through to the API client:
-/// - `{entity}DetailProvider` becomes a `family` keyed on `(Object id, parentType parentId)`.
+/// - `{entity}DetailProvider` becomes a `family` keyed on `(idType id, parentType parentId)`.
 /// - `{entity}sProvider` becomes a `family` keyed on the `parentType parentId`.
 class ProviderGenerator extends Generator {
   @override
@@ -90,10 +90,10 @@ class ProviderGenerator extends Generator {
         hasParent ? manifest.parentField!.dartType : null;
 
     if (hasParent) {
-      // Detail provider keyed on (Object id, parentType parentId).
+      // Detail provider keyed on (idType id, parentType parentId).
       buffer.writeln(
           'final ${entityLower}DetailProvider = FutureProvider.autoDispose'
-          '.family<$entity, (Object, $parentParamType)>((ref, args) =>');
+          '.family<$entity, (${manifest.idType}, $parentParamType)>((ref, args) =>');
       buffer.writeln(
           '    ref.watch(${entityLower}ApiClientProvider).getById(args.\$1, $parentParamName: args.\$2));');
       buffer.writeln();
@@ -147,10 +147,10 @@ class ProviderGenerator extends Generator {
       }
       buffer.writeln('}');
     } else {
-      // Detail provider keyed on Object id.
+      // Detail provider keyed on the typed id.
       buffer.writeln(
           'final ${entityLower}DetailProvider = FutureProvider.autoDispose'
-          '.family<$entity, Object>((ref, id) =>');
+          '.family<$entity, ${manifest.idType}>((ref, id) =>');
       buffer.writeln(
           '    ref.watch(${entityLower}ApiClientProvider).getById(id));');
       buffer.writeln();

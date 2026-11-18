@@ -57,8 +57,28 @@ a class that also has `@View`.
 class Product { ... }
 ```
 
-The entity must have a field named `id`; generated code uses `entity.id` to
-build URLs.
+The entity needs an identifier: a field annotated with [`@Id`](#id-field) or,
+failing that, a field named `id`. See [`@Id`](#id-field).
+
+### `@Id` (field)
+
+Marks the field that holds the entity's identifier. When no field carries
+`@Id`, a field named `id` is used; when neither exists the generator fails with
+a build-time error (as it does for more than one `@Id`, or an id type other than
+`String` or `int`).
+
+```dart
+@Id()
+final String sku;
+```
+
+The id's Dart type is used everywhere instead of `Object`: routes convert the
+`:id` path parameter (`int.parse` for `int`, as-is for `String`) before passing
+it to `{Entity}DetailScreen(id:)` / `{Entity}EditScreen(id:)`, and the detail
+and edit providers, screens and API client `getById` take the typed id. Parent
+ids (`@Parent` fields) are converted the same way based on their own type. The
+id field is never shown as an editable form or detail field, and the generated
+URLs use its name (e.g. `/{path}/${entity.sku}`).
 
 ### `@Update` (class)
 
@@ -303,7 +323,6 @@ These are known gaps in the current pre-release. Each has a backlog task.
 | Nested create, edit and delete do not compile | Don't use `@Update`/`@Delete` on nested entities yet | PF-25 |
 | The detail screen shows stale data after an edit | Invalidate `{entity}DetailProvider` yourself | PF-28 |
 | `$prefabRoutes` has the same name in every routes file | Import with prefixes (see [Routes](#routes)) | PF-27 |
-| The id field must be called `id` | — | PF-23 |
 | Nullable fields are not handled (`null` shows as the text "null"; prefill may not compile) | Use non-nullable fields | PF-15 |
 | `Validator.required` on an enum dropdown emits `value.isEmpty` and does not compile | Leave validators off dropdown fields | PF-31 |
 | `@FormField` clashes with Flutter's `FormField` | `hide FormField` on one import | PF-30 |

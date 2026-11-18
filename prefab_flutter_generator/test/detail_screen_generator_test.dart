@@ -103,6 +103,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Tag', path: 'tags')
 class Tag {
+  late final int id;
   @FormField(label: 'Name')
   final String name;
 
@@ -117,6 +118,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Order', path: 'orders')
 class Order {
+  late final int id;
   @FormField()
   final String customerName;
 

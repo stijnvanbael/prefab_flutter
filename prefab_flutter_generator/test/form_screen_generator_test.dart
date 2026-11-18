@@ -74,6 +74,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Product', path: 'products')
 @Update()
 class Product {
+  late final int id;
   @FormField(label: 'Name', validators: [Validator.required])
   final String name;
 
@@ -88,6 +89,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'User', path: 'users')
 @Update()
 class User {
+  late final int id;
   @FormField(label: 'Email', validators: [Validator.email])
   final String email;
 
@@ -102,6 +104,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Product', path: 'products')
 @Update()
 class Product {
+  late final int id;
   @FormField(label: 'Price', validators: [Validator.positiveNumber])
   final double price;
 
@@ -116,6 +119,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Resource', path: 'resources')
 @Update()
 class Resource {
+  late final int id;
   @FormField(label: 'URL', validators: [Validator.url])
   final String url;
 
@@ -129,6 +133,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Tag', path: 'tags')
 class Tag {
+  late final int id;
   @FormField(label: 'Name')
   final String name;
 
@@ -143,6 +148,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Contact', path: 'contacts')
 @Update()
 class Contact {
+  late final int id;
   @FormField(label: 'Email', validators: [Validator.required, Validator.email])
   final String email;
 
@@ -157,6 +163,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Setting', path: 'settings')
 @Update()
 class Setting {
+  late final int id;
   @FormField(label: 'Is Active')
   final bool isActive;
 
@@ -171,6 +178,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Event', path: 'events')
 @Update()
 class Event {
+  late final int id;
   @FormField(label: 'Start Date')
   final DateTime startDate;
 
@@ -185,6 +193,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Article', path: 'articles')
 @Update()
 class Article {
+  late final int id;
   @FormField(label: 'Body', widget: FieldWidget.multilineText)
   final String body;
 
@@ -199,6 +208,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Account', path: 'accounts')
 @Update()
 class Account {
+  late final int id;
   @FormField(label: 'Password', widget: FieldWidget.password)
   final String password;
 
@@ -215,6 +225,7 @@ enum Status { active, inactive }
 @View(title: 'Task', path: 'tasks')
 @Update()
 class Task {
+  late final int id;
   @FormField(label: 'Status')
   final Status status;
 
@@ -229,6 +240,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Flag', path: 'flags')
 @Update()
 class Flag {
+  late final int id;
   @FormField(label: 'Enabled', widget: FieldWidget.toggle)
   final String enabled;
 
@@ -245,6 +257,7 @@ enum Priority { low, medium, high }
 @View(title: 'Item', path: 'items')
 @Update()
 class Item {
+  late final int id;
   @FormField(label: 'Name')
   final String name;
 

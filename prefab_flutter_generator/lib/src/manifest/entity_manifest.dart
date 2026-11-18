@@ -7,6 +7,7 @@ import 'field_manifest.dart';
 const _updateChecker = TypeChecker.fromRuntime(Update);
 const _deleteChecker = TypeChecker.fromRuntime(Delete);
 const _formFieldChecker = TypeChecker.fromRuntime(FormField);
+const _idChecker = TypeChecker.fromRuntime(Id);
 const _parentChecker = TypeChecker.fromRuntime(Parent);
 
 /// Summarises everything the generators need to know about a single
@@ -33,6 +34,12 @@ class EntityManifest {
   /// All fields declared with [@FormField] in source order.
   final List<FieldManifest> fields;
 
+  /// Name of the identifier field (the [@Id] field, or `id`).
+  final String idFieldName;
+
+  /// Dart type of the identifier field (e.g. `'String'` or `'int'`).
+  final String idType;
+
   EntityManifest({
     required this.entityName,
     required this.title,
@@ -40,6 +47,8 @@ class EntityManifest {
     required this.hasUpdate,
     required this.hasDelete,
     required this.fields,
+    this.idFieldName = 'id',
+    this.idType = 'String',
   }) : entityNameLower = _toLowerCamel(entityName);
 
   // ---------------------------------------------------------------------------
@@ -54,9 +63,19 @@ class EntityManifest {
   List<FieldManifest> get formFields => visibleFields;
 
   /// Name of the first visible field, used as the item label in delete dialogs.
-  /// Falls back to `'id'` when no visible fields are declared.
+  /// Falls back to the id field when no visible fields are declared.
   String get firstLabelFieldName =>
-      visibleFields.isNotEmpty ? visibleFields.first.name : 'id';
+      visibleFields.isNotEmpty ? visibleFields.first.name : idFieldName;
+
+  /// Whether [idType] is `int`.
+  bool get idIsInt => idType == 'int';
+
+  /// Dart expression converting the string [expr] to the id type.
+  String parseId(String expr) => idIsInt ? 'int.parse($expr)' : expr;
+
+  /// Dart expression converting [expr] to the parent id type.
+  String parseParentId(String expr) =>
+      parentField?.dartType == 'int' ? 'int.parse($expr)' : expr;
 
   /// The first field annotated with [@Parent], if any.
   FieldManifest? get parentField =>
@@ -101,9 +120,39 @@ class EntityManifest {
     final hasUpdate = _updateChecker.hasAnnotationOf(element);
     final hasDelete = _deleteChecker.hasAnnotationOf(element);
 
+    // Resolve the identifier field: @Id, otherwise a field named `id`.
+    final instanceFields =
+        element.fields.where((f) => !f.isStatic && !f.isSynthetic).toList();
+    final idFields =
+        instanceFields.where(_idChecker.hasAnnotationOf).toList();
+    if (idFields.length > 1) {
+      throw InvalidGenerationSourceError(
+        'Entity "${element.name}" has more than one @Id field.',
+        element: element,
+      );
+    }
+    final idField = idFields.isNotEmpty
+        ? idFields.first
+        : instanceFields.where((f) => f.name == 'id').firstOrNull;
+    if (idField == null) {
+      throw InvalidGenerationSourceError(
+        'Entity "${element.name}" has no identifier. Annotate a field with '
+        '@Id or name it "id".',
+        element: element,
+      );
+    }
+    final idType = idField.type.getDisplayString(withNullability: false);
+    if (idType != 'String' && idType != 'int') {
+      throw InvalidGenerationSourceError(
+        'The id field "${idField.name}" of "${element.name}" must be of type '
+        'String or int, but is $idType.',
+        element: idField,
+      );
+    }
+
     final fields = <FieldManifest>[];
-    for (final field in element.fields) {
-      if (field.isStatic || field.isSynthetic) continue;
+    for (final field in instanceFields) {
+      if (field == idField) continue;
 
       final formFieldAnnotation = _formFieldChecker.firstAnnotationOf(field);
       if (formFieldAnnotation == null) continue;
@@ -158,6 +207,8 @@ class EntityManifest {
       hasUpdate: hasUpdate,
       hasDelete: hasDelete,
       fields: fields,
+      idFieldName: idField.name,
+      idType: idType,
     );
   }
 
