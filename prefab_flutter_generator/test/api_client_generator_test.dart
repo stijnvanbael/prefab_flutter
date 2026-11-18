@@ -52,7 +52,8 @@ class FormField {
 ''',
   'prefab_flutter|lib/src/annotations/parent.dart': r'''
 class Parent {
-  const Parent();
+  final Type type;
+  const Parent(this.type);
 }
 ''',
   'prefab_flutter|lib/src/enums/field_widget.dart': r'''
@@ -106,7 +107,7 @@ class Post {
 class Comment {
   final int id;
 
-  @Parent()
+  @Parent(Post)
   @FormField(hidden: true)
   final int postId;
 
@@ -116,6 +117,42 @@ class Comment {
   Comment({required this.id, required this.postId, required this.content});
 }
 ''';
+
+
+const _postFileSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Post', path: 'posts')
+class Post {
+  final int id;
+  @FormField(label: 'Title')
+  final String title;
+  Post({required this.id, required this.title});
+}
+''';
+
+const _crossFileCommentSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+import 'post.dart';
+
+@View(title: 'Comment', path: 'comments')
+@Update()
+class Comment {
+  final int id;
+  @Parent(Post)
+  @FormField(hidden: true)
+  final int postId;
+  @FormField(label: 'Content')
+  final String content;
+  Comment({required this.id, required this.postId, required this.content});
+}
+''';
+
+Map<String, Object> _crossFile(String commentSource) => {
+      ...Map<String, Object>.from(_prefabSources),
+      'a|lib/post.dart': _postFileSource,
+      'a|lib/comment.dart': commentSource,
+    };
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -281,6 +318,54 @@ void main() {
           ),
         },
       );
+    });
+
+    // PF-24 — cross-file parents and build-time validation
+
+    test('PF-24 @Parent(Type) resolves a parent declared in another file',
+        () async {
+      await testBuilder(
+        apiClientBuilder(BuilderOptions.empty),
+        _crossFile(_crossFileCommentSource),
+        outputs: {
+          'a|lib/comment.api_client.dart': decodedMatches(
+            allOf(
+              contains("'/posts/\$postId/comments'"),
+              contains('Future<List<Comment>> list({required int postId})'),
+            ),
+          ),
+          'a|lib/post.api_client.dart': anything,
+        },
+      );
+    });
+
+    test('PF-24 @Parent(Type) without @View on the type is an error',
+        () async {
+      final source = _crossFileCommentSource.replaceFirst(
+          'import \'post.dart\';',
+          'import \'post.dart\';\nclass Plain { final int id = 0; }').replaceFirst(
+          '@Parent(Post)', '@Parent(Plain)');
+      final logs = <String>[];
+      await testBuilder(
+        apiClientBuilder(BuilderOptions.empty),
+        _crossFile(source),
+        outputs: {'a|lib/post.api_client.dart': anything},
+        onLog: (r) => logs.add(r.message),
+      );
+      expect(logs.join('\n'), contains('without a @View annotation'));
+    });
+
+    test('PF-24 @Parent field type must match the parent id type', () async {
+      final source = _crossFileCommentSource.replaceFirst(
+          'final int postId;', 'final String postId;');
+      final logs = <String>[];
+      await testBuilder(
+        apiClientBuilder(BuilderOptions.empty),
+        _crossFile(source),
+        outputs: {'a|lib/post.api_client.dart': anything},
+        onLog: (r) => logs.add(r.message),
+      );
+      expect(logs.join('\n'), contains('Type mismatch'));
     });
   });
 }

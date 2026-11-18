@@ -12,7 +12,7 @@ Apply these annotations to your Dart entity classes and run `build_runner` to ge
 | `@Update` | Adds an **Edit** action to the generated detail screen |
 | `@Delete` | Adds a **Delete** action backed by a confirmation dialog |
 | `@FormField` | Marks a field for inclusion in generated form and detail screens |
-| `@Parent` | Marks a field as a reference to the parent entity (nested resource) |
+| `@Parent(Type)` | Marks a field as a reference to the parent entity `Type` (nested resource) |
 | `@Id` | Marks the entity's identifier field (defaults to a field named `id`) |
 
 ## Enums

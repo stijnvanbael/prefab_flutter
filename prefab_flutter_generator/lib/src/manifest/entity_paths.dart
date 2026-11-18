@@ -30,28 +30,11 @@ class EntityPaths {
     return EntityPaths(manifests);
   }
 
-  /// The parent manifest of [manifest], or null when it has no parent.
-  /// Throws when the parent is not declared in the same source file.
-  EntityManifest? parentOf(EntityManifest manifest) {
-    final name = manifest.parentEntityNameLower;
-    if (name == null) return null;
-    final parent = _byName[name];
-    if (parent == null) {
-      throw InvalidGenerationSourceError(
-        'Entity "${manifest.entityName}" has a @Parent field referencing '
-        '"$name", but no @View-annotated class with that name was '
-        'found in the same source file. Define the parent entity in the '
-        'same source file as its children.',
-      );
-    }
-    return parent;
-  }
-
   /// Collection path, e.g. `/products` or `/posts/$postId/comments`.
   String collectionPath(EntityManifest manifest) {
-    final parent = parentOf(manifest);
-    if (parent == null) return '/${manifest.path}';
-    return '/${parent.path}/\$${manifest.parentParamName}/${manifest.path}';
+    final parentPath = manifest.parentPath;
+    if (parentPath == null) return '/${manifest.path}';
+    return '/$parentPath/\$${manifest.parentParamName}/${manifest.path}';
   }
 
   /// Item path for the id expression [idExpr] (e.g. `$id` or `${c.id}`).

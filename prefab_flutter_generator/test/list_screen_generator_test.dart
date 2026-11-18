@@ -52,7 +52,8 @@ class FormField {
 ''',
   'prefab_flutter|lib/src/annotations/parent.dart': r'''
 class Parent {
-  const Parent();
+  final Type type;
+  const Parent(this.type);
 }
 ''',
   'prefab_flutter|lib/src/enums/field_widget.dart': r'''
@@ -102,7 +103,7 @@ class Post {
 class Comment {
   final int id;
 
-  @Parent()
+  @Parent(Post)
   @FormField(hidden: true)
   final int postId;
 

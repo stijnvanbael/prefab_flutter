@@ -131,7 +131,9 @@ class RoutesGenerator extends Generator {
     final childrenByParent = <String, List<EntityManifest>>{};
     for (final m in manifests) {
       final parentName = m.parentEntityNameLower;
-      if (parentName != null) {
+      // Children of a parent declared in another file cannot be nested inside
+      // that file's route tree; they become top-level routes instead.
+      if (parentName != null && m.parentInSameLibrary) {
         childrenByParent.putIfAbsent(parentName, () => []).add(m);
       }
     }
@@ -140,6 +142,15 @@ class RoutesGenerator extends Generator {
     for (final manifest in manifests) {
       if (!manifest.hasParent) {
         _writeEntityRoute(manifest, childrenByParent, buffer, level: 1);
+      } else if (!manifest.parentInSameLibrary) {
+        _writeNestedEntityRoute(
+          manifest,
+          parentIdParam: manifest.parentParamName!,
+          childrenByParent: childrenByParent,
+          buffer: buffer,
+          level: 1,
+          absolutePrefix: '/${manifest.parentPath}/:${manifest.parentParamName}/',
+        );
       }
     }
     buffer.writeln('];');
@@ -220,10 +231,11 @@ class RoutesGenerator extends Generator {
     required Map<String, List<EntityManifest>> childrenByParent,
     required StringBuffer buffer,
     required int level,
+    String absolutePrefix = '',
   }) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
-    final path = manifest.path;
+    final path = '$absolutePrefix${manifest.path}';
     final parentParamName = manifest.parentParamName!;
 
     final children = childrenByParent[entityLower] ?? [];
