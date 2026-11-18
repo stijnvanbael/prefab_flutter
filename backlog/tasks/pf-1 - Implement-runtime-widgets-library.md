@@ -1,10 +1,10 @@
 ---
 id: PF-1
 title: Implement runtime widgets library
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-05-02 06:03'
-updated_date: '2026-05-02 06:03'
+updated_date: '2026-11-18 10:00'
 labels: []
 dependencies: []
 ---
@@ -17,9 +17,15 @@ The generated code references PrefabPage, PrefabSearchBar, PrefabPaginationBar, 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 PrefabPage<T> model class with items list and pagination metadata
-- [ ] #2 PrefabSearchBar widget with onChanged callback
+- [x] #1 PrefabPage<T> model class with items list and pagination metadata
+- [x] #2 PrefabSearchBar widget with onChanged callback
 - [ ] #3 PrefabPaginationBar widget connected to the list notifier
-- [ ] #4 PrefabDeleteDialog<T> confirmation dialog
-- [ ] #5 PrefabSortMenu<T> sort menu widget
+- [x] #4 PrefabDeleteDialog<T> confirmation dialog
+- [x] #5 PrefabSortMenu<T> sort menu widget
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+All widgets are implemented and exported from prefab_flutter_widgets. AC #3 (pagination bar connected to the list notifier) is not met: generated list screens do not use any of these widgets yet. That wiring moved to PF-13.
+<!-- SECTION:NOTES:END -->
