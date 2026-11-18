@@ -298,3 +298,4 @@ These are known gaps in the current pre-release. Each has a backlog task.
 | `Validator.required` on an enum dropdown emits `value.isEmpty` and does not compile | Leave validators off dropdown fields | PF-31 |
 | `@FormField` clashes with Flutter's `FormField` | `hide FormField` on one import | PF-30 |
 | Search, sort and pagination are not generated | — | PF-13 |
+| On Flutter 3.50+, generated screens import the deprecated `package:flutter/material.dart` and trigger deprecation warnings | Exclude generated files from analysis, or ignore `deprecated_member_use` for them | PF-33 |
