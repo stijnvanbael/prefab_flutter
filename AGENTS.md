@@ -44,4 +44,8 @@ Before finishing a task, check: does `README.md` or `docs/user_guide.md` describ
 
 ## PULL REQUESTS
 
-Always open a pull request into `main` once your work is committed and pushed — do not wait to be asked. If a pull request for the branch already exists, push to it instead of opening a new one. The description summarises the changes, lists the backlog tasks affected, and notes anything that was not verified.
+Always open a pull request into `main` once your work is committed and pushed — do not wait to be asked. If a pull request for the branch already exists, push to it instead of opening a new one.
+
+- Open it as a **draft** while the work is still in progress.
+- Mark it **ready for review** only when the work is complete (including the documentation and backlog updates above) **and** CI is green. If CI fails, fix it and wait for a green run first.
+- The description summarises the changes, lists the backlog tasks affected, and notes anything that was not verified.
