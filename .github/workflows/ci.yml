@@ -74,9 +74,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Pinned: Flutter 3.50 deprecates package:flutter/material.dart in favour
+      # of package:material_ui, which fails `analyze --fatal-infos`.
+      # Unpin when the migration is done (backlog PF-33).
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.9'
 
       - name: Install dependencies
         run: flutter pub get
