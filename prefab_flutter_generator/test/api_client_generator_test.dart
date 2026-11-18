@@ -154,6 +154,21 @@ Map<String, Object> _crossFile(String commentSource) => {
       'a|lib/comment.dart': commentSource,
     };
 
+/// Runs the builder and returns everything it logged plus any thrown error.
+Future<String> _buildError(Map<String, Object> assets) async {
+  final logs = <String>[];
+  try {
+    await testBuilder(
+      apiClientBuilder(BuilderOptions.empty),
+      assets,
+      onLog: (r) => logs.add('${r.message} ${r.error ?? ''}'),
+    );
+  } catch (e) {
+    logs.add(e.toString());
+  }
+  return logs.join('\n');
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -345,27 +360,19 @@ void main() {
           'import \'post.dart\';',
           'import \'post.dart\';\nclass Plain { final int id = 0; }').replaceFirst(
           '@Parent(Post)', '@Parent(Plain)');
-      final logs = <String>[];
-      await testBuilder(
-        apiClientBuilder(BuilderOptions.empty),
-        _crossFile(source),
-        outputs: {'a|lib/post.api_client.dart': anything},
-        onLog: (r) => logs.add(r.message),
+      expect(
+        await _buildError(_crossFile(source)),
+        contains('without a @View annotation'),
       );
-      expect(logs.join('\n'), contains('without a @View annotation'));
     });
 
     test('PF-24 @Parent field type must match the parent id type', () async {
       final source = _crossFileCommentSource.replaceFirst(
           'final int postId;', 'final String postId;');
-      final logs = <String>[];
-      await testBuilder(
-        apiClientBuilder(BuilderOptions.empty),
-        _crossFile(source),
-        outputs: {'a|lib/post.api_client.dart': anything},
-        onLog: (r) => logs.add(r.message),
+      expect(
+        await _buildError(_crossFile(source)),
+        contains('Type mismatch'),
       );
-      expect(logs.join('\n'), contains('Type mismatch'));
     });
   });
 }
