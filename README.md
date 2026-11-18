@@ -97,20 +97,29 @@ and `product.routes.dart` next to `product.dart`.
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
+import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
 
 import 'product.routes.dart';
 
 final router = GoRouter(initialLocation: '/products', routes: $prefabRoutes);
 
 void main() => runApp(
-      ProviderScope(child: MaterialApp.router(routerConfig: router)),
+      ProviderScope(
+        overrides: [
+          prefabDioProvider.overrideWithValue(
+            Dio(BaseOptions(baseUrl: 'https://api.example.com')),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
     );
 ```
 
-Generated API clients read a Dio instance from a provider named `dioProvider`.
-Until the runtime package provides one ([PF-22](backlog/tasks)), declare it in
-the entity's source file; see
+Generated API clients read their Dio instance from `prefabDioProvider`
+(exported by `prefab_flutter_widgets`). Override it in the root `ProviderScope`
+to set the base URL, authentication and interceptors; see
 [Configuring the HTTP client](docs/user_guide.md#configuring-the-http-client).
 
 ## Documentation

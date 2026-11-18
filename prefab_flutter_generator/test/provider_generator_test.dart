@@ -183,6 +183,21 @@ void main() {
       );
     });
 
+    test('API client provider watches prefabDioProvider', () async {
+      await testBuilder(
+        providerBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.provider.dart': decodedMatches(allOf(
+            contains(
+                "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart'"),
+            contains('ref.watch(prefabDioProvider)'),
+            isNot(contains('ref.watch(dioProvider)')),
+          )),
+        },
+      );
+    });
+
     // AC#3 — @Parent: parent ID threaded through all operations
 
     test(

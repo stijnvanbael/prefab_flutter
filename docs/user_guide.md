@@ -2,7 +2,7 @@
 
 This guide describes what Prefab Flutter generates **today** and how to use it.
 Planned changes are tracked in [`backlog/tasks`](../backlog/tasks); where a
-limitation has a planned fix, the task id (e.g. PF-22) is mentioned.
+limitation has a planned fix, the task id (e.g. PF-13) is mentioned.
 
 For installation and a minimal example, see the [README](../README.md#quick-start).
 
@@ -236,21 +236,32 @@ Nested create, edit and delete do not compile yet; see
 
 ## Configuring the HTTP client
 
-Every generated `{entity}ApiClientProvider` reads `ref.watch(dioProvider)`, and
-the generated provider file only imports your entity's source file. Until the
-runtime package ships a configurable provider (PF-22), declare `dioProvider` in
-(or export it from) that source file:
+Every generated `{entity}ApiClientProvider` reads
+`ref.watch(prefabDioProvider)`, and the generated provider file imports
+`package:prefab_flutter_widgets/prefab_flutter_widgets.dart`. `prefabDioProvider`
+has no default: reading it before it is overridden throws a descriptive
+`UnimplementedError`. Override it once in your root `ProviderScope`:
 
 ```dart
-// lib/product.dart
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:prefab_flutter/prefab_flutter.dart';
+import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
 
-final dioProvider = Provider<Dio>(
-  (ref) => Dio(BaseOptions(baseUrl: 'https://api.example.com')),
-);
+void main() => runApp(
+      ProviderScope(
+        overrides: [
+          prefabDioProvider.overrideWithValue(
+            Dio(BaseOptions(baseUrl: 'https://api.example.com'))
+              ..interceptors.add(MyAuthInterceptor()),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
 ```
+
+`prefab_flutter_widgets` depends on `dio` (`>=5.4.0 <6.0.0`) and
+`flutter_riverpod` (`>=2.5.0 <3.0.0`).
 
 ## REST contract
 
@@ -286,7 +297,6 @@ These are known gaps in the current pre-release. Each has a backlog task.
 
 | Limitation | Workaround | Task |
 |---|---|---|
-| `dioProvider` is not provided | Declare it in the entity source file (see above) | PF-22 |
 | Responses are cast (`as Product`) instead of deserialized, so every request fails at runtime | None yet | PF-12 |
 | The Save button validates and closes the form but does not save | None yet | PF-11 |
 | The list screen has no button to open the create screen | Navigate to `/{path}/create` yourself | PF-26 |
