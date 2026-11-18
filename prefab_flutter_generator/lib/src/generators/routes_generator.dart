@@ -29,11 +29,13 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 /// ```
 ///
 /// All entity routes from the same source file are collected into a single
-/// top-level `$prefabRoutes` getter so they can be registered with [GoRouter]
-/// in one place:
+/// top-level getter named after the source file (`product.dart` ->
+/// `$productRoutes`, `user_account.dart` -> `$userAccountRoutes`) so they can
+/// be registered with [GoRouter] in one place and several route files can be
+/// imported side by side without name clashes:
 ///
 /// ```dart
-/// GoRouter(routes: $prefabRoutes)
+/// GoRouter(routes: $productRoutes)
 /// ```
 class RoutesGenerator extends Generator {
   @override
@@ -59,7 +61,7 @@ class RoutesGenerator extends Generator {
     _writeHeader(buffer);
     _writeImports(manifests, sourceFileName, buffer);
     buffer.writeln();
-    _writePrefabRoutesList(manifests, buffer);
+    _writeRoutesList(manifests, routesGetterName(sourceFileName), buffer);
 
     return buffer.toString();
   }
@@ -103,8 +105,26 @@ class RoutesGenerator extends Generator {
   // $prefabRoutes getter
   // ---------------------------------------------------------------------------
 
-  void _writePrefabRoutesList(
+  /// Derives the getter name from the source file name, e.g.
+  /// `user_account.dart` -> `$userAccountRoutes`.
+  static String routesGetterName(String sourceFileName) {
+    final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
+    final parts = base
+        .split(RegExp(r'[^A-Za-z0-9]+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    final camel = [
+      for (var i = 0; i < parts.length; i++)
+        i == 0 ? parts[i] : parts[i][0].toUpperCase() + parts[i].substring(1),
+    ].join();
+    final name = camel.isEmpty ? 'prefab' : camel;
+    final safe = RegExp(r'^[0-9]').hasMatch(name) ? '_$name' : name;
+    return '\$${safe}Routes';
+  }
+
+  void _writeRoutesList(
     List<EntityManifest> manifests,
+    String getterName,
     StringBuffer buffer,
   ) {
     // Map: parentEntityNameLower → child manifests
@@ -116,7 +136,7 @@ class RoutesGenerator extends Generator {
       }
     }
 
-    buffer.writeln('List<RouteBase> get \$prefabRoutes => [');
+    buffer.writeln('List<RouteBase> get $getterName => [');
     for (final manifest in manifests) {
       if (!manifest.hasParent) {
         _writeEntityRoute(manifest, childrenByParent, buffer, level: 1);

@@ -106,7 +106,7 @@ import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
 
 import 'product.routes.dart';
 
-final router = GoRouter(initialLocation: '/products', routes: $prefabRoutes);
+final router = GoRouter(initialLocation: '/products', routes: $productRoutes);
 
 void main() => runApp(
       ProviderScope(
