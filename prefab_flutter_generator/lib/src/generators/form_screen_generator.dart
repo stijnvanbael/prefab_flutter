@@ -129,7 +129,7 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     final entity = manifest.entityName;
 
     buffer.writeln('class ${entity}EditScreen extends ConsumerStatefulWidget {');
-    buffer.writeln('  final Object id;');
+    buffer.writeln('  final ${manifest.idType} id;');
     buffer.writeln();
     buffer
         .writeln('  const ${entity}EditScreen({super.key, required this.id});');

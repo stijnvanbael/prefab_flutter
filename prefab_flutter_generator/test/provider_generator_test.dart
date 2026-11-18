@@ -193,7 +193,7 @@ void main() {
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
           'a|lib/post.provider.dart': decodedMatches(
-            contains('.family<Comment, (Object, int)>'),
+            contains('.family<Comment, (int, int)>'),
           ),
         },
       );
@@ -304,7 +304,7 @@ void main() {
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
           'a|lib/post.provider.dart': decodedMatches(
-            contains('FutureProvider.autoDispose.family<Post, Object>'),
+            contains('FutureProvider.autoDispose.family<Post, int>'),
           ),
         },
       );

@@ -99,6 +99,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Tag', path: 'tags')
 class Tag {
+  late final int id;
   @FormField(label: 'Name')
   final String name;
 
@@ -113,6 +114,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Product', path: 'products')
 @Update()
 class Product {
+  late final int id;
   @FormField(label: 'Name')
   final String name;
 
@@ -121,6 +123,7 @@ class Product {
 
 @View(title: 'Tag', path: 'tags')
 class Tag {
+  late final int id;
   @FormField(label: 'Name')
   final String name;
 
@@ -441,7 +444,7 @@ class Plain {}
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
           'a|lib/post.routes.dart': decodedMatches(
-            contains("CommentListScreen(postId: state.pathParameters['postId']!)"),
+            contains("CommentListScreen(postId: int.parse(state.pathParameters['postId']!))"),
           ),
         },
       );
@@ -456,7 +459,7 @@ class Plain {}
         outputs: {
           'a|lib/post.routes.dart': decodedMatches(allOf(
             contains("CommentDetailScreen("),
-            contains("postId: state.pathParameters['postId']!"),
+            contains("postId: int.parse(state.pathParameters['postId']!)"),
           )),
         },
       );
@@ -485,7 +488,7 @@ class Plain {}
         outputs: {
           'a|lib/post.routes.dart': decodedMatches(allOf(
             contains("CommentCreateScreen("),
-            contains("postId: state.pathParameters['postId']!"),
+            contains("postId: int.parse(state.pathParameters['postId']!)"),
           )),
         },
       );
@@ -500,8 +503,8 @@ class Plain {}
         outputs: {
           'a|lib/post.routes.dart': decodedMatches(allOf(
             contains("CommentEditScreen("),
-            contains("id: state.pathParameters['id']!"),
-            contains("postId: state.pathParameters['postId']!"),
+            contains("id: int.parse(state.pathParameters['id']!)"),
+            contains("postId: int.parse(state.pathParameters['postId']!)"),
           )),
         },
       );

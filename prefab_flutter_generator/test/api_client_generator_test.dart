@@ -188,7 +188,7 @@ void main() {
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
           'a|lib/product.api_client.dart': decodedMatches(
-            contains('Future<Product> getById(Object id)'),
+            contains('Future<Product> getById(int id)'),
           ),
         },
       );
@@ -226,7 +226,7 @@ void main() {
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
           'a|lib/post.api_client.dart': decodedMatches(
-            contains('Future<Comment> getById(Object id, {required int postId})'),
+            contains('Future<Comment> getById(int id, {required int postId})'),
           ),
         },
       );

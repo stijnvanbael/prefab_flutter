@@ -103,7 +103,7 @@ class DetailScreenGenerator extends GeneratorForAnnotation<View> {
         hasParent ? manifest.parentField!.dartType : null;
 
     buffer.writeln('class ${entity}DetailScreen extends ConsumerWidget {');
-    buffer.writeln('  final Object id;');
+    buffer.writeln('  final ${manifest.idType} id;');
     if (hasParent) {
       buffer.writeln('  final $parentParamType $parentParamName;');
     }
