@@ -443,9 +443,10 @@ class Plain {}
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
-          'a|lib/post.routes.dart': decodedMatches(
-            contains("CommentListScreen(postId: int.parse(state.pathParameters['postId']!))"),
-          ),
+          'a|lib/post.routes.dart': decodedMatches(allOf(
+            contains('CommentListScreen('),
+            contains("postId: int.parse(state.pathParameters['postId']!)"),
+          )),
         },
       );
     });

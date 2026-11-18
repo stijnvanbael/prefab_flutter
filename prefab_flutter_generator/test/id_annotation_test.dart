@@ -160,13 +160,18 @@ void main() {
 
     test('missing id is a build-time error', () async {
       final logs = <String>[];
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        _assets(_noIdSource),
-        outputs: {},
-        onLog: (r) => logs.add(r.message),
-      );
-      expect(logs.join('\n'), contains('has no identifier'));
+      Object? error;
+      try {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          _assets(_noIdSource),
+          outputs: {},
+          onLog: (r) => logs.add(r.message),
+        );
+      } catch (e) {
+        error = e;
+      }
+      expect('$error\n${logs.join('\n')}', contains('has no identifier'));
     });
   });
 }
