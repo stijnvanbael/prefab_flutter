@@ -27,6 +27,8 @@ Annotate an entity class, run `build_runner`, and Prefab Flutter generates:
 ### 1. Add dependencies
 
 The packages are not published yet, so reference them by git or path:
+Requires Flutter 3.47 or newer (`material_ui` replaces `flutter/material.dart`).
+
 
 ```yaml
 dependencies:
@@ -35,6 +37,7 @@ dependencies:
   dio: ^5.4.0
   flutter_riverpod: ^2.5.0
   go_router: ^14.0.0
+  material_ui: ^1.11.1
   prefab_flutter:
     git:
       url: https://github.com/stijnvanbael/prefab_flutter
@@ -95,7 +98,7 @@ and `product.routes.dart` next to `product.dart`.
 ### 4. Register the routes
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';

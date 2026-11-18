@@ -185,7 +185,7 @@ void main() {
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
           'a|lib/product.list_screen.dart': decodedMatches(allOf(
-            contains("import 'package:flutter/material.dart'"),
+            contains("import 'package:material_ui/material_ui.dart'"),
             contains("import 'package:flutter_riverpod/flutter_riverpod.dart'"),
             contains("import 'package:go_router/go_router.dart'"),
           )),
