@@ -81,7 +81,7 @@ class Parent {
 }
 ''',
   'prefab_flutter|lib/src/enums/field_widget.dart': r'''
-enum FieldWidget { auto, multilineText, password, datePicker, timePicker, dateTimePicker, dropdown, toggle }
+enum FieldWidget { auto, multilineText, password, numberInput, datePicker, timePicker, dateTimePicker, dropdown, toggle }
 ''',
   'prefab_flutter|lib/src/enums/validator.dart': r'''
 /// Validation rules that the form-screen generator wires into form fields.
@@ -378,5 +378,52 @@ void main() {
               '@Field(form: FormOptions(validators: [Validator.min(1)])) final bool f;'),
           contains('MinValidator cannot be used on "f"'));
     });
+  });
+
+  group('numberInput', () {
+    test(
+      'int field gets a signed numeric keyboard and a digits formatter',
+      () => _expectOutput(
+        '@Field() final int f;',
+        allOf(
+          contains('const TextInputType.numberWithOptions(signed: true)'),
+          contains(r"FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$'))"),
+        ),
+      ),
+    );
+
+    test(
+      'double field also allows one decimal separator',
+      () => _expectOutput(
+        '@Field() final double f;',
+        allOf(
+          contains('const TextInputType.numberWithOptions('),
+          contains('decimal: true'),
+          contains(
+              r"FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d*$'))"),
+          contains('double.tryParse(value) == null'),
+        ),
+      ),
+    );
+
+    test(
+      'explicit numberInput on a String field is accepted',
+      () => _expectOutput(
+        '@Field(form: FormOptions(widget: FieldWidget.numberInput)) '
+        'final String f;',
+        contains('keyboardType: const TextInputType.numberWithOptions'),
+      ),
+    );
+
+    test(
+      'range validators work on numberInput',
+      () => _expectOutput(
+        '@Field(form: FormOptions(validators: [Validator.min(1)])) final int f;',
+        allOf(
+          contains('const TextInputType.numberWithOptions(signed: true)'),
+          contains('n < 1'),
+        ),
+      ),
+    );
   });
 }

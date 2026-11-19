@@ -10,6 +10,10 @@ enum FieldWidget {
   /// Obscured (password) [TextFormField].
   password,
 
+  /// Numeric [TextFormField] with a numeric keyboard and an input formatter.
+  /// Inferred for `int`, `double` and `num` fields.
+  numberInput,
+
   /// Date picker backed by [showDatePicker].
   datePicker,
 

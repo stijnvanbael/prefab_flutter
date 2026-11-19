@@ -13,6 +13,7 @@ enum _WidgetKind {
   text,
   multilineText,
   password,
+  numberInput,
   datePicker,
   timePicker,
   dateTimePicker,
@@ -45,7 +46,9 @@ class FormScreenGenerator extends Generator {
     final sourceFileName = buildStep.inputId.path.split('/').last;
     final buffer = StringBuffer();
     _writeHeader(buffer);
-    _writeImports(sourceFileName, buffer);
+    final usesNumberInput = manifests.any((m) => m.formFields
+        .any((f) => _resolveWidgetKind(f) == _WidgetKind.numberInput));
+    _writeImports(sourceFileName, buffer, usesNumberInput);
     for (final manifest in manifests) {
       if (manifest.hasCreate) {
         buffer.writeln();
@@ -83,6 +86,7 @@ class FormScreenGenerator extends Generator {
     return switch (field.fieldWidget) {
       FieldWidget.multilineText => _WidgetKind.multilineText,
       FieldWidget.password => _WidgetKind.password,
+      FieldWidget.numberInput => _WidgetKind.numberInput,
       FieldWidget.datePicker => _WidgetKind.datePicker,
       FieldWidget.timePicker => _WidgetKind.timePicker,
       FieldWidget.dateTimePicker => _WidgetKind.dateTimePicker,
@@ -91,6 +95,7 @@ class FormScreenGenerator extends Generator {
       FieldWidget.auto => switch (field.dartType) {
           'bool' => _WidgetKind.toggle,
           'DateTime' => _WidgetKind.datePicker,
+          'int' || 'double' || 'num' => _WidgetKind.numberInput,
           _ => field.isEnum ? _WidgetKind.dropdown : _WidgetKind.text,
         },
     };
@@ -115,8 +120,17 @@ class FormScreenGenerator extends Generator {
   // Imports
   // ---------------------------------------------------------------------------
 
-  void _writeImports(String sourceFileName, StringBuffer buffer) {
+  void _writeImports(
+    String sourceFileName,
+    StringBuffer buffer,
+    bool usesNumberInput,
+  ) {
     final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
+    // FilteringTextInputFormatter lives in services, which material_ui does
+    // not re-export.
+    if (usesNumberInput) {
+      buffer.writeln("import 'package:flutter/services.dart';");
+    }
     buffer.writeln("import 'package:material_ui/material_ui.dart';");
     buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
     buffer.writeln("import 'package:go_router/go_router.dart';");
@@ -581,6 +595,8 @@ class FormScreenGenerator extends Generator {
         _writeMultilineTextField(field, buffer);
       case _WidgetKind.password:
         _writePasswordField(field, buffer);
+      case _WidgetKind.numberInput:
+        _writeNumberField(field, buffer);
       case _WidgetKind.text:
         _writeTextField(field, buffer);
     }
@@ -601,6 +617,27 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('              controller: _${field.name}Controller,');
     buffer.writeln('              maxLines: null,');
     buffer.writeln('              keyboardType: TextInputType.multiline,');
+    buffer.writeln(
+      "              decoration: const InputDecoration(labelText: '${field.label}'),",
+    );
+    _writeValidators(field, buffer);
+    buffer.writeln('            ),');
+  }
+
+  void _writeNumberField(FieldManifest field, StringBuffer buffer) {
+    final isInt = field.dartType == 'int';
+    final keyboard = isInt
+        ? 'const TextInputType.numberWithOptions(signed: true)'
+        : 'const TextInputType.numberWithOptions(signed: true, decimal: true)';
+    final pattern = isInt ? r'^-?\d*$' : r'^-?\d*\.?\d*$';
+    buffer.writeln('            TextFormField(');
+    buffer.writeln('              controller: _${field.name}Controller,');
+    buffer.writeln('              keyboardType: $keyboard,');
+    buffer.writeln('              inputFormatters: [');
+    buffer.writeln(
+      "                FilteringTextInputFormatter.allow(RegExp(r'$pattern')),",
+    );
+    buffer.writeln('              ],');
     buffer.writeln(
       "              decoration: const InputDecoration(labelText: '${field.label}'),",
     );
@@ -841,6 +878,7 @@ class FormScreenGenerator extends Generator {
   void _checkValidatorsFor(FieldManifest field) {
     final kind = _resolveWidgetKind(field);
     final isText = kind == _WidgetKind.text ||
+        kind == _WidgetKind.numberInput ||
         kind == _WidgetKind.multilineText ||
         kind == _WidgetKind.password;
     if (isText) return;
@@ -898,7 +936,8 @@ class FormScreenGenerator extends Generator {
   }
 
   bool _isNumericText(FieldManifest field) =>
-      _resolveWidgetKind(field) == _WidgetKind.text &&
+      const {_WidgetKind.text, _WidgetKind.numberInput}
+          .contains(_resolveWidgetKind(field)) &&
       const {'int', 'double', 'num'}.contains(field.dartType);
 
   void _writeValidatorCheck(Validator validator, StringBuffer buffer) {
