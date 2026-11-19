@@ -10,15 +10,15 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 /// Generates Riverpod providers for every class annotated with [@View].
 ///
 /// Produced providers include:
-/// - `{entity}DetailProvider` — `FutureProvider.family` that fetches a single
+/// - `{entity}DetailProvider` — `FutureProvider.autoDispose.family` that fetches a single
 ///   entity by ID via the generated API client,
-/// - `{entity}sProvider` — a `StateNotifierProvider` for the full list with
+/// - `{entity}sProvider` — an `AsyncNotifierProvider.autoDispose` (`AutoDisposeAsyncNotifier`) for the full list with
 ///   create / update / delete mutations.
 ///
 /// When the entity carries a [@Parent]-annotated field, every provider accepts
 /// the parent ID and threads it through to the API client:
 /// - `{entity}DetailProvider` becomes a `family` keyed on `(idType id, parentType parentId)`.
-/// - `{entity}sProvider` becomes a `family` keyed on the `parentType parentId`.
+/// - `{entity}sProvider` becomes a `family` (`AutoDisposeFamilyAsyncNotifier`) keyed on the `parentType parentId`.
 class ProviderGenerator extends Generator {
   @override
   String generate(LibraryReader library, BuildStep buildStep) {
@@ -100,27 +100,26 @@ class ProviderGenerator extends Generator {
 
       // List provider keyed on parentType parentId.
       buffer.writeln(
-          'final ${entityLower}sProvider = StateNotifierProvider.autoDispose'
-          '.family<${entity}sNotifier, AsyncValue<List<$entity>>, $parentParamType>(');
-      buffer.writeln(
-          '  (ref, $parentParamName) => ${entity}sNotifier(ref, ref.watch(${entityLower}ApiClientProvider), $parentParamName));');
+          'final ${entityLower}sProvider = AsyncNotifierProvider.autoDispose'
+          '.family<${entity}sNotifier, List<$entity>, $parentParamType>(');
+      buffer.writeln('  ${entity}sNotifier.new);');
       buffer.writeln();
 
-      // StateNotifier with parentId threaded through.
+      // Family notifier; the family argument is the parent id.
       buffer.writeln(
-          'class ${entity}sNotifier extends StateNotifier<AsyncValue<List<$entity>>> {');
-      buffer.writeln('  final Ref _ref;');
-      buffer.writeln('  final ${entity}ApiClient _client;');
-      buffer.writeln('  final $parentParamType $parentParamName;');
+          'class ${entity}sNotifier extends AutoDisposeFamilyAsyncNotifier<List<$entity>, $parentParamType> {');
+      buffer.writeln(
+          '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');
+      buffer.writeln('  $parentParamType get $parentParamName => arg;');
       buffer.writeln();
+      buffer.writeln('  @override');
       buffer.writeln(
-          '  ${entity}sNotifier(this._ref, this._client, this.$parentParamName)');
-      buffer.writeln('      : super(const AsyncValue.loading()) {');
-      buffer.writeln('    _load();');
-      buffer.writeln('  }');
+          '  Future<List<$entity>> build($parentParamType arg) =>');
+      buffer.writeln(
+          '      ref.read(${entityLower}ApiClientProvider).list($parentParamName: arg);');
       buffer.writeln();
       buffer.writeln('  Future<void> _load() async {');
-      buffer.writeln('    state = const AsyncValue.loading();');
+      buffer.writeln('    state = const AsyncLoading();');
       buffer.writeln(
           '    state = await AsyncValue.guard(() => _client.list($parentParamName: $parentParamName));');
       buffer.writeln('  }');
@@ -136,7 +135,7 @@ class ProviderGenerator extends Generator {
         buffer.writeln(
             '    await _client.update($entityLower, $parentParamName: $parentParamName);');
         buffer.writeln(
-            '    _ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}, $parentParamName)));');
+            '    ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}, $parentParamName)));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
@@ -146,7 +145,7 @@ class ProviderGenerator extends Generator {
         buffer.writeln(
             '    await _client.delete($entityLower, $parentParamName: $parentParamName);');
         buffer.writeln(
-            '    _ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}, $parentParamName)));');
+            '    ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}, $parentParamName)));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
@@ -162,25 +161,24 @@ class ProviderGenerator extends Generator {
 
       // List provider (no family arg).
       buffer.writeln(
-          'final ${entityLower}sProvider = StateNotifierProvider.autoDispose'
-          '<${entity}sNotifier, AsyncValue<List<$entity>>>(');
-      buffer.writeln(
-          '  (ref) => ${entity}sNotifier(ref, ref.watch(${entityLower}ApiClientProvider)));');
+          'final ${entityLower}sProvider = AsyncNotifierProvider.autoDispose'
+          '<${entity}sNotifier, List<$entity>>(${entity}sNotifier.new);');
       buffer.writeln();
 
-      // StateNotifier.
+      // AsyncNotifier.
       buffer.writeln(
-          'class ${entity}sNotifier extends StateNotifier<AsyncValue<List<$entity>>> {');
-      buffer.writeln('  final Ref _ref;');
-      buffer.writeln('  final ${entity}ApiClient _client;');
+          'class ${entity}sNotifier extends AutoDisposeAsyncNotifier<List<$entity>> {');
+      buffer.writeln(
+          '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');
       buffer.writeln();
+      buffer.writeln('  @override');
       buffer.writeln(
-          '  ${entity}sNotifier(this._ref, this._client) : super(const AsyncValue.loading()) {');
-      buffer.writeln('    _load();');
-      buffer.writeln('  }');
+          '  Future<List<$entity>> build() =>');
+      buffer.writeln(
+          '      ref.read(${entityLower}ApiClientProvider).list();');
       buffer.writeln();
       buffer.writeln('  Future<void> _load() async {');
-      buffer.writeln('    state = const AsyncValue.loading();');
+      buffer.writeln('    state = const AsyncLoading();');
       buffer.writeln(
           '    state = await AsyncValue.guard(() => _client.list());');
       buffer.writeln('  }');
@@ -194,7 +192,7 @@ class ProviderGenerator extends Generator {
         buffer.writeln('  Future<void> update($entity $entityLower) async {');
         buffer.writeln('    await _client.update($entityLower);');
         buffer.writeln(
-            '    _ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}));');
+            '    ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
@@ -203,7 +201,7 @@ class ProviderGenerator extends Generator {
         buffer.writeln('  Future<void> delete($entity $entityLower) async {');
         buffer.writeln('    await _client.delete($entityLower);');
         buffer.writeln(
-            '    _ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}));');
+            '    ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
