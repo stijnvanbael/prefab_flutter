@@ -78,7 +78,112 @@ class Parent {
 enum FieldWidget { auto, multilineText, password, datePicker, dropdown, toggle }
 ''',
   'prefab_flutter|lib/src/enums/validator.dart': r'''
-enum Validator { required, email, positiveNumber, url }
+/// Validation rules that the form-screen generator wires into form fields.
+///
+/// Parameterless rules are available as static constants
+/// (`Validator.required`, `Validator.email`, ...); rules that carry a value are
+/// created with the const factories (`Validator.min(0)`,
+/// `Validator.pattern(r'^[A-Z]+$')`).
+///
+/// Every rule accepts an optional custom error [message]. For the parameterless
+/// rules use the subclass constructor, e.g. `EmailValidator(message: 'Bad')`.
+sealed class Validator {
+  /// Custom error message shown instead of the default one.
+  final String? message;
+
+  const Validator({this.message});
+
+  /// Field must not be empty (or, on dropdowns, must have a selection).
+  static const Validator required = RequiredValidator();
+
+  /// Field value must be a valid e-mail address.
+  static const Validator email = EmailValidator();
+
+  /// Field value must be a parseable absolute URL.
+  static const Validator url = UrlValidator();
+
+  /// Field value must be a number greater than zero.
+  static const Validator positive = PositiveValidator();
+
+  /// Alias of [positive], kept for backwards compatibility.
+  static const Validator positiveNumber = PositiveValidator();
+
+  /// Field value must be a number greater than or equal to zero.
+  static const Validator nonNegative = NonNegativeValidator();
+
+  /// Field value must be a number greater than or equal to [value].
+  const factory Validator.min(num value, {String? message}) = MinValidator;
+
+  /// Field value must be a number less than or equal to [value].
+  const factory Validator.max(num value, {String? message}) = MaxValidator;
+
+  /// Field value must be at least [length] characters long.
+  const factory Validator.minLength(int length, {String? message}) =
+      MinLengthValidator;
+
+  /// Field value must be at most [length] characters long.
+  const factory Validator.maxLength(int length, {String? message}) =
+      MaxLengthValidator;
+
+  /// Field value must match the regular expression [regex].
+  const factory Validator.pattern(String regex, {String? message}) =
+      PatternValidator;
+}
+
+/// See [Validator.required].
+final class RequiredValidator extends Validator {
+  const RequiredValidator({super.message});
+}
+
+/// See [Validator.email].
+final class EmailValidator extends Validator {
+  const EmailValidator({super.message});
+}
+
+/// See [Validator.url].
+final class UrlValidator extends Validator {
+  const UrlValidator({super.message});
+}
+
+/// See [Validator.positive].
+final class PositiveValidator extends Validator {
+  const PositiveValidator({super.message});
+}
+
+/// See [Validator.nonNegative].
+final class NonNegativeValidator extends Validator {
+  const NonNegativeValidator({super.message});
+}
+
+/// See [Validator.min].
+final class MinValidator extends Validator {
+  final num value;
+  const MinValidator(this.value, {super.message});
+}
+
+/// See [Validator.max].
+final class MaxValidator extends Validator {
+  final num value;
+  const MaxValidator(this.value, {super.message});
+}
+
+/// See [Validator.minLength].
+final class MinLengthValidator extends Validator {
+  final int length;
+  const MinLengthValidator(this.length, {super.message});
+}
+
+/// See [Validator.maxLength].
+final class MaxLengthValidator extends Validator {
+  final int length;
+  const MaxLengthValidator(this.length, {super.message});
+}
+
+/// See [Validator.pattern].
+final class PatternValidator extends Validator {
+  final String regex;
+  const PatternValidator(this.regex, {super.message});
+}
 ''',
 };
 
@@ -141,7 +246,6 @@ class Comment {
   Map<String, dynamic> toJson() => {};
 }
 ''';
-
 
 const _postFileSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
@@ -319,7 +423,8 @@ void main() {
         outputs: {
           'a|lib/post.api_client.dart': decodedMatches(
             contains(
-                'Future<Comment> create(Comment comment, {required int postId})'),
+              'Future<Comment> create(Comment comment, {required int postId})',
+            ),
           ),
         },
       );
@@ -332,7 +437,8 @@ void main() {
         outputs: {
           'a|lib/post.api_client.dart': decodedMatches(
             contains(
-                'Future<Comment> update(Comment comment, {required int postId})'),
+              'Future<Comment> update(Comment comment, {required int postId})',
+            ),
           ),
         },
       );
@@ -345,7 +451,8 @@ void main() {
         outputs: {
           'a|lib/post.api_client.dart': decodedMatches(
             contains(
-                'Future<void> delete(Comment comment, {required int postId})'),
+              'Future<void> delete(Comment comment, {required int postId})',
+            ),
           ),
         },
       );
@@ -365,29 +472,32 @@ void main() {
 
     // PF-24 — cross-file parents and build-time validation
 
-    test('PF-24 @Parent(Type) resolves a parent declared in another file',
-        () async {
-      await testBuilder(
-        apiClientBuilder(BuilderOptions.empty),
-        _crossFile(_crossFileCommentSource),
-        outputs: {
-          'a|lib/comment.api_client.dart': decodedMatches(
-            allOf(
-              contains("'/posts/\$postId/comments'"),
-              contains('Future<List<Comment>> list({required int postId})'),
+    test(
+      'PF-24 @Parent(Type) resolves a parent declared in another file',
+      () async {
+        await testBuilder(
+          apiClientBuilder(BuilderOptions.empty),
+          _crossFile(_crossFileCommentSource),
+          outputs: {
+            'a|lib/comment.api_client.dart': decodedMatches(
+              allOf(
+                contains("'/posts/\$postId/comments'"),
+                contains('Future<List<Comment>> list({required int postId})'),
+              ),
             ),
-          ),
-          'a|lib/post.api_client.dart': anything,
-        },
-      );
-    });
+            'a|lib/post.api_client.dart': anything,
+          },
+        );
+      },
+    );
 
-    test('PF-24 @Parent(Type) without @View on the type is an error',
-        () async {
-      final source = _crossFileCommentSource.replaceFirst(
-          'import \'post.dart\';',
-          'import \'post.dart\';\nclass Plain { final int id = 0; }').replaceFirst(
-          '@Parent(Post)', '@Parent(Plain)');
+    test('PF-24 @Parent(Type) without @View on the type is an error', () async {
+      final source = _crossFileCommentSource
+          .replaceFirst(
+            'import \'post.dart\';',
+            'import \'post.dart\';\nclass Plain { final int id = 0; }',
+          )
+          .replaceFirst('@Parent(Post)', '@Parent(Plain)');
       expect(
         await _buildError(_crossFile(source)),
         contains('without a @View annotation'),
@@ -396,11 +506,10 @@ void main() {
 
     test('PF-24 @Parent field type must match the parent id type', () async {
       final source = _crossFileCommentSource.replaceFirst(
-          'final int postId;', 'final String postId;');
-      expect(
-        await _buildError(_crossFile(source)),
-        contains('Type mismatch'),
+        'final int postId;',
+        'final String postId;',
       );
+      expect(await _buildError(_crossFile(source)), contains('Type mismatch'));
     });
 
     // PF-12 — JSON (de)serialization
@@ -410,10 +519,14 @@ void main() {
         apiClientBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.api_client.dart': decodedMatches(allOf(
-            contains('(response.data as List)'),
-            contains('.map((e) => Product.fromJson(e as Map<String, dynamic>))'),
-          )),
+          'a|lib/product.api_client.dart': decodedMatches(
+            allOf(
+              contains('(response.data as List)'),
+              contains(
+                '.map((e) => Product.fromJson(e as Map<String, dynamic>))',
+              ),
+            ),
+          ),
         },
       );
     });
@@ -423,11 +536,14 @@ void main() {
         apiClientBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.api_client.dart': decodedMatches(allOf(
-            contains(
-                'return Product.fromJson(response.data as Map<String, dynamic>);'),
-            isNot(contains('response.data as Product')),
-          )),
+          'a|lib/product.api_client.dart': decodedMatches(
+            allOf(
+              contains(
+                'return Product.fromJson(response.data as Map<String, dynamic>);',
+              ),
+              isNot(contains('response.data as Product')),
+            ),
+          ),
         },
       );
     });
@@ -437,19 +553,22 @@ void main() {
         apiClientBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.api_client.dart': decodedMatches(allOf(
-            contains("_dio.post('/products', data: product.toJson())"),
-            contains('data: product.toJson())'),
-            isNot(contains('data: product)')),
-          )),
+          'a|lib/product.api_client.dart': decodedMatches(
+            allOf(
+              contains("_dio.post('/products', data: product.toJson())"),
+              contains('data: product.toJson())'),
+              isNot(contains('data: product)')),
+            ),
+          ),
         },
       );
     });
 
     test('PF-12 missing fromJson names the entity', () async {
       final source = _productSource.replaceFirst(
-          '  factory Product.fromJson(Map<String, dynamic> json) => throw 0;\n',
-          '');
+        '  factory Product.fromJson(Map<String, dynamic> json) => throw 0;\n',
+        '',
+      );
       final error = await _buildError(_assets('a', 'lib/product.dart', source));
       expect(error, contains('Product'));
       expect(error, contains('fromJson'));
@@ -458,7 +577,9 @@ void main() {
 
     test('PF-12 missing toJson names the entity', () async {
       final source = _productSource.replaceFirst(
-          '  Map<String, dynamic> toJson() => {};\n', '');
+        '  Map<String, dynamic> toJson() => {};\n',
+        '',
+      );
       final error = await _buildError(_assets('a', 'lib/product.dart', source));
       expect(error, contains('Product'));
       expect(error, contains('toJson()'));

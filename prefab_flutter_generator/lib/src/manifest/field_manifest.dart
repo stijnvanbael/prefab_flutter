@@ -43,5 +43,6 @@ class FieldManifest {
 
   /// Whether the form must reject an empty value: non-nullable fields are
   /// required by default, nullable fields only with [Validator.required].
-  bool get isRequired => !isNullable || validators.contains(Validator.required);
+  bool get isRequired =>
+      !isNullable || validators.any((v) => v is RequiredValidator);
 }

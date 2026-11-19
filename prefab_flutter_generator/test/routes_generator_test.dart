@@ -80,7 +80,112 @@ class Parent {
 enum FieldWidget { auto, multilineText, password, datePicker, dropdown, toggle }
 ''',
   'prefab_flutter|lib/src/enums/validator.dart': r'''
-enum Validator { required, email, positiveNumber, url }
+/// Validation rules that the form-screen generator wires into form fields.
+///
+/// Parameterless rules are available as static constants
+/// (`Validator.required`, `Validator.email`, ...); rules that carry a value are
+/// created with the const factories (`Validator.min(0)`,
+/// `Validator.pattern(r'^[A-Z]+$')`).
+///
+/// Every rule accepts an optional custom error [message]. For the parameterless
+/// rules use the subclass constructor, e.g. `EmailValidator(message: 'Bad')`.
+sealed class Validator {
+  /// Custom error message shown instead of the default one.
+  final String? message;
+
+  const Validator({this.message});
+
+  /// Field must not be empty (or, on dropdowns, must have a selection).
+  static const Validator required = RequiredValidator();
+
+  /// Field value must be a valid e-mail address.
+  static const Validator email = EmailValidator();
+
+  /// Field value must be a parseable absolute URL.
+  static const Validator url = UrlValidator();
+
+  /// Field value must be a number greater than zero.
+  static const Validator positive = PositiveValidator();
+
+  /// Alias of [positive], kept for backwards compatibility.
+  static const Validator positiveNumber = PositiveValidator();
+
+  /// Field value must be a number greater than or equal to zero.
+  static const Validator nonNegative = NonNegativeValidator();
+
+  /// Field value must be a number greater than or equal to [value].
+  const factory Validator.min(num value, {String? message}) = MinValidator;
+
+  /// Field value must be a number less than or equal to [value].
+  const factory Validator.max(num value, {String? message}) = MaxValidator;
+
+  /// Field value must be at least [length] characters long.
+  const factory Validator.minLength(int length, {String? message}) =
+      MinLengthValidator;
+
+  /// Field value must be at most [length] characters long.
+  const factory Validator.maxLength(int length, {String? message}) =
+      MaxLengthValidator;
+
+  /// Field value must match the regular expression [regex].
+  const factory Validator.pattern(String regex, {String? message}) =
+      PatternValidator;
+}
+
+/// See [Validator.required].
+final class RequiredValidator extends Validator {
+  const RequiredValidator({super.message});
+}
+
+/// See [Validator.email].
+final class EmailValidator extends Validator {
+  const EmailValidator({super.message});
+}
+
+/// See [Validator.url].
+final class UrlValidator extends Validator {
+  const UrlValidator({super.message});
+}
+
+/// See [Validator.positive].
+final class PositiveValidator extends Validator {
+  const PositiveValidator({super.message});
+}
+
+/// See [Validator.nonNegative].
+final class NonNegativeValidator extends Validator {
+  const NonNegativeValidator({super.message});
+}
+
+/// See [Validator.min].
+final class MinValidator extends Validator {
+  final num value;
+  const MinValidator(this.value, {super.message});
+}
+
+/// See [Validator.max].
+final class MaxValidator extends Validator {
+  final num value;
+  const MaxValidator(this.value, {super.message});
+}
+
+/// See [Validator.minLength].
+final class MinLengthValidator extends Validator {
+  final int length;
+  const MinLengthValidator(this.length, {super.message});
+}
+
+/// See [Validator.maxLength].
+final class MaxLengthValidator extends Validator {
+  final int length;
+  const MaxLengthValidator(this.length, {super.message});
+}
+
+/// See [Validator.pattern].
+final class PatternValidator extends Validator {
+  final String regex;
+  const PatternValidator(this.regex, {super.message});
+}
 ''',
 };
 
@@ -182,7 +287,6 @@ class Comment {
   Comment({required this.id, required this.postId, required this.content});
 }
 ''';
-
 
 const _postFileSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
@@ -289,9 +393,7 @@ void main() {
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.routes.dart': decodedMatches(
-            contains("path: ':id'"),
-          ),
+          'a|lib/product.routes.dart': decodedMatches(contains("path: ':id'")),
         },
       );
     });
@@ -303,10 +405,9 @@ void main() {
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.routes.dart': decodedMatches(allOf(
-            contains("path: 'edit'"),
-            contains('ProductEditScreen('),
-          )),
+          'a|lib/product.routes.dart': decodedMatches(
+            allOf(contains("path: 'edit'"), contains('ProductEditScreen(')),
+          ),
         },
       );
     });
@@ -316,10 +417,12 @@ void main() {
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.routes.dart': decodedMatches(allOf(
-            contains("path: 'create'"),
-            contains('ProductCreateScreen()'),
-          )),
+          'a|lib/product.routes.dart': decodedMatches(
+            allOf(
+              contains("path: 'create'"),
+              contains('ProductCreateScreen()'),
+            ),
+          ),
         },
       );
     });
@@ -329,10 +432,9 @@ void main() {
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/tag.dart', _tagSource),
         outputs: {
-          'a|lib/tag.routes.dart': decodedMatches(isNot(anyOf(
-            contains("path: 'edit'"),
-            contains("path: 'create'"),
-          ))),
+          'a|lib/tag.routes.dart': decodedMatches(
+            isNot(anyOf(contains("path: 'edit'"), contains("path: 'create'"))),
+          ),
         },
       );
     });
@@ -346,12 +448,14 @@ void main() {
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/entities.dart', _twoEntitiesSource),
         outputs: {
-          'a|lib/entities.routes.dart': decodedMatches(allOf(
-            contains("path: '/products'"),
-            contains("path: '/tags'"),
-            contains('ProductListScreen()'),
-            contains('TagListScreen()'),
-          )),
+          'a|lib/entities.routes.dart': decodedMatches(
+            allOf(
+              contains("path: '/products'"),
+              contains("path: '/tags'"),
+              contains('ProductListScreen()'),
+              contains('TagListScreen()'),
+            ),
+          ),
         },
       );
     });
@@ -366,10 +470,7 @@ void main() {
           'a|lib/entities.routes.dart': decodedMatches(
             // The getter declaration should appear exactly once.
             matches(
-              RegExp(
-                r'List<RouteBase> get \$entitiesRoutes',
-                multiLine: true,
-              ),
+              RegExp(r'List<RouteBase> get \$entitiesRoutes', multiLine: true),
             ),
           ),
         },
@@ -407,26 +508,30 @@ void main() {
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
-          'a|lib/product.routes.dart': decodedMatches(allOf(
-            contains("import 'product.detail_screen.dart'"),
-            contains("import 'product.list_screen.dart'"),
-          )),
-        },
-      );
-    });
-
-    test('generated file imports form screen file when @Update is present',
-        () async {
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _productSource),
-        outputs: {
           'a|lib/product.routes.dart': decodedMatches(
-            contains("import 'product.form_screen.dart'"),
+            allOf(
+              contains("import 'product.detail_screen.dart'"),
+              contains("import 'product.list_screen.dart'"),
+            ),
           ),
         },
       );
     });
+
+    test(
+      'generated file imports form screen file when @Update is present',
+      () async {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          _assets('a', 'lib/product.dart', _productSource),
+          outputs: {
+            'a|lib/product.routes.dart': decodedMatches(
+              contains("import 'product.form_screen.dart'"),
+            ),
+          },
+        );
+      },
+    );
 
     test(
         'generated file does NOT import form screen file when @Update is '
@@ -445,16 +550,12 @@ void main() {
     // Non-annotated files should produce no output.
 
     test('produces no output for files without @View annotations', () async {
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        {
-          ...Map<String, Object>.from(_prefabSources),
-          'a|lib/plain.dart': r'''
+      await testBuilder(routesBuilder(BuilderOptions.empty), {
+        ...Map<String, Object>.from(_prefabSources),
+        'a|lib/plain.dart': r'''
 class Plain {}
 ''',
-        },
-        outputs: {},
-      );
+      }, outputs: {});
     });
 
     // -------------------------------------------------------------------------
@@ -462,18 +563,19 @@ class Plain {}
     // -------------------------------------------------------------------------
 
     test(
-        'AC#1 @Parent — child entity (Comment) is NOT emitted as a root route',
-        () async {
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/post.dart', _parentChildSource),
-        outputs: {
-          'a|lib/post.routes.dart': decodedMatches(
-            isNot(contains("path: '/comments'")),
-          ),
-        },
-      );
-    });
+      'AC#1 @Parent — child entity (Comment) is NOT emitted as a root route',
+      () async {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          _assets('a', 'lib/post.dart', _parentChildSource),
+          outputs: {
+            'a|lib/post.routes.dart': decodedMatches(
+              isNot(contains("path: '/comments'")),
+            ),
+          },
+        );
+      },
+    );
 
     test(
         'AC#1 @Parent — parent entity (Post) uses a named id param '
@@ -482,118 +584,132 @@ class Plain {}
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
-          'a|lib/post.routes.dart': decodedMatches(
-            contains("path: ':postId'"),
-          ),
+          'a|lib/post.routes.dart': decodedMatches(contains("path: ':postId'")),
         },
       );
     });
 
     test(
-        'AC#1 @Parent — child list route is nested under parent :id route',
-        () async {
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/post.dart', _parentChildSource),
-        outputs: {
-          'a|lib/post.routes.dart': decodedMatches(
-            contains("path: 'comments'"),
-          ),
-        },
-      );
-    });
-
-    test(
-        'AC#1 @Parent — child ListScreen receives the parent ID from route',
-        () async {
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/post.dart', _parentChildSource),
-        outputs: {
-          'a|lib/post.routes.dart': decodedMatches(allOf(
-            contains('CommentListScreen('),
-            contains("postId: int.parse(state.pathParameters['postId']!)"),
-          )),
-        },
-      );
-    });
-
-    test(
-        'AC#1 @Parent — child DetailScreen receives both id and parent ID',
-        () async {
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/post.dart', _parentChildSource),
-        outputs: {
-          'a|lib/post.routes.dart': decodedMatches(allOf(
-            contains("CommentDetailScreen("),
-            contains("postId: int.parse(state.pathParameters['postId']!)"),
-          )),
-        },
-      );
-    });
-
-    test(
-        'AC#1 @Parent — parent root route is still present at the top level',
-        () async {
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/post.dart', _parentChildSource),
-        outputs: {
-          'a|lib/post.routes.dart': decodedMatches(
-            contains("path: '/posts'"),
-          ),
-        },
-      );
-    });
-
-    test(
-        'AC#1 @Parent — create route for child entity passes parent ID',
-        () async {
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/post.dart', _parentChildSource),
-        outputs: {
-          'a|lib/post.routes.dart': decodedMatches(allOf(
-            contains("CommentCreateScreen("),
-            contains("postId: int.parse(state.pathParameters['postId']!)"),
-          )),
-        },
-      );
-    });
-
-    test(
-        'AC#1 @Parent — edit route for child entity passes both id and parent ID',
-        () async {
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/post.dart', _parentChildSource),
-        outputs: {
-          'a|lib/post.routes.dart': decodedMatches(allOf(
-            contains("CommentEditScreen("),
-            contains("id: int.parse(state.pathParameters['id']!)"),
-            contains("postId: int.parse(state.pathParameters['postId']!)"),
-          )),
-        },
-      );
-    });
-
-    test('PF-24 child with a cross-file parent becomes a top-level route',
-        () async {
-      await testBuilder(
-        routesBuilder(BuilderOptions.empty),
-        _crossFile(_crossFileCommentSource),
-        outputs: {
-          'a|lib/comment.routes.dart': decodedMatches(
-            allOf(
-              contains("path: '/posts/:postId/comments'"),
-              contains('CommentListScreen('),
-              contains("postId: int.parse(state.pathParameters['postId']!)"),
+      'AC#1 @Parent — child list route is nested under parent :id route',
+      () async {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          _assets('a', 'lib/post.dart', _parentChildSource),
+          outputs: {
+            'a|lib/post.routes.dart': decodedMatches(
+              contains("path: 'comments'"),
             ),
-          ),
-          'a|lib/post.routes.dart': anything,
-        },
-      );
-    });
+          },
+        );
+      },
+    );
+
+    test(
+      'AC#1 @Parent — child ListScreen receives the parent ID from route',
+      () async {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          _assets('a', 'lib/post.dart', _parentChildSource),
+          outputs: {
+            'a|lib/post.routes.dart': decodedMatches(
+              allOf(
+                contains('CommentListScreen('),
+                contains("postId: int.parse(state.pathParameters['postId']!)"),
+              ),
+            ),
+          },
+        );
+      },
+    );
+
+    test(
+      'AC#1 @Parent — child DetailScreen receives both id and parent ID',
+      () async {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          _assets('a', 'lib/post.dart', _parentChildSource),
+          outputs: {
+            'a|lib/post.routes.dart': decodedMatches(
+              allOf(
+                contains("CommentDetailScreen("),
+                contains("postId: int.parse(state.pathParameters['postId']!)"),
+              ),
+            ),
+          },
+        );
+      },
+    );
+
+    test(
+      'AC#1 @Parent — parent root route is still present at the top level',
+      () async {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          _assets('a', 'lib/post.dart', _parentChildSource),
+          outputs: {
+            'a|lib/post.routes.dart': decodedMatches(
+              contains("path: '/posts'"),
+            ),
+          },
+        );
+      },
+    );
+
+    test(
+      'AC#1 @Parent — create route for child entity passes parent ID',
+      () async {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          _assets('a', 'lib/post.dart', _parentChildSource),
+          outputs: {
+            'a|lib/post.routes.dart': decodedMatches(
+              allOf(
+                contains("CommentCreateScreen("),
+                contains("postId: int.parse(state.pathParameters['postId']!)"),
+              ),
+            ),
+          },
+        );
+      },
+    );
+
+    test(
+      'AC#1 @Parent — edit route for child entity passes both id and parent ID',
+      () async {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          _assets('a', 'lib/post.dart', _parentChildSource),
+          outputs: {
+            'a|lib/post.routes.dart': decodedMatches(
+              allOf(
+                contains("CommentEditScreen("),
+                contains("id: int.parse(state.pathParameters['id']!)"),
+                contains("postId: int.parse(state.pathParameters['postId']!)"),
+              ),
+            ),
+          },
+        );
+      },
+    );
+
+    test(
+      'PF-24 child with a cross-file parent becomes a top-level route',
+      () async {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          _crossFile(_crossFileCommentSource),
+          outputs: {
+            'a|lib/comment.routes.dart': decodedMatches(
+              allOf(
+                contains("path: '/posts/:postId/comments'"),
+                contains('CommentListScreen('),
+                contains("postId: int.parse(state.pathParameters['postId']!)"),
+              ),
+            ),
+            'a|lib/post.routes.dart': anything,
+          },
+        );
+      },
+    );
   });
 }

@@ -158,19 +158,38 @@ time and date-time pickers in PF-17.
 
 ## Validators
 
-`Validator` values are combined in the field's `form: FormOptions(validators: [...])` list and checked in
-order; the first failing check shows its message.
+`Validator` is a sealed class. Parameterless rules are static constants
+(`Validator.email`); rules with a value are const factories
+(`Validator.min(0)`). Rules are combined in the field's `form: FormOptions(validators: [...])` list and
+checked in order; the first failing check shows its message.
 
-| Value | Check | Message |
+| Validator | Check | Default message |
 |---|---|---|
-| `required` | value is not empty | `Required` |
-| `email` | matches `^[^@\s]+@[^@\s]+\.[^@\s]+$` | `Invalid email address` |
-| `positiveNumber` | parses as a number greater than 0 | `Must be a positive number` |
-| `url` | parses as an absolute URI | `Invalid URL` |
+| `Validator.required` | value is not empty | `Required` |
+| `Validator.email` | matches `^[^@\s]+@[^@\s]+\.[^@\s]+$` | `Invalid email address` |
+| `Validator.url` | parses as an absolute URI | `Invalid URL` |
+| `Validator.positive` | parses as a number greater than 0 (`positiveNumber` is a kept alias) | `Must be a positive number` |
+| `Validator.nonNegative` | parses as a number >= 0 | `Must not be negative` |
+| `Validator.min(n)` | parses as a number >= `n` | `Must be at least n` |
+| `Validator.max(n)` | parses as a number <= `n` | `Must be at most n` |
+| `Validator.minLength(n)` | at least `n` characters | `Must be at least n characters` |
+| `Validator.maxLength(n)` | at most `n` characters | `Must be at most n characters` |
+| `Validator.pattern(regex)` | matches the regular expression | `Invalid format` |
 
-Validators are not applied to non-nullable `toggle` fields. On `dropdown` fields
-only the required check applies (`Required` when no option is selected); the
-other validators are ignored there.
+Every validator accepts a custom message. The factories take
+`message:` (`Validator.min(0, message: 'No negatives')`,
+`Validator.pattern(r'^[A-Z]+$', message: 'Capitals only')`); for the constants
+use the class constructor, e.g. `RequiredValidator(message: 'Name needed')`,
+`EmailValidator(message: ...)`, `UrlValidator`, `PositiveValidator`,
+`NonNegativeValidator`.
+
+Checks depend on the rendered widget:
+
+- Text, multiline and password fields support every validator.
+- On `dropdown` fields (and nullable `toggle` fields) only `required` applies;
+  it checks `value == null`.
+- Using any other validator on a dropdown, toggle or date picker field fails the
+  build with an error naming the field.
 
 ### Nullable and optional fields
 
@@ -186,7 +205,6 @@ The nullability of the Dart type decides whether a field is required:
 | Nullable `DateTime` | Date picker, starts empty | `—` when `null` |
 
 The edit form prefills nullable fields null-safely (`item.x ?? ''`).
-Parameterised validators such as `min(0)` or `pattern(...)` are planned in PF-31.
 
 ### Saving
 

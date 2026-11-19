@@ -101,20 +101,24 @@ class FormScreenGenerator extends Generator {
     final entity = manifest.entityName;
 
     buffer.writeln(
-        'class ${entity}CreateScreen extends ConsumerStatefulWidget {');
+      'class ${entity}CreateScreen extends ConsumerStatefulWidget {',
+    );
     if (manifest.hasParent) {
       buffer.writeln(
-          '  final ${manifest.parentField!.dartType} ${manifest.parentParamName};');
+        '  final ${manifest.parentField!.dartType} ${manifest.parentParamName};',
+      );
       buffer.writeln();
       buffer.writeln(
-          '  const ${entity}CreateScreen({super.key, required this.${manifest.parentParamName}});');
+        '  const ${entity}CreateScreen({super.key, required this.${manifest.parentParamName}});',
+      );
     } else {
       buffer.writeln('  const ${entity}CreateScreen({super.key});');
     }
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln(
-        '  ConsumerState<${entity}CreateScreen> createState() => _${entity}CreateScreenState();');
+      '  ConsumerState<${entity}CreateScreen> createState() => _${entity}CreateScreenState();',
+    );
     buffer.writeln('}');
     buffer.writeln();
 
@@ -135,24 +139,29 @@ class FormScreenGenerator extends Generator {
   void _writeEditScreen(EntityManifest manifest, StringBuffer buffer) {
     final entity = manifest.entityName;
 
-    buffer
-        .writeln('class ${entity}EditScreen extends ConsumerStatefulWidget {');
+    buffer.writeln(
+      'class ${entity}EditScreen extends ConsumerStatefulWidget {',
+    );
     buffer.writeln('  final ${manifest.idType} id;');
     buffer.writeln();
     if (manifest.hasParent) {
       buffer.writeln(
-          '  final ${manifest.parentField!.dartType} ${manifest.parentParamName};');
+        '  final ${manifest.parentField!.dartType} ${manifest.parentParamName};',
+      );
       buffer.writeln();
       buffer.writeln(
-          '  const ${entity}EditScreen({super.key, required this.id, required this.${manifest.parentParamName}});');
+        '  const ${entity}EditScreen({super.key, required this.id, required this.${manifest.parentParamName}});',
+      );
     } else {
       buffer.writeln(
-          '  const ${entity}EditScreen({super.key, required this.id});');
+        '  const ${entity}EditScreen({super.key, required this.id});',
+      );
     }
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln(
-        '  ConsumerState<${entity}EditScreen> createState() => _${entity}EditScreenState();');
+      '  ConsumerState<${entity}EditScreen> createState() => _${entity}EditScreenState();',
+    );
     buffer.writeln('}');
     buffer.writeln();
 
@@ -181,7 +190,8 @@ class FormScreenGenerator extends Generator {
     final fields = manifest.formFields;
 
     buffer.writeln(
-        'class $stateClassName extends ConsumerState<$widgetClassName> {');
+      'class $stateClassName extends ConsumerState<$widgetClassName> {',
+    );
     buffer.writeln('  final _formKey = GlobalKey<FormState>();');
 
     buffer.writeln('  bool _saving = false;');
@@ -194,18 +204,22 @@ class FormScreenGenerator extends Generator {
       final kind = _resolveWidgetKind(field);
       switch (kind) {
         case _WidgetKind.toggle:
-          buffer.writeln(field.isNullable
-              ? '  bool? _${field.name}Value;'
-              : '  bool _${field.name}Value = false;');
+          buffer.writeln(
+            field.isNullable
+                ? '  bool? _${field.name}Value;'
+                : '  bool _${field.name}Value = false;',
+          );
         case _WidgetKind.datePicker:
           buffer.writeln(
-              '  final _${field.name}Controller = TextEditingController();');
+            '  final _${field.name}Controller = TextEditingController();',
+          );
           buffer.writeln('  DateTime? _${field.name}Value;');
         case _WidgetKind.dropdown:
           buffer.writeln('  ${field.dartType}? _${field.name}Value;');
         default:
           buffer.writeln(
-              '  final _${field.name}Controller = TextEditingController();');
+            '  final _${field.name}Controller = TextEditingController();',
+          );
       }
     }
 
@@ -249,7 +263,10 @@ class FormScreenGenerator extends Generator {
 
   /// Emits the body of [build] for the Create screen (no provider prefill).
   void _writeCreateBuildBody(
-      EntityManifest manifest, String saveButtonLabel, StringBuffer buffer) {
+    EntityManifest manifest,
+    String saveButtonLabel,
+    StringBuffer buffer,
+  ) {
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
@@ -273,14 +290,18 @@ class FormScreenGenerator extends Generator {
   /// provider, prefills controllers once, and wraps the form in
   /// [AsyncValue.when].
   void _writeEditBuildBody(
-      EntityManifest manifest, String saveButtonLabel, StringBuffer buffer) {
+    EntityManifest manifest,
+    String saveButtonLabel,
+    StringBuffer buffer,
+  ) {
     final entityLower = manifest.entityNameLower;
 
     final detailArg = manifest.hasParent
         ? '((widget.id, widget.${manifest.parentParamName}))'
         : '(widget.id)';
     buffer.writeln(
-        '    final asyncItem = ref.watch(${entityLower}DetailProvider$detailArg);');
+      '    final asyncItem = ref.watch(${entityLower}DetailProvider$detailArg);',
+    );
     buffer.writeln('    asyncItem.whenData((item) {');
     buffer.writeln('      if (!_prefilled) {');
     buffer.writeln('        _prefilled = true;');
@@ -293,9 +314,11 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('      ),');
     buffer.writeln('      body: asyncItem.when(');
     buffer.writeln(
-        '        loading: () => const Center(child: CircularProgressIndicator()),');
-    buffer
-        .writeln('        error: (e, _) => Center(child: Text(e.toString())),');
+      '        loading: () => const Center(child: CircularProgressIndicator()),',
+    );
+    buffer.writeln(
+      '        error: (e, _) => Center(child: Text(e.toString())),',
+    );
     buffer.writeln('        data: (_) => Form(');
     buffer.writeln('          key: _formKey,');
     buffer.writeln('          child: ListView(');
@@ -521,7 +544,8 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('            TextFormField(');
     buffer.writeln('              controller: _${field.name}Controller,');
     buffer.writeln(
-        "              decoration: const InputDecoration(labelText: '${field.label}'),");
+      "              decoration: const InputDecoration(labelText: '${field.label}'),",
+    );
     _writeValidators(field, buffer);
     buffer.writeln('            ),');
   }
@@ -532,7 +556,8 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('              maxLines: null,');
     buffer.writeln('              keyboardType: TextInputType.multiline,');
     buffer.writeln(
-        "              decoration: const InputDecoration(labelText: '${field.label}'),");
+      "              decoration: const InputDecoration(labelText: '${field.label}'),",
+    );
     _writeValidators(field, buffer);
     buffer.writeln('            ),');
   }
@@ -542,7 +567,8 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('              controller: _${field.name}Controller,');
     buffer.writeln('              obscureText: true,');
     buffer.writeln(
-        "              decoration: const InputDecoration(labelText: '${field.label}'),");
+      "              decoration: const InputDecoration(labelText: '${field.label}'),",
+    );
     _writeValidators(field, buffer);
     buffer.writeln('            ),');
   }
@@ -552,12 +578,14 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('              controller: _${field.name}Controller,');
     buffer.writeln('              readOnly: true,');
     buffer.writeln(
-        "              decoration: const InputDecoration(labelText: '${field.label}'),");
+      "              decoration: const InputDecoration(labelText: '${field.label}'),",
+    );
     buffer.writeln('              onTap: () async {');
     buffer.writeln('                final picked = await showDatePicker(');
     buffer.writeln('                  context: context,');
     buffer.writeln(
-        '                  initialDate: _${field.name}Value ?? DateTime.now(),');
+      '                  initialDate: _${field.name}Value ?? DateTime.now(),',
+    );
     buffer.writeln('                  firstDate: DateTime(2000),');
     buffer.writeln('                  lastDate: DateTime(2100),');
     buffer.writeln('                );');
@@ -565,7 +593,8 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('                  setState(() {');
     buffer.writeln('                    _${field.name}Value = picked;');
     buffer.writeln(
-        '                    _${field.name}Controller.text = picked.toIso8601String();');
+      '                    _${field.name}Controller.text = picked.toIso8601String();',
+    );
     buffer.writeln('                  });');
     buffer.writeln('                }');
     buffer.writeln('              },');
@@ -574,51 +603,64 @@ class FormScreenGenerator extends Generator {
   }
 
   void _writeDropdownField(FieldManifest field, StringBuffer buffer) {
+    _checkValidatorsFor(field);
     final type = field.dartType;
     buffer.writeln('            DropdownButtonFormField<$type>(');
     buffer.writeln('              value: _${field.name}Value,');
     buffer.writeln(
-        "              decoration: const InputDecoration(labelText: '${field.label}'),");
+      "              decoration: const InputDecoration(labelText: '${field.label}'),",
+    );
     buffer.writeln('              items: [');
     if (field.isNullable) {
       buffer.writeln(
-          "                const DropdownMenuItem<$type>(value: null, child: Text('')),");
+        "                const DropdownMenuItem<$type>(value: null, child: Text('')),",
+      );
     }
     buffer.writeln(
-        '                ...$type.values.map((v) => DropdownMenuItem<$type>(');
+      '                ...$type.values.map((v) => DropdownMenuItem<$type>(',
+    );
     buffer.writeln('                  value: v,');
     buffer.writeln('                  child: Text(v.name),');
     buffer.writeln('                )),');
     buffer.writeln('              ],');
     buffer.writeln(
-        '              onChanged: (v) => setState(() => _${field.name}Value = v),');
+      '              onChanged: (v) => setState(() => _${field.name}Value = v),',
+    );
     if (field.isRequired) {
       buffer.writeln(
-          "              validator: (value) => value == null ? 'Required' : null,");
+        "              validator: (value) => value == null ? ${_requiredMessage(field)} : null,",
+      );
     }
     buffer.writeln('            ),');
   }
 
   void _writeSwitchField(FieldManifest field, StringBuffer buffer) {
+    _checkValidatorsFor(field);
     if (field.isNullable) {
       // Nullable bool: dropdown with an empty (null) option.
       buffer.writeln('            DropdownButtonFormField<bool>(');
       buffer.writeln('              value: _${field.name}Value,');
       buffer.writeln(
-          "              decoration: const InputDecoration(labelText: '${field.label}'),");
+        "              decoration: const InputDecoration(labelText: '${field.label}'),",
+      );
       buffer.writeln('              items: const [');
       buffer.writeln(
-          "                DropdownMenuItem<bool>(value: null, child: Text('')),");
+        "                DropdownMenuItem<bool>(value: null, child: Text('')),",
+      );
       buffer.writeln(
-          "                DropdownMenuItem<bool>(value: true, child: Text('Yes')),");
+        "                DropdownMenuItem<bool>(value: true, child: Text('Yes')),",
+      );
       buffer.writeln(
-          "                DropdownMenuItem<bool>(value: false, child: Text('No')),");
+        "                DropdownMenuItem<bool>(value: false, child: Text('No')),",
+      );
       buffer.writeln('              ],');
       buffer.writeln(
-          '              onChanged: (v) => setState(() => _${field.name}Value = v),');
-      if (field.validators.contains(Validator.required)) {
+        '              onChanged: (v) => setState(() => _${field.name}Value = v),',
+      );
+      if (field.validators.any((v) => v is RequiredValidator)) {
         buffer.writeln(
-            "              validator: (value) => value == null ? 'Required' : null,");
+          "              validator: (value) => value == null ? ${_requiredMessage(field)} : null,",
+        );
       }
       buffer.writeln('            ),');
       return;
@@ -627,7 +669,8 @@ class FormScreenGenerator extends Generator {
     buffer.writeln("              title: const Text('${field.label}'),");
     buffer.writeln('              value: _${field.name}Value,');
     buffer.writeln(
-        '              onChanged: (v) => setState(() => _${field.name}Value = v),');
+      '              onChanged: (v) => setState(() => _${field.name}Value = v),',
+    );
     buffer.writeln('            ),');
   }
 
@@ -635,28 +678,71 @@ class FormScreenGenerator extends Generator {
   // Validator check lines
   // ---------------------------------------------------------------------------
 
+  /// Escapes [value] as a single-quoted Dart string literal.
+  String _lit(String value) {
+    final escaped = value
+        .replaceAll(r'\', r'\\')
+        .replaceAll("'", r"\'")
+        .replaceAll(r'$', r'\$')
+        .replaceAll('\n', r'\n')
+        .replaceAll('\r', r'\r');
+    return "'$escaped'";
+  }
+
+  /// Rejects text-only validators on widgets that are not text inputs.
+  void _checkValidatorsFor(FieldManifest field) {
+    final kind = _resolveWidgetKind(field);
+    final isText = kind == _WidgetKind.text ||
+        kind == _WidgetKind.multilineText ||
+        kind == _WidgetKind.password;
+    if (isText) return;
+    for (final v in field.validators) {
+      if (v is! RequiredValidator) {
+        throw InvalidGenerationSourceError(
+          '${v.runtimeType} cannot be used on "${field.name}" because it '
+          'renders as a ${kind.name} field. Only Validator.required is '
+          'supported there.',
+        );
+      }
+    }
+  }
+
+  /// Quoted message of the `required` check (custom or `'Required'`).
+  String _requiredMessage(FieldManifest field) => _lit(
+        field.validators
+                .whereType<RequiredValidator>()
+                .map((v) => v.message)
+                .firstOrNull ??
+            'Required',
+      );
+
   void _writeValidators(FieldManifest field, StringBuffer buffer) {
+    _checkValidatorsFor(field);
     // `required` always runs first (or an empty-is-valid guard for optional
     // fields), so `value` is promoted to a non-null String for the others.
-    final validators = [
-      if (field.isRequired) Validator.required,
-      ...field.validators.where((v) => v != Validator.required),
-    ];
+    final others =
+        field.validators.where((v) => v is! RequiredValidator).toList();
     final numeric = _isNumericText(field);
-    if (validators.isEmpty && !numeric) return;
+    if (!field.isRequired && others.isEmpty && !numeric) return;
     buffer.writeln('              validator: (value) {');
-    if (!field.isRequired) {
+    if (field.isRequired) {
+      buffer.writeln(
+        "                if (value == null || value.isEmpty) return ${_requiredMessage(field)};",
+      );
+    } else {
       // Optional field: an empty value is valid, skip the other checks.
       buffer.writeln(
-          "                if (value == null || value.isEmpty) return null;");
+        "                if (value == null || value.isEmpty) return null;",
+      );
     }
     if (numeric) {
       // Parseability check so the save handler can parse safely.
       final isInt = field.dartType == 'int';
       buffer.writeln(
-          "                if (${field.dartType}.tryParse(value) == null) return '${isInt ? 'Must be a whole number' : 'Must be a number'}';");
+        "                if (${field.dartType}.tryParse(value) == null) return '${isInt ? 'Must be a whole number' : 'Must be a number'}';",
+      );
     }
-    for (final validator in validators) {
+    for (final validator in others) {
       _writeValidatorCheck(validator, buffer);
     }
     buffer.writeln('                return null;');
@@ -668,23 +754,50 @@ class FormScreenGenerator extends Generator {
       const {'int', 'double', 'num'}.contains(field.dartType);
 
   void _writeValidatorCheck(Validator validator, StringBuffer buffer) {
+    String msg(String fallback) => _lit(validator.message ?? fallback);
+    const i = '                ';
     switch (validator) {
-      case Validator.required:
+      case RequiredValidator():
+        break; // handled by _writeValidators
+      case EmailValidator():
         buffer.writeln(
-            "                if (value == null || value.isEmpty) return 'Required';");
-      case Validator.email:
+          "${i}if (!RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+\$').hasMatch(value)) return ${msg('Invalid email address')};",
+        );
+      case UrlValidator():
+        buffer.writeln('$i{');
+        buffer.writeln('$i  final uri = Uri.tryParse(value);');
         buffer.writeln(
-            r"                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) return 'Invalid email address';");
-      case Validator.positiveNumber:
-        buffer
-            .writeln("                final n = double.tryParse(value);");
+          "$i  if (uri == null || !uri.isAbsolute) return ${msg('Invalid URL')};",
+        );
+        buffer.writeln('$i}');
+      case PositiveValidator():
+        _writeNumberCheck(buffer, '<= 0', msg('Must be a positive number'));
+      case NonNegativeValidator():
+        _writeNumberCheck(buffer, '< 0', msg('Must not be negative'));
+      case MinValidator(:final value):
+        _writeNumberCheck(buffer, '< $value', msg('Must be at least $value'));
+      case MaxValidator(:final value):
+        _writeNumberCheck(buffer, '> $value', msg('Must be at most $value'));
+      case MinLengthValidator(:final length):
         buffer.writeln(
-            "                if (n == null || n <= 0) return 'Must be a positive number';");
-      case Validator.url:
-        buffer
-            .writeln("                final uri = Uri.tryParse(value);");
+          "${i}if (value.length < $length) return ${msg('Must be at least $length characters')};",
+        );
+      case MaxLengthValidator(:final length):
         buffer.writeln(
-            "                if (uri == null || !uri.isAbsolute) return 'Invalid URL';");
+          "${i}if (value.length > $length) return ${msg('Must be at most $length characters')};",
+        );
+      case PatternValidator(:final regex):
+        buffer.writeln(
+          "${i}if (!RegExp(${_lit(regex)}).hasMatch(value)) return ${msg('Invalid format')};",
+        );
     }
+  }
+
+  void _writeNumberCheck(StringBuffer buffer, String failWhen, String message) {
+    const i = '                ';
+    buffer.writeln('$i{');
+    buffer.writeln('$i  final n = double.tryParse(value);');
+    buffer.writeln('$i  if (n == null || n $failWhen) return $message;');
+    buffer.writeln('$i}');
   }
 }
