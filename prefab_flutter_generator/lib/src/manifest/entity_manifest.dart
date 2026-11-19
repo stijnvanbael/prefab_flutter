@@ -8,6 +8,7 @@ const _updateChecker = TypeChecker.fromRuntime(Update);
 const _deleteChecker = TypeChecker.fromRuntime(Delete);
 const _formFieldChecker = TypeChecker.fromRuntime(FormField);
 const _idChecker = TypeChecker.fromRuntime(Id);
+const _viewChecker = TypeChecker.fromRuntime(View);
 const _parentChecker = TypeChecker.fromRuntime(Parent);
 
 /// Summarises everything the generators need to know about a single
@@ -39,6 +40,20 @@ class EntityManifest {
 
   /// Dart type of the identifier field (e.g. `'String'` or `'int'`).
   final String idType;
+  /// Class name of the parent entity named in `@Parent(Type)`, or `null`.
+  final String? parentEntityName;
+
+  /// URL path of the parent entity (from the parent's `@View.path`).
+  final String? parentPath;
+
+  /// Title of the parent entity (from the parent's `@View.title`).
+  final String? parentTitle;
+
+  /// Dart type of the parent's `id` field (e.g. `'int'`).
+  final String? parentIdType;
+
+  /// Whether the parent is declared in the same library as this entity.
+  final bool parentInSameLibrary;
 
   EntityManifest({
     required this.entityName,
@@ -49,6 +64,11 @@ class EntityManifest {
     required this.fields,
     this.idFieldName = 'id',
     this.idType = 'String',
+    this.parentEntityName,
+    this.parentPath,
+    this.parentTitle,
+    this.parentIdType,
+    this.parentInSameLibrary = true,
   }) : entityNameLower = _toLowerCamel(entityName);
 
   // ---------------------------------------------------------------------------
@@ -84,20 +104,11 @@ class EntityManifest {
   /// Whether this entity has a parent reference.
   bool get hasParent => parentField != null;
 
-  /// Lower-camel-case name of the parent entity, derived from the [@Parent]
-  /// field name by stripping a trailing `'Id'` suffix (case-sensitive).
+  /// Lower-camel-case name of the parent entity named in `@Parent(Type)`.
   ///
-  /// **Convention**: the [@Parent] field must be named `{parentEntityLower}Id`
-  /// (e.g. `postId` for a `Post` parent, `orderId` for an `Order` parent).
-  ///
-  /// Example: `'postId'` → `'post'`.
-  String? get parentEntityNameLower {
-    final pf = parentField;
-    if (pf == null) return null;
-    final name = pf.name;
-    if (name.endsWith('Id')) return name.substring(0, name.length - 2);
-    return name;
-  }
+  /// Example: `Post` → `'post'`.
+  String? get parentEntityNameLower =>
+      parentEntityName == null ? null : _toLowerCamel(parentEntityName!);
 
   /// The Dart parameter name used for the parent ID (same as the field name).
   ///
@@ -151,6 +162,8 @@ class EntityManifest {
     }
 
     final fields = <FieldManifest>[];
+    ClassElement? parentElement;
+    String? parentPath, parentTitle, parentIdType;
     for (final field in instanceFields) {
       if (field == idField) continue;
 
@@ -165,7 +178,50 @@ class EntityManifest {
           : labelReader.stringValue;
 
       final hidden = reader.read('hidden').boolValue;
-      final isParent = _parentChecker.hasAnnotationOf(field);
+      final parentAnnotation = _parentChecker.firstAnnotationOf(field);
+      final isParent = parentAnnotation != null;
+      if (isParent) {
+        if (parentElement != null) {
+          throw InvalidGenerationSourceError(
+            'Entity "${element.name}" has more than one @Parent field; '
+            'only one level of nesting is supported.',
+            element: field,
+          );
+        }
+        final parentType = parentAnnotation.getField('type')?.toTypeValue();
+        final parentTypeElement = parentType?.element;
+        if (parentTypeElement is! ClassElement) {
+          throw InvalidGenerationSourceError(
+            '@Parent on "${field.name}" must reference an entity class, '
+            'e.g. @Parent(Post).',
+            element: field,
+          );
+        }
+        final parentView = _viewChecker.firstAnnotationOf(parentTypeElement);
+        if (parentView == null) {
+          throw InvalidGenerationSourceError(
+            '@Parent(${parentTypeElement.name}) on "${field.name}" references '
+            'a class without a @View annotation. Annotate '
+            '"${parentTypeElement.name}" with @View.',
+            element: field,
+          );
+        }
+        final parentViewReader = ConstantReader(parentView);
+        parentPath = parentViewReader.read('path').stringValue;
+        parentTitle = parentViewReader.read('title').stringValue;
+        final parentIdField = _findIdField(parentTypeElement);
+        parentIdType =
+            parentIdField?.type.getDisplayString(withNullability: false);
+        final fieldType = field.type.getDisplayString(withNullability: false);
+        if (parentIdType != null && parentIdType != fieldType) {
+          throw InvalidGenerationSourceError(
+            'Type mismatch: "${field.name}" is "$fieldType" but '
+            '"${parentTypeElement.name}.${parentIdField?.name}" is "$parentIdType".',
+            element: field,
+          );
+        }
+        parentElement = parentTypeElement;
+      }
 
       final validatorsObjList = reader.read('validators').listValue;
       final validators = validatorsObjList
@@ -209,12 +265,26 @@ class EntityManifest {
       fields: fields,
       idFieldName: idField.name,
       idType: idType,
+      parentEntityName: parentElement?.name,
+      parentPath: parentPath,
+      parentTitle: parentTitle,
+      parentIdType: parentIdType,
+      parentInSameLibrary:
+          parentElement == null || parentElement.library == element.library,
     );
   }
 
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
+
+  /// The identifier field of [cls]: the [@Id] field, otherwise a field `id`.
+  static FieldElement? _findIdField(ClassElement cls) {
+    final fields = cls.fields.where((f) => !f.isStatic && !f.isSynthetic);
+    final annotated = fields.where(_idChecker.hasAnnotationOf);
+    if (annotated.isNotEmpty) return annotated.first;
+    return fields.where((f) => f.name == 'id').firstOrNull;
+  }
 
   static String _toLowerCamel(String name) {
     if (name.isEmpty) return name;

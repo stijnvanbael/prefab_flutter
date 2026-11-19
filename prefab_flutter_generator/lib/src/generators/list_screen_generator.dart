@@ -39,7 +39,6 @@ class ListScreenGenerator extends Generator {
     buffer.writeln();
 
     for (final manifest in manifests) {
-      paths.parentOf(manifest); // throws when the parent is missing
       _writeListScreenClass(manifest, paths, buffer);
       buffer.writeln();
     }

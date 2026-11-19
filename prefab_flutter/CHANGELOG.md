@@ -1,6 +1,7 @@
 ## Unreleased
 
 * Added `@Id` annotation; ids are typed (`String`/`int`) instead of `Object` (PF-23).
+* `@Parent` now takes the parent entity type: `@Parent(Post)`; the parent may live in another source file.
 
 ## 0.1.0
 

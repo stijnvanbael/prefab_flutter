@@ -36,8 +36,6 @@ class ApiClientGenerator extends Generator {
     }
 
     final sourceFileName = buildStep.inputId.path.split('/').last;
-    // Map entityNameLower → manifest for parent look-up.
-    final byName = {for (final m in manifests) m.entityNameLower: m};
 
     final buffer = StringBuffer();
     _writeHeader(buffer);
@@ -45,21 +43,7 @@ class ApiClientGenerator extends Generator {
     buffer.writeln();
 
     for (final manifest in manifests) {
-      final parentName = manifest.parentEntityNameLower;
-      EntityManifest? parentManifest;
-      if (parentName != null) {
-        parentManifest = byName[parentName];
-        if (parentManifest == null) {
-          throw InvalidGenerationSourceError(
-            'Entity "${manifest.entityName}" has a @Parent field referencing '
-            '"$parentName", but no @View-annotated class with that name was '
-            'found in the same source file. Define the parent entity in the '
-            'same source file as its children.',
-            element: null,
-          );
-        }
-      }
-      _writeApiClientClass(manifest, parentManifest, buffer);
+      _writeApiClientClass(manifest, buffer);
       buffer.writeln();
     }
 
@@ -98,7 +82,6 @@ class ApiClientGenerator extends Generator {
 
   void _writeApiClientClass(
     EntityManifest manifest,
-    EntityManifest? parentManifest,
     StringBuffer buffer,
   ) {
     final entity = manifest.entityName;
@@ -112,7 +95,7 @@ class ApiClientGenerator extends Generator {
 
     // The URL base path: '/parentPath/$parentParam/path' or '/path'.
     final parentPath =
-        parentManifest?.path ?? '${manifest.parentEntityNameLower}s';
+        manifest.parentPath;
     final urlBase = hasParent
         ? '/$parentPath/\$$parentParamName/$path'
         : '/$path';

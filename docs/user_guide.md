@@ -122,11 +122,12 @@ final String description;
 ### `@Parent` (field)
 
 Marks the field that holds the id of the owning entity, making this entity a
-nested resource. See [Nested resources](#nested-resources).
+nested resource. The required argument is the parent entity class. See
+[Nested resources](#nested-resources).
 
 ```dart
 @FormField()
-@Parent()
+@Parent(Post)
 final int postId;
 ```
 
@@ -229,7 +230,7 @@ class Post {
 @View(title: 'Comment', path: 'comments')
 class Comment {
   final int id;
-  @FormField() @Parent() final int postId;
+  @FormField() @Parent(Post) final int postId;
   @FormField() final String body;
   Comment({required this.id, required this.postId, required this.body});
 }
@@ -237,10 +238,15 @@ class Comment {
 
 Rules:
 
-- The `@Parent` field must be named `{parentEntity}Id` in lower camel case
-  (`postId` for `Post`). The parent entity is found by stripping `Id`.
-  (A type-safe `@Parent(Post)` is planned in PF-24.)
-- The parent must be declared in the **same source file** as the child.
+- `@Parent(Post)` names the parent entity explicitly. The parent must carry a
+  `@View` annotation (its `path` is used in routes and API URLs); otherwise the
+  build fails.
+- The parent may be declared in the same file or in **another source file**.
+  A child whose parent lives in another file is registered as a top-level route
+  (`/posts/:postId/comments`) in its own routes getter (e.g. `$commentRoutes`)
+  instead of being nested inside the parent's route. Register both getters.
+- The type of the `@Parent` field must equal the type of the parent's `id`
+  field, otherwise the build fails.
 - Only one level of nesting is supported (PF-19 plans deeper chains).
 - The parent field is not shown in forms or the detail screen.
 

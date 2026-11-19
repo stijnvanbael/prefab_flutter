@@ -54,7 +54,8 @@ class FormField {
 ''',
   'prefab_flutter|lib/src/annotations/parent.dart': r'''
 class Parent {
-  const Parent();
+  final Type type;
+  const Parent(this.type);
 }
 ''',
   'prefab_flutter|lib/src/enums/field_widget.dart': r'''
@@ -153,7 +154,7 @@ class Post {
 class Comment {
   final int id;
 
-  @Parent()
+  @Parent(Post)
   @FormField(hidden: true)
   final int postId;
 
@@ -163,6 +164,42 @@ class Comment {
   Comment({required this.id, required this.postId, required this.content});
 }
 ''';
+
+
+const _postFileSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Post', path: 'posts')
+class Post {
+  final int id;
+  @FormField(label: 'Title')
+  final String title;
+  Post({required this.id, required this.title});
+}
+''';
+
+const _crossFileCommentSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+import 'post.dart';
+
+@View(title: 'Comment', path: 'comments')
+@Update()
+class Comment {
+  final int id;
+  @Parent(Post)
+  @FormField(hidden: true)
+  final int postId;
+  @FormField(label: 'Content')
+  final String content;
+  Comment({required this.id, required this.postId, required this.content});
+}
+''';
+
+Map<String, Object> _crossFile(String commentSource) => {
+      ...Map<String, Object>.from(_prefabSources),
+      'a|lib/post.dart': _postFileSource,
+      'a|lib/comment.dart': commentSource,
+    };
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -519,6 +556,24 @@ class Plain {}
             contains("id: int.parse(state.pathParameters['id']!)"),
             contains("postId: int.parse(state.pathParameters['postId']!)"),
           )),
+        },
+      );
+    });
+
+    test('PF-24 child with a cross-file parent becomes a top-level route',
+        () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _crossFile(_crossFileCommentSource),
+        outputs: {
+          'a|lib/comment.routes.dart': decodedMatches(
+            allOf(
+              contains("path: '/posts/:postId/comments'"),
+              contains('CommentListScreen('),
+              contains("postId: int.parse(state.pathParameters['postId']!)"),
+            ),
+          ),
+          'a|lib/post.routes.dart': anything,
         },
       );
     });
