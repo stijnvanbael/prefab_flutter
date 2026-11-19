@@ -6,7 +6,7 @@ import 'product.dart';
 part 'review.g.dart';
 
 @JsonSerializable()
-@View(title: 'Review', path: 'reviews')
+@View()
 @Create()
 @Update()
 @Delete()

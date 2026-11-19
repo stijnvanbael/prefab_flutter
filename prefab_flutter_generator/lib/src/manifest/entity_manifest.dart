@@ -301,8 +301,8 @@ class EntityManifest {
     ClassElement element,
     ConstantReader viewAnnotation,
   ) {
-    final title = viewAnnotation.read('title').stringValue;
-    final path = viewAnnotation.read('path').stringValue;
+    final title = viewTitle(viewAnnotation, element.name);
+    final path = viewPath(viewAnnotation, element.name);
 
     final paged = viewAnnotation.peek('paged')?.boolValue ?? true;
 
@@ -395,8 +395,8 @@ class EntityManifest {
           );
         }
         final parentViewReader = ConstantReader(parentView);
-        parentPath = parentViewReader.read('path').stringValue;
-        parentTitle = parentViewReader.read('title').stringValue;
+        parentPath = viewPath(parentViewReader, parentTypeElement.name);
+        parentTitle = viewTitle(parentViewReader, parentTypeElement.name);
         final parentIdField = _findIdField(parentTypeElement);
         parentIdType = parentIdField?.type.getDisplayString(
           withNullability: false,
@@ -602,6 +602,48 @@ class EntityManifest {
     if (name.isEmpty) return name;
     return name[0].toLowerCase() + name.substring(1);
   }
+
+  /// The `@View.title` of an entity: the explicit value, or the class name in
+  /// title case (`ProductOrder` → `Product Order`).
+  static String viewTitle(ConstantReader view, String className) {
+    final explicit = view.peek('title');
+    if (explicit != null && !explicit.isNull) return explicit.stringValue;
+    return classNameWords(className).map(_capitalize).join(' ');
+  }
+
+  /// The `@View.path` of an entity: the explicit value, or the kebab-case
+  /// plural of the class name (`ProductOrder` → `product-orders`).
+  static String viewPath(ConstantReader view, String className) {
+    final explicit = view.peek('path');
+    if (explicit != null && !explicit.isNull) return explicit.stringValue;
+    return pluralizeKebab(className);
+  }
+
+  /// Splits a class name into words (`HTTPRequest` → `HTTP`, `Request`).
+  static List<String> classNameWords(String name) => RegExp(
+        r'[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+',
+      ).allMatches(name).map((m) => m[0]!).toList();
+
+  /// Kebab-case plural of a class name. The last word is pluralised:
+  /// consonant + `y` → `ies`; ending in `s`, `x`, `z`, `ch` or `sh` → `es`;
+  /// otherwise `s` is appended.
+  static String pluralizeKebab(String className) {
+    final words = classNameWords(className).map((w) => w.toLowerCase()).toList();
+    if (words.isEmpty) return className.toLowerCase();
+    final last = words.removeLast();
+    final String plural;
+    if (RegExp(r'[^aeiou]y$').hasMatch(last)) {
+      plural = '${last.substring(0, last.length - 1)}ies';
+    } else if (RegExp(r'(s|x|z|ch|sh)$').hasMatch(last)) {
+      plural = '${last}es';
+    } else {
+      plural = '${last}s';
+    }
+    return [...words, plural].join('-');
+  }
+
+  static String _capitalize(String w) =>
+      w.isEmpty ? w : w[0].toUpperCase() + w.substring(1);
 
   /// Converts a camelCase field name to a human-readable Title Case label.
   ///

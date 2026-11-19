@@ -44,14 +44,23 @@ a class that also has `@View`.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
-| `title` | `String` | yes | Shown in the AppBar of all generated screens |
-| `path` | `String` | yes | URL path segment for routes and the REST endpoint (e.g. `'products'`) |
+| `title` | `String?` | no (class name in title case: `ProductOrder` → `Product Order`) | Shown in the AppBar of all generated screens |
+| `path` | `String?` | no (kebab-case plural of the class name: `ProductOrder` → `product-orders`) | URL path segment for routes and the REST endpoint (e.g. `'products'`) |
 | `paged` | `bool` | no (`true`) | Page the list on the server. With `false` the list is requested in one go (no `page`/`size` parameters) and the list screen has no pagination bar |
 
 ```dart
-@View(title: 'Product', path: 'products')
+@View()                                      // title 'Product', path 'products'
+class Product { ... }
+
+@View(title: 'Product', path: 'products')    // explicit, same result
 class Product { ... }
 ```
+
+The default `path` pluralises the last word of the class name with a small
+rule: consonant + `y` → `ies` (`Category` → `categories`); ending in `s`,
+`x`, `z`, `ch` or `sh` → `es` (`Box` → `boxes`); otherwise `s` is appended.
+Irregular plurals (`Person`) need an explicit `path`. Explicit values are
+always used as given.
 
 The entity needs an identifier: a field annotated with [`@Id`](#id-field) or,
 failing that, a field named `id`. See [`@Id`](#id-field).
@@ -193,6 +202,11 @@ final int postId;
 | `dateTimePicker` | Read-only `TextFormField` that chains `showDatePicker` and `showTimePicker` | — (`DateTime` defaults to `datePicker`) |
 | `dropdown` | `DropdownButtonFormField` over `Type.values`, labelled with `name` | enum types |
 | `toggle` | `SwitchListTile` | `bool` |
+
+`auto` inference rules: `bool` → `toggle`; enum types → `dropdown`;
+`DateTime` → `datePicker`; `int`/`double`/`num` → `numberInput`; every other type
+(`String`, …) → a plain `TextFormField`. `multilineText`, `password`,
+`timePicker` and `dateTimePicker` are never inferred; set them explicitly.
 
 With `auto`, any other type (`String`, …) gets a plain `TextFormField`.
 Number fields reject non-numeric text ("Must be a whole number" / "Must be a

@@ -1,7 +1,16 @@
 /// Hint to the form-screen generator about which Flutter widget to render
 /// for a particular field.
 enum FieldWidget {
-  /// Infer the widget from the Dart type (default).
+  /// Infer the widget from the Dart type (default):
+  ///
+  /// - `bool` → [toggle]
+  /// - enum types → [dropdown]
+  /// - `DateTime` → [datePicker]
+  /// - `int`, `double`, `num` → [numberInput]
+  /// - any other type (`String`, …) → plain text field
+  ///
+  /// [multilineText], [password], [timePicker] and [dateTimePicker] are never
+  /// inferred; set them explicitly.
   auto,
 
   /// Multi-line [TextFormField].
