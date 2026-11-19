@@ -86,3 +86,32 @@ jobs:
 
       - name: Run tests
         run: flutter test
+
+  # -------------------------------------------------------------------------
+  # prefab_flutter_example — runs the generator and checks the generated code
+  # -------------------------------------------------------------------------
+  prefab_flutter_example:
+    name: prefab_flutter_example (build_runner + analyze + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prefab_flutter_example
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze (generated code must compile)
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests
+        run: flutter test

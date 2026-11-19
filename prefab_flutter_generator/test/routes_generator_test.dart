@@ -439,6 +439,21 @@ void main() {
       );
     });
 
+    test('PF-9 — create route is declared before the :id route', () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.routes.dart': decodedMatches(
+            predicate<String>(
+              (s) => s.indexOf("path: 'create'") < s.indexOf("path: ':id'"),
+              'create precedes :id',
+            ),
+          ),
+        },
+      );
+    });
+
     // AC#3 — Multiple entities produce one combined $prefabRoutes list
 
     test(

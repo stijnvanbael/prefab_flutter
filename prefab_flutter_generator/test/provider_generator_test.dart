@@ -295,7 +295,7 @@ void main() {
             allOf(
               contains('_load()'),
               contains('Future<void> create('),
-              contains('Future<void> update('),
+              contains('Future<void> updateEntity('),
               contains('Future<void> delete('),
             ),
           ),
@@ -475,7 +475,7 @@ void main() {
             allOf(
               matches(
                 RegExp(
-                  r'update\(Product product\) async \{\n[^}]*'
+                  r'updateEntity\(Product product\) async \{\n[^}]*'
                   r'ref\.invalidate\(productDetailProvider\(product\.id\)\);',
                 ),
               ),
