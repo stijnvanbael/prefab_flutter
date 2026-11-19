@@ -13,6 +13,13 @@ enum FieldWidget {
   /// Date picker backed by [showDatePicker].
   datePicker,
 
+  /// Time picker backed by [showTimePicker]. Supports `Duration` (time since
+  /// midnight) and `String` in `HH:mm` format.
+  timePicker,
+
+  /// Date picker followed by a time picker, for `DateTime` fields.
+  dateTimePicker,
+
   /// [DropdownButtonFormField] for enum fields.
   dropdown,
 

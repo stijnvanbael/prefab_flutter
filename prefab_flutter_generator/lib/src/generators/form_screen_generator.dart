@@ -9,7 +9,16 @@ import '../manifest/field_manifest.dart';
 const _viewChecker = TypeChecker.fromRuntime(View);
 
 /// Resolved widget kind after applying [FieldWidget.auto] type inference.
-enum _WidgetKind { text, multilineText, password, datePicker, dropdown, toggle }
+enum _WidgetKind {
+  text,
+  multilineText,
+  password,
+  datePicker,
+  timePicker,
+  dateTimePicker,
+  dropdown,
+  toggle,
+}
 
 /// Generates `{Entity}CreateScreen` and `{Entity}EditScreen` [ConsumerWidget]s
 /// for every class annotated with [@View] that also carries [@Update].
@@ -51,10 +60,28 @@ class FormScreenGenerator extends Generator {
   // ---------------------------------------------------------------------------
 
   _WidgetKind _resolveWidgetKind(FieldManifest field) {
+    if (field.fieldWidget == FieldWidget.timePicker &&
+        field.dartType != 'Duration' &&
+        field.dartType != 'String') {
+      throw InvalidGenerationSourceError(
+        'Field "${field.name}" uses FieldWidget.timePicker but has type '
+        '${field.dartType}. timePicker supports Duration (time since '
+        'midnight) and String in HH:mm format.',
+      );
+    }
+    if (field.fieldWidget == FieldWidget.dateTimePicker &&
+        field.dartType != 'DateTime') {
+      throw InvalidGenerationSourceError(
+        'Field "${field.name}" uses FieldWidget.dateTimePicker but has type '
+        '${field.dartType}. dateTimePicker supports DateTime.',
+      );
+    }
     return switch (field.fieldWidget) {
       FieldWidget.multilineText => _WidgetKind.multilineText,
       FieldWidget.password => _WidgetKind.password,
       FieldWidget.datePicker => _WidgetKind.datePicker,
+      FieldWidget.timePicker => _WidgetKind.timePicker,
+      FieldWidget.dateTimePicker => _WidgetKind.dateTimePicker,
       FieldWidget.dropdown => _WidgetKind.dropdown,
       FieldWidget.toggle => _WidgetKind.toggle,
       FieldWidget.auto => switch (field.dartType) {
@@ -211,10 +238,12 @@ class FormScreenGenerator extends Generator {
                 : '  bool _${field.name}Value = false;',
           );
         case _WidgetKind.datePicker:
+        case _WidgetKind.timePicker:
+        case _WidgetKind.dateTimePicker:
           buffer.writeln(
             '  final _${field.name}Controller = TextEditingController();',
           );
-          buffer.writeln('  DateTime? _${field.name}Value;');
+          buffer.writeln('  ${field.dartType}? _${field.name}Value;');
         case _WidgetKind.dropdown:
           buffer.writeln('  ${field.dartType}? _${field.name}Value;');
         default:
@@ -457,6 +486,8 @@ class FormScreenGenerator extends Generator {
       case _WidgetKind.toggle:
         return '_${name}Value';
       case _WidgetKind.datePicker:
+      case _WidgetKind.timePicker:
+      case _WidgetKind.dateTimePicker:
         return field.isNullable ? '_${name}Value' : '_${name}Value!';
       case _WidgetKind.dropdown:
         return field.isNullable ? '_${name}Value' : '_${name}Value!';
@@ -497,11 +528,15 @@ class FormScreenGenerator extends Generator {
         case _WidgetKind.toggle:
           buffer.writeln('    _${field.name}Value = item.${field.name};');
         case _WidgetKind.datePicker:
+        case _WidgetKind.timePicker:
+        case _WidgetKind.dateTimePicker:
           buffer.writeln('    _${field.name}Value = item.${field.name};');
-          final iso = field.isNullable
-              ? "item.${field.name}?.toIso8601String() ?? ''"
-              : 'item.${field.name}.toIso8601String()';
-          buffer.writeln('    _${field.name}Controller.text = $iso;');
+          final display = _displayExpression(field, '_${field.name}Value!');
+          buffer.writeln(
+            field.isNullable
+                ? "    _${field.name}Controller.text = _${field.name}Value == null ? '' : $display;"
+                : '    _${field.name}Controller.text = $display;',
+          );
         case _WidgetKind.dropdown:
           buffer.writeln('    _${field.name}Value = item.${field.name};');
         default:
@@ -532,6 +567,10 @@ class FormScreenGenerator extends Generator {
         _writeSwitchField(field, buffer);
       case _WidgetKind.datePicker:
         _writeDatePickerField(field, buffer);
+      case _WidgetKind.timePicker:
+        _writeTimePickerField(field, buffer);
+      case _WidgetKind.dateTimePicker:
+        _writeDateTimePickerField(field, buffer);
       case _WidgetKind.dropdown:
         _writeDropdownField(field, buffer);
       case _WidgetKind.multilineText:
@@ -576,7 +615,42 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('            ),');
   }
 
-  void _writeDatePickerField(FieldManifest field, StringBuffer buffer) {
+  /// Dart expression for the locale-formatted display text of the non-null
+  /// value [v] of a picker [field] (uses `MaterialLocalizations`).
+  String _displayExpression(FieldManifest field, String v) {
+    const loc = 'MaterialLocalizations.of(context)';
+    switch (_resolveWidgetKind(field)) {
+      case _WidgetKind.timePicker:
+        return '$loc.formatTimeOfDay(${_timeOfDayExpression(field, v)})';
+      case _WidgetKind.dateTimePicker:
+        return "'\${$loc.formatCompactDate($v)} "
+            "\${$loc.formatTimeOfDay(TimeOfDay.fromDateTime($v))}'";
+      default:
+        return '$loc.formatCompactDate($v)';
+    }
+  }
+
+  /// Dart expression converting the non-null timePicker value [v] to a
+  /// `TimeOfDay`.
+  String _timeOfDayExpression(FieldManifest field, String v) {
+    if (field.dartType == 'Duration') {
+      return 'TimeOfDay(hour: $v.inHours % 24, minute: $v.inMinutes % 60)';
+    }
+    return "TimeOfDay(hour: int.parse($v.split(':')[0]), "
+        "minute: int.parse($v.split(':')[1]))";
+  }
+
+  /// Dart expression converting the `TimeOfDay` [t] to the timePicker field's
+  /// entity type.
+  String _fromTimeOfDayExpression(FieldManifest field, String t) {
+    if (field.dartType == 'Duration') {
+      return 'Duration(hours: $t.hour, minutes: $t.minute)';
+    }
+    return "'\${$t.hour.toString().padLeft(2, '0')}:"
+        "\${$t.minute.toString().padLeft(2, '0')}'";
+  }
+
+  void _writePickerHead(FieldManifest field, StringBuffer buffer) {
     buffer.writeln('            TextFormField(');
     buffer.writeln('              controller: _${field.name}Controller,');
     buffer.writeln('              readOnly: true,');
@@ -584,25 +658,92 @@ class FormScreenGenerator extends Generator {
       "              decoration: const InputDecoration(labelText: '${field.label}'),",
     );
     buffer.writeln('              onTap: () async {');
-    buffer.writeln('                final picked = await showDatePicker(');
-    buffer.writeln('                  context: context,');
-    buffer.writeln(
-      '                  initialDate: _${field.name}Value ?? DateTime.now(),',
-    );
-    buffer.writeln('                  firstDate: DateTime(2000),');
-    buffer.writeln('                  lastDate: DateTime(2100),');
-    buffer.writeln('                );');
-    buffer.writeln('                if (picked != null) {');
-    buffer.writeln('                  setState(() {');
-    buffer.writeln('                    _${field.name}Value = picked;');
-    buffer.writeln(
-      '                    _${field.name}Controller.text = picked.toIso8601String();',
-    );
-    buffer.writeln('                  });');
-    buffer.writeln('                }');
+  }
+
+  void _writePickerTail(FieldManifest field, StringBuffer buffer) {
     buffer.writeln('              },');
     _writeValidators(field, buffer);
     buffer.writeln('            ),');
+  }
+
+  void _writeDatePickerField(FieldManifest field, StringBuffer buffer) {
+    final n = field.name;
+    _writePickerHead(field, buffer);
+    buffer.writeln('                final picked = await showDatePicker(');
+    buffer.writeln('                  context: context,');
+    buffer.writeln(
+        '                  initialDate: _${n}Value ?? DateTime.now(),');
+    buffer.writeln('                  firstDate: DateTime(2000),');
+    buffer.writeln('                  lastDate: DateTime(2100),');
+    buffer.writeln('                );');
+    buffer.writeln('                if (picked != null && context.mounted) {');
+    buffer.writeln('                  setState(() {');
+    buffer.writeln('                    _${n}Value = picked;');
+    buffer.writeln(
+      '                    _${n}Controller.text = ${_displayExpression(field, 'picked')};',
+    );
+    buffer.writeln('                  });');
+    buffer.writeln('                }');
+    _writePickerTail(field, buffer);
+  }
+
+  void _writeTimePickerField(FieldManifest field, StringBuffer buffer) {
+    final n = field.name;
+    _writePickerHead(field, buffer);
+    buffer.writeln('                final current = _${n}Value;');
+    buffer.writeln('                final picked = await showTimePicker(');
+    buffer.writeln('                  context: context,');
+    buffer.writeln('                  initialTime: current == null');
+    buffer.writeln('                      ? TimeOfDay.now()');
+    buffer.writeln(
+      '                      : ${_timeOfDayExpression(field, 'current')},',
+    );
+    buffer.writeln('                );');
+    buffer.writeln('                if (picked != null && context.mounted) {');
+    buffer.writeln('                  setState(() {');
+    buffer.writeln(
+      '                    _${n}Value = ${_fromTimeOfDayExpression(field, 'picked')};',
+    );
+    buffer.writeln(
+      '                    _${n}Controller.text = ${_displayExpression(field, '_${n}Value!')};',
+    );
+    buffer.writeln('                  });');
+    buffer.writeln('                }');
+    _writePickerTail(field, buffer);
+  }
+
+  void _writeDateTimePickerField(FieldManifest field, StringBuffer buffer) {
+    final n = field.name;
+    _writePickerHead(field, buffer);
+    buffer.writeln(
+        '                final initial = _${n}Value ?? DateTime.now();');
+    buffer.writeln('                final date = await showDatePicker(');
+    buffer.writeln('                  context: context,');
+    buffer.writeln('                  initialDate: initial,');
+    buffer.writeln('                  firstDate: DateTime(2000),');
+    buffer.writeln('                  lastDate: DateTime(2100),');
+    buffer.writeln('                );');
+    buffer.writeln(
+        '                if (date == null || !context.mounted) return;');
+    buffer.writeln('                final time = await showTimePicker(');
+    buffer.writeln('                  context: context,');
+    buffer.writeln(
+        '                  initialTime: TimeOfDay.fromDateTime(initial),');
+    buffer.writeln('                );');
+    buffer.writeln(
+        '                if (time == null || !context.mounted) return;');
+    buffer.writeln('                final picked = DateTime(');
+    buffer.writeln(
+      '                  date.year, date.month, date.day, time.hour, time.minute,',
+    );
+    buffer.writeln('                );');
+    buffer.writeln('                setState(() {');
+    buffer.writeln('                  _${n}Value = picked;');
+    buffer.writeln(
+      '                  _${n}Controller.text = ${_displayExpression(field, 'picked')};',
+    );
+    buffer.writeln('                });');
+    _writePickerTail(field, buffer);
   }
 
   void _writeDropdownField(FieldManifest field, StringBuffer buffer) {

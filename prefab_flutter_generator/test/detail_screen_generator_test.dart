@@ -79,7 +79,7 @@ class Parent {
 }
 ''',
   'prefab_flutter|lib/src/enums/field_widget.dart': r'''
-enum FieldWidget { auto, multilineText, password, datePicker, dropdown, toggle }
+enum FieldWidget { auto, multilineText, password, datePicker, timePicker, dateTimePicker, dropdown, toggle }
 ''',
   'prefab_flutter|lib/src/enums/validator.dart': r'''
 /// Validation rules that the form-screen generator wires into form fields.

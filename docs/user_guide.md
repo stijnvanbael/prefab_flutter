@@ -173,12 +173,21 @@ final int postId;
 | `multilineText` | `TextFormField` with `maxLines: null` | — |
 | `password` | `TextFormField` with `obscureText: true` | — |
 | `datePicker` | Read-only `TextFormField` that opens `showDatePicker` (years 2000–2100) | `DateTime` |
+| `timePicker` | Read-only `TextFormField` that opens `showTimePicker`; supports `Duration` (time since midnight) and `String` in `HH:mm` format | — |
+| `dateTimePicker` | Read-only `TextFormField` that chains `showDatePicker` and `showTimePicker` | — (`DateTime` defaults to `datePicker`) |
 | `dropdown` | `DropdownButtonFormField` over `Type.values`, labelled with `name` | enum types |
 | `toggle` | `SwitchListTile` | `bool` |
 
 With `auto`, any other type (`String`, `int`, `double`, …) gets a plain
-`TextFormField`. A numeric keyboard for `int`/`double` is planned in PF-18;
-time and date-time pickers in PF-17.
+`TextFormField`. A numeric keyboard for `int`/`double` is planned in PF-18.
+
+The picker widgets keep the selected value in a typed state variable (so the
+entity is built without parsing text); the text controller only holds the
+display string, formatted with the locale's `MaterialLocalizations`
+(`formatCompactDate` / `formatTimeOfDay`), not ISO-8601. `TimeOfDay` is not a
+supported field type because entity classes stay pure Dart. Using
+`timePicker` on a type other than `Duration`/`String`, or `dateTimePicker` on
+a type other than `DateTime`, fails the build with an error.
 
 ## Validators
 
