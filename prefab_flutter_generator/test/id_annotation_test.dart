@@ -49,7 +49,8 @@ class FormField {
 ''',
   'prefab_flutter|lib/src/annotations/parent.dart': r'''
 class Parent {
-  const Parent();
+  final Type type;
+  const Parent(this.type);
 }
 ''',
   'prefab_flutter|lib/src/annotations/id.dart': r'''
