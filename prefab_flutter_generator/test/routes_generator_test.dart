@@ -569,7 +569,8 @@ class Plain {}
           'a|lib/comment.routes.dart': decodedMatches(
             allOf(
               contains("path: '/posts/:postId/comments'"),
-              contains("CommentListScreen(postId: state.pathParameters['postId']!)"),
+              contains('CommentListScreen('),
+              contains("postId: int.parse(state.pathParameters['postId']!)"),
             ),
           ),
           'a|lib/post.routes.dart': anything,
