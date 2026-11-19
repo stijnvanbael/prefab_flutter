@@ -149,7 +149,8 @@ class RoutesGenerator extends Generator {
           childrenByParent: childrenByParent,
           buffer: buffer,
           level: 1,
-          absolutePrefix: '/${manifest.parentPath}/:${manifest.parentParamName}/',
+          absolutePrefix:
+              '/${manifest.parentPath}/:${manifest.parentParamName}/',
         );
       }
     }
@@ -179,6 +180,16 @@ class RoutesGenerator extends Generator {
     buffer.writeln(
         '$i  builder: (context, state) => const ${entity}ListScreen(),');
     buffer.writeln('$i  routes: [');
+
+    // The create route (only with @Update) must precede ':id' so '/create' is
+    // not parsed as an id.
+    if (manifest.hasUpdate) {
+      buffer.writeln('$i    GoRoute(');
+      buffer.writeln("$i      path: 'create',");
+      buffer.writeln(
+          '$i      builder: (context, state) => const ${entity}CreateScreen(),');
+      buffer.writeln('$i    ),');
+    }
 
     // Detail route
     buffer.writeln('$i    GoRoute(');
@@ -211,15 +222,6 @@ class RoutesGenerator extends Generator {
 
     buffer.writeln('$i    ),');
 
-    // Create route (only when @Update is present)
-    if (manifest.hasUpdate) {
-      buffer.writeln('$i    GoRoute(');
-      buffer.writeln("$i      path: 'create',");
-      buffer.writeln(
-          '$i      builder: (context, state) => const ${entity}CreateScreen(),');
-      buffer.writeln('$i    ),');
-    }
-
     buffer.writeln('$i  ],');
     buffer.writeln('$i),');
   }
@@ -248,6 +250,16 @@ class RoutesGenerator extends Generator {
     buffer.writeln(
         "$i  builder: (context, state) => ${entity}ListScreen($parentParamName: ${manifest.parseParentId("state.pathParameters['$parentIdParam']!")}),");
     buffer.writeln('$i  routes: [');
+
+    // The create route (only with @Update) must precede ':id' so '/create' is
+    // not parsed as an id.
+    if (manifest.hasUpdate) {
+      buffer.writeln('$i    GoRoute(');
+      buffer.writeln("$i      path: 'create',");
+      buffer.writeln(
+          "$i      builder: (context, state) => ${entity}CreateScreen($parentParamName: ${manifest.parseParentId("state.pathParameters['$parentIdParam']!")}),");
+      buffer.writeln('$i    ),');
+    }
 
     // Detail route
     buffer.writeln('$i    GoRoute(');
@@ -278,14 +290,6 @@ class RoutesGenerator extends Generator {
     }
 
     buffer.writeln('$i    ),');
-
-    if (manifest.hasUpdate) {
-      buffer.writeln('$i    GoRoute(');
-      buffer.writeln("$i      path: 'create',");
-      buffer.writeln(
-          "$i      builder: (context, state) => ${entity}CreateScreen($parentParamName: ${manifest.parseParentId("state.pathParameters['$parentIdParam']!")}),");
-      buffer.writeln('$i    ),');
-    }
 
     buffer.writeln('$i  ],');
     buffer.writeln('$i),');

@@ -67,8 +67,7 @@ class ProviderGenerator extends Generator {
   // ---------------------------------------------------------------------------
 
   void _writeImports(String sourceFileName, StringBuffer buffer) {
-    buffer.writeln(
-        "import 'package:flutter_riverpod/flutter_riverpod.dart';");
+    buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
     buffer.writeln(
         "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';");
     buffer.writeln();
@@ -86,8 +85,7 @@ class ProviderGenerator extends Generator {
     final entityLower = manifest.entityNameLower;
     final hasParent = manifest.hasParent;
     final parentParamName = manifest.parentParamName;
-    final parentParamType =
-        hasParent ? manifest.parentField!.dartType : null;
+    final parentParamType = hasParent ? manifest.parentField!.dartType : null;
 
     if (hasParent) {
       // Detail provider keyed on (idType id, parentType parentId).
@@ -113,8 +111,7 @@ class ProviderGenerator extends Generator {
       buffer.writeln('  $parentParamType get $parentParamName => arg;');
       buffer.writeln();
       buffer.writeln('  @override');
-      buffer.writeln(
-          '  Future<List<$entity>> build($parentParamType arg) =>');
+      buffer.writeln('  Future<List<$entity>> build($parentParamType arg) =>');
       buffer.writeln(
           '      ref.read(${entityLower}ApiClientProvider).list($parentParamName: arg);');
       buffer.writeln();
@@ -131,11 +128,12 @@ class ProviderGenerator extends Generator {
       buffer.writeln('  }');
       if (manifest.hasUpdate) {
         buffer.writeln();
-        buffer.writeln('  Future<void> update($entity $entityLower) async {');
+        buffer.writeln(
+            '  Future<void> updateEntity($entity $entityLower) async {');
         buffer.writeln(
             '    await _client.update($entityLower, $parentParamName: $parentParamName);');
         buffer.writeln(
-            '    ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}, $parentParamName)));');
+            '    ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}${manifest.idBang}, $parentParamName)));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
@@ -145,7 +143,7 @@ class ProviderGenerator extends Generator {
         buffer.writeln(
             '    await _client.delete($entityLower, $parentParamName: $parentParamName);');
         buffer.writeln(
-            '    ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}, $parentParamName)));');
+            '    ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}${manifest.idBang}, $parentParamName)));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
@@ -172,15 +170,13 @@ class ProviderGenerator extends Generator {
           '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');
       buffer.writeln();
       buffer.writeln('  @override');
-      buffer.writeln(
-          '  Future<List<$entity>> build() =>');
-      buffer.writeln(
-          '      ref.read(${entityLower}ApiClientProvider).list();');
+      buffer.writeln('  Future<List<$entity>> build() =>');
+      buffer.writeln('      ref.read(${entityLower}ApiClientProvider).list();');
       buffer.writeln();
       buffer.writeln('  Future<void> _load() async {');
       buffer.writeln('    state = const AsyncLoading();');
-      buffer.writeln(
-          '    state = await AsyncValue.guard(() => _client.list());');
+      buffer
+          .writeln('    state = await AsyncValue.guard(() => _client.list());');
       buffer.writeln('  }');
       buffer.writeln();
       buffer.writeln('  Future<void> create($entity $entityLower) async {');
@@ -189,10 +185,11 @@ class ProviderGenerator extends Generator {
       buffer.writeln('  }');
       if (manifest.hasUpdate) {
         buffer.writeln();
-        buffer.writeln('  Future<void> update($entity $entityLower) async {');
+        buffer.writeln(
+            '  Future<void> updateEntity($entity $entityLower) async {');
         buffer.writeln('    await _client.update($entityLower);');
         buffer.writeln(
-            '    ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}));');
+            '    ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}${manifest.idBang}));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
@@ -201,7 +198,7 @@ class ProviderGenerator extends Generator {
         buffer.writeln('  Future<void> delete($entity $entityLower) async {');
         buffer.writeln('    await _client.delete($entityLower);');
         buffer.writeln(
-            '    ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}));');
+            '    ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}${manifest.idBang}));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
@@ -211,6 +208,7 @@ class ProviderGenerator extends Generator {
     buffer.writeln();
     buffer.writeln(
         'final ${entityLower}ApiClientProvider = Provider.autoDispose<${entity}ApiClient>(');
-    buffer.writeln('  (ref) => ${entity}ApiClient(ref.watch(prefabDioProvider)));');
+    buffer.writeln(
+        '  (ref) => ${entity}ApiClient(ref.watch(prefabDioProvider)));');
   }
 }

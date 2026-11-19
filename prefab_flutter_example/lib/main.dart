@@ -1,0 +1,40 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
+
+import 'mock_backend.dart';
+import 'product.prefab.dart';
+import 'review.prefab.dart';
+
+GoRouter createRouter({String initialLocation = '/products'}) => GoRouter(
+      initialLocation: initialLocation,
+      routes: [...$productRoutes, ...$reviewRoutes],
+    );
+
+void main() => runApp(
+      ProviderScope(
+        overrides: [prefabDioProvider.overrideWithValue(createMockDio())],
+        child: const ExampleApp(),
+      ),
+    );
+
+class ExampleApp extends StatefulWidget {
+  const ExampleApp({super.key, this.initialLocation = '/products'});
+
+  final String initialLocation;
+
+  @override
+  State<ExampleApp> createState() => _ExampleAppState();
+}
+
+class _ExampleAppState extends State<ExampleApp> {
+  late final GoRouter _router =
+      createRouter(initialLocation: widget.initialLocation);
+
+  @override
+  Widget build(BuildContext context) => MaterialApp.router(
+        title: 'Prefab Flutter Example',
+        routerConfig: _router,
+      );
+}

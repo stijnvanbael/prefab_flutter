@@ -341,8 +341,8 @@ void main() {
                 edit.contains(_flat('secret: _item!.secret,')) &&
                 edit.contains(_flat('untracked: _item!.untracked,')) &&
                 edit.contains(_flat(
-                    'await ref.read(itemsProvider.notifier).update(entity);')) &&
-                edit.indexOf(_flat('.update(entity)')) <
+                    'await ref.read(itemsProvider.notifier).updateEntity(entity);')) &&
+                edit.indexOf(_flat('.updateEntity(entity)')) <
                     edit.indexOf(_flat('context.pop()'));
           }, 'edit screen saves via update()')),
         },
@@ -384,7 +384,7 @@ void main() {
           'a|lib/item.form_screen.dart': _hasAll([
             'postId: widget.postId,',
             'ref.read(commentsProvider(widget.postId).notifier).create(entity)',
-            'ref.read(commentsProvider(widget.postId).notifier).update(entity)',
+            'ref.read(commentsProvider(widget.postId).notifier).updateEntity(entity)',
           ]),
         },
       );

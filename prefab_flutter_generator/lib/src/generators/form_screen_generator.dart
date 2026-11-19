@@ -197,6 +197,7 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('  bool _saving = false;');
     if (isEdit) {
       buffer.writeln('  bool _prefilled = false;');
+      buffer.writeln('  // ignore: unused_field');
       buffer.writeln('  ${manifest.entityName}? _item;');
     }
 
@@ -359,7 +360,7 @@ class FormScreenGenerator extends Generator {
     final providerArgs =
         manifest.hasParent ? '(widget.${manifest.parentParamName})' : '';
     final provider = '${manifest.entityNameLower}sProvider$providerArgs';
-    final mutation = isEdit ? 'update' : 'create';
+    final mutation = isEdit ? 'updateEntity' : 'create';
 
     final arguments = _buildConstructorArguments(manifest, isEdit);
 
@@ -368,15 +369,16 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('    setState(() => _saving = true);');
     buffer.writeln(
         '    // Keep the (auto-dispose) provider alive while the request runs.');
-    buffer.writeln('    final subscription = ref.listenManual($provider, (_, __) {});');
+    buffer.writeln(
+        '    final subscription = ref.listenManual($provider, (_, __) {});');
     buffer.writeln('    try {');
     buffer.writeln('      final entity = $entity(');
     for (final argument in arguments) {
       buffer.writeln('        $argument,');
     }
     buffer.writeln('      );');
-    buffer.writeln(
-        '      await ref.read($provider.notifier).$mutation(entity);');
+    buffer
+        .writeln('      await ref.read($provider.notifier).$mutation(entity);');
     buffer.writeln('      if (!mounted) return;');
     buffer.writeln('      context.pop();');
     buffer.writeln('    } catch (e) {');
@@ -397,7 +399,8 @@ class FormScreenGenerator extends Generator {
   /// (`widget.<parent>`), a form field (typed form state), or — for hidden and
   /// un-annotated fields — the loaded item on edit. A required parameter with
   /// no source is a build-time error.
-  List<String> _buildConstructorArguments(EntityManifest manifest, bool isEdit) {
+  List<String> _buildConstructorArguments(
+      EntityManifest manifest, bool isEdit) {
     final params = manifest.constructorParams;
     if (params == null) {
       throw InvalidGenerationSourceError(

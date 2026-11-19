@@ -74,6 +74,12 @@ class EntityManifest {
   /// Dart type of the identifier field (e.g. `'String'` or `'int'`).
   final String idType;
 
+  /// Whether the identifier field is nullable (e.g. `int? id`).
+  final bool idIsNullable;
+
+  /// Dart expression suffix that makes an id access non-null (`!` or empty).
+  String get idBang => idIsNullable ? '!' : '';
+
   /// Class name of the parent entity named in `@Parent(Type)`, or `null`.
   final String? parentEntityName;
 
@@ -101,6 +107,7 @@ class EntityManifest {
     required this.fields,
     this.idFieldName = 'id',
     this.idType = 'String',
+    this.idIsNullable = false,
     this.parentEntityName,
     this.parentPath,
     this.parentTitle,
@@ -204,15 +211,15 @@ class EntityManifest {
       if (field == idField) continue;
 
       final fieldAnnotation = _fieldChecker.firstAnnotationOf(field);
-      final legacyAnnotation =
-          fieldAnnotation == null ? _formFieldChecker.firstAnnotationOf(field) : null;
+      final legacyAnnotation = fieldAnnotation == null
+          ? _formFieldChecker.firstAnnotationOf(field)
+          : null;
       final annotation = fieldAnnotation ?? legacyAnnotation;
       if (annotation == null) continue;
 
       final reader = ConstantReader(annotation);
       // Form-only settings: `@Field.form`, or the top level of `@FormField`.
-      final formReader =
-          fieldAnnotation != null ? reader.read('form') : reader;
+      final formReader = fieldAnnotation != null ? reader.read('form') : reader;
 
       final labelReader = reader.read('label');
       final label = labelReader.isNull
@@ -304,6 +311,8 @@ class EntityManifest {
       fields: fields,
       idFieldName: idField.name,
       idType: idType,
+      idIsNullable:
+          idField.type.nullabilitySuffix == NullabilitySuffix.question,
       parentEntityName: parentElement?.name,
       parentPath: parentPath,
       parentTitle: parentTitle,
@@ -315,8 +324,8 @@ class EntityManifest {
                 name: p.name,
                 isNamed: p.isNamed,
                 isRequired: p.isRequiredNamed || p.isRequiredPositional,
-                isNullable: p.type.nullabilitySuffix ==
-                    NullabilitySuffix.question,
+                isNullable:
+                    p.type.nullabilitySuffix == NullabilitySuffix.question,
                 hasDefault: p.hasDefaultValue,
               ))
           .toList(),

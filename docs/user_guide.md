@@ -81,7 +81,7 @@ Enables editing **and** creating:
 - an **Edit** action in the detail screen's AppBar,
 - the `create` and `:id/edit` routes,
 - `{Entity}CreateScreen` and `{Entity}EditScreen`,
-- an `update()` method on the list notifier.
+- an `updateEntity()` method on the list notifier.
 
 Without `@Update` no form screens are generated. (Separate `@Create` and
 `@Update` annotations are planned in PF-14.)
@@ -231,7 +231,7 @@ of a type the form cannot convert (anything other than `String`, `int`,
 field.
 
 The entity is then passed to the list notifier's `create()` (create screen) or
-`update()` (edit screen) and the screen pops on success. While the request is
+`updateEntity()` (edit screen; named to avoid clashing with `AsyncNotifier.update`) and the screen pops on success. While the request is
 in flight the button is disabled and shows a progress indicator; an error is
 shown in a `SnackBar` and the screen stays open.
 
@@ -246,7 +246,7 @@ contains:
 | `ProductListScreen` | A `ListView` of items (or a "No items found" message when empty); tapping one opens its detail screen. With `@Update`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
 | `ProductDetailScreen(id:)` | One `ListTile` per visible field, plus Edit/Delete actions |
 | `ProductCreateScreen` and `ProductEditScreen(id:)` | Only with `@Update` |
-| `productDetailProvider`, `productsProvider`, `ProductsNotifier`, `productApiClientProvider` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `create`, `update` and `delete` (`update` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
+| `productDetailProvider`, `productsProvider`, `ProductsNotifier`, `productApiClientProvider` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `create`, `updateEntity` and `delete` (`updateEntity` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
 | `ProductApiClient` | `list`, `getById`, `create`, `update` and `delete`; responses are read with `Product.fromJson` and request bodies are sent as `product.toJson()` |
 | `$productRoutes` | Named after the source file; a `List<RouteBase>` with the routes of every entity in the file |
 
@@ -429,5 +429,5 @@ These are known gaps in the current pre-release. Each has a backlog task.
 
 | Limitation | Workaround | Task |
 |---|---|---|
-| The save round-trip is covered by generator tests only; it is not yet exercised end-to-end in a running example app | — | PF-9 |
 | Search, sort and pagination are not generated | — | PF-13 |
+| Detail screens do not link to the lists of nested child entities; reach them by URL (`/products/1/reviews`) or add your own link | Navigate with `context.push` | PF-19 |

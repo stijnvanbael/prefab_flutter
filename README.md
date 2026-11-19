@@ -9,8 +9,9 @@ Annotate an entity class, run `build_runner`, and Prefab Flutter generates:
 - a **Dio API client** for a REST backend,
 - **GoRouter routes** that tie the screens together.
 
-> **Status: pre-release (0.1.0, not yet on pub.dev).** Generated code does not
-> yet compile without the workarounds listed under
+> **Status: pre-release (0.1.0, not yet on pub.dev).** The generated code
+> compiles and runs end to end in the [example app](prefab_flutter_example), but
+> some features are still missing; see
 > [Known limitations](docs/user_guide.md#known-limitations). Work is tracked in
 > [`backlog/tasks`](backlog/tasks).
 
@@ -21,6 +22,7 @@ Annotate an entity class, run `build_runner`, and Prefab Flutter generates:
 | [`prefab_flutter`](prefab_flutter) | Dart | Annotations (`@View`, `@Field`, `@Update`, `@Delete`, `@Parent`, `@Id`) and enums |
 | [`prefab_flutter_generator`](prefab_flutter_generator) | Dart, dev dependency | `build_runner` generators |
 | [`prefab_flutter_widgets`](prefab_flutter_widgets) | Flutter | Runtime widgets used by generated code (delete dialog, search bar, sort menu, pagination bar) |
+| [`prefab_flutter_example`](prefab_flutter_example) | Flutter app | Runnable example with a `Product` and a nested `Review` entity against an in-memory mock backend |
 
 ## Quick start
 
@@ -152,5 +154,8 @@ cd prefab_flutter_generator && dart pub get && dart test
 cd prefab_flutter_widgets && flutter pub get && flutter test
 ```
 
+To run the example app, see [`prefab_flutter_example`](prefab_flutter_example/README.md).
+
 CI (`.github/workflows/ci.yml`) runs `analyze --fatal-infos` and the tests for
-all three packages.
+all packages. For the example app it also runs `build_runner` and analyses the
+generated code, so generated code that does not compile fails the build.
