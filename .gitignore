@@ -1,1 +1,2 @@
-*.iml
+*.iml.dart_tool/
+build/
