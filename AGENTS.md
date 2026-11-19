@@ -26,6 +26,8 @@ You MUST read the overview resource to understand the complete workflow. The inf
 
 </CRITICAL_INSTRUCTION>
 
+**Completed tasks**: always move a task file from `backlog/tasks/` to `backlog/completed/` (use `git mv`) as soon as its status is set to `Done`. Never leave a `Done` task in `backlog/tasks/`.
+
 <!-- BACKLOG.MD MCP GUIDELINES END -->
 
 ## DOCUMENTATION MUST STAY UP TO DATE
