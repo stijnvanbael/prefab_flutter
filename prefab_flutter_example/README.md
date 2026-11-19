@@ -5,7 +5,7 @@ See the [root README](../README.md) and the [user guide](../docs/user_guide.md).
 A runnable example for [prefab_flutter](../README.md). It has two annotated
 entities and an in-memory mock backend, so no server is needed.
 
-- `lib/product.dart`: a top-level `Product` entity (`@View`, `@Update`, `@Delete`, `@Field`).
+- `lib/product.dart`: a top-level `Product` entity (`@View`, `@Create`, `@Update`, `@Delete`, `@Field`).
 - `lib/review.dart`: a nested `Review` entity (`@Parent(Product)`), served under
   `/products/:productId/reviews`.
 - `lib/mock_backend.dart`: a Dio `HttpClientAdapter` implementing the REST

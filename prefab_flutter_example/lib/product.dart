@@ -5,6 +5,7 @@ part 'product.g.dart';
 
 @JsonSerializable()
 @View(title: 'Product', path: 'products')
+@Create()
 @Update()
 @Delete()
 class Product {
