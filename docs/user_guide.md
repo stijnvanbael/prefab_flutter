@@ -45,6 +45,7 @@ a class that also has `@View`.
 |---|---|---|---|
 | `title` | `String` | yes | Shown in the AppBar of all generated screens |
 | `path` | `String` | yes | URL path segment for routes and the REST endpoint (e.g. `'products'`) |
+| `paged` | `bool` | no (`true`) | Page the list on the server. With `false` the list is requested in one go (no `page`/`size` parameters) and the list screen has no pagination bar |
 
 ```dart
 @View(title: 'Product', path: 'products')
@@ -105,6 +106,8 @@ ignored by every generator. Display and listing settings sit directly on
 | `label` | `String?` | field name in title case (`firstName` → `First Name`) | Label in forms and the detail screen |
 | `hidden` | `bool` | `false` | Exclude the field from forms and the detail screen |
 | `views` | `Set<String>?` | `null` (all views) | Views the field appears in: `'list'`, `'detail'` (see [Views](#views)) |
+| `searchable` | `bool` | `false` | The list screen shows a search bar (once any field is searchable); the text is sent to the server as `q` (see [Search, sorting and pagination](#search-sorting-and-pagination)) |
+| `sortable` | `bool` | `false` | The list screen's sort menu offers this field ascending and descending |
 | `form` | `FormOptions` | `FormOptions()` | Form-only settings, below |
 
 `FormOptions` parameters:
@@ -267,11 +270,11 @@ contains:
 
 | Generated code | Contents |
 |---|---|
-| `ProductListScreen` | A `ListView` of items (or a "No items found" message when empty); tapping one opens its detail screen. With `@Update`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
+| `ProductListScreen` | A `ListView` of items (or a "No items found" message when empty); tapping one opens its detail screen. With a `searchable` field it has a `PrefabSearchBar`, with `sortable` fields a `PrefabSortMenu` in the AppBar, and (unless `@View(paged: false)`) a `PrefabPaginationBar` footer. With `@Update`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
 | `ProductDetailScreen(id:)` | One `ListTile` per visible field, plus Edit/Delete actions |
 | `ProductCreateScreen` and `ProductEditScreen(id:)` | Only with `@Update` |
-| `productDetailProvider`, `productsProvider`, `ProductsNotifier`, `productApiClientProvider` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `create`, `updateEntity` and `delete` (`updateEntity` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
-| `ProductApiClient` | `list`, `getById`, `create`, `update` and `delete`; responses are read with `Product.fromJson` and request bodies are sent as `product.toJson()` |
+| `productDetailProvider`, `productsProvider`, `ProductsNotifier`, `productApiClientProvider` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `setSearch`, `setSort`, `goToPage`, `setPageSize`, `create`, `updateEntity` and `delete` (`updateEntity` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
+| `ProductApiClient` | `list` (returns a `PrefabPage<Product>`), `getById`, `create`, `update` and `delete`; responses are read with `Product.fromJson` and request bodies are sent as `product.toJson()` |
 | `$productRoutes` | Named after the source file; a `List<RouteBase>` with the routes of every entity in the file |
 
 A file without `@View` classes produces no output. The previous layout of six
@@ -425,13 +428,56 @@ The generated client expects this API, relative to the Dio base URL:
 
 | Method | URL | Body | Response |
 |---|---|---|---|
-| `list()` | `GET /{path}` | — | JSON array of entities |
+| `list(search:, sort:, descending:, page:, pageSize:)` | `GET /{path}?q=&sort=&page=&size=` | — | `{ "items": [...], "total": n }` (a bare JSON array is accepted as a single page) |
 | `getById(id)` | `GET /{path}/{id}` | — | entity |
 | `create(e)` | `POST /{path}` | entity | entity |
 | `update(e)` | `PUT /{path}/{e.id}` | entity | entity |
 | `delete(e)` | `DELETE /{path}/{e.id}` | — | ignored |
 
-After `create`, `update` or `delete` the list notifier reloads the whole list.
+After `create`, `update` or `delete` the list notifier reloads the current page
+with the current search and sort.
+
+### Search, sorting and pagination
+
+Searching, sorting and paging happen on the **server**; the client only sends
+query parameters. The defaults, implemented by `PrefabListAdapter`:
+
+| Query parameter | Meaning |
+|---|---|
+| `q` | Search text (left out when empty). The server decides which fields it searches; `searchable` only controls whether the list screen shows the search bar |
+| `sort` | Dart field name, `-` prefix for descending (`price`, `-price`). Left out when unsorted |
+| `page` | Zero-based page index (only for `paged` lists) |
+| `size` | Page size, default 20 (only for `paged` lists) |
+
+The response is `{ "items": [...], "total": 42 }`; `total` is the number of
+items across all pages. A bare JSON array also works and counts as one page.
+
+The generated list notifier holds the search text, sort field, sort direction
+and page. Changing any of them reloads the list; typing in the search bar is
+debounced (300 ms) and a new search or sort returns to the first page.
+
+To adapt a backend with other names or another response shape, override
+`prefabListAdapterProvider` (every generated API client reads it):
+
+```dart
+ProviderScope(
+  overrides: [
+    prefabListAdapterProvider.overrideWithValue(
+      const PrefabListAdapter(
+        searchParam: 'query',
+        sizeParam: 'limit',
+        itemsKey: 'data',
+        totalKey: 'count',
+        defaultPageSize: 50,
+      ),
+    ),
+  ],
+  child: const MyApp(),
+);
+```
+
+Subclass `PrefabListAdapter` and override `queryParameters` / `parsePage` for
+anything the constructor parameters cannot express.
 
 ## Runtime widgets
 
@@ -440,10 +486,11 @@ After `create`, `update` or `delete` the list notifier reloads the whole list.
 | Widget / class | Used by generated code | Purpose |
 |---|---|---|
 | `showPrefabDeleteDialog` / `PrefabDeleteDialog<T>` | yes (detail screen) | Delete confirmation; returns `true` when the item was deleted |
-| `PrefabSearchBar` | not yet (PF-13) | Search text field with an `onChanged` callback |
-| `PrefabSortMenu<T>` / `PrefabSortOption<T>` | not yet (PF-13) | Popup menu to choose a sort option |
-| `PrefabPaginationBar` / `PrefabPageNotifier` | not yet (PF-13) | Previous/next page controls |
-| `PrefabPage<T>` | not yet (PF-13) | A page of items with total count and page metadata |
+| `PrefabSearchBar` | yes (list screen) | Search text field with an `onChanged` callback |
+| `PrefabSortMenu<T>` / `PrefabSortOption<T>` | yes (list screen) | Popup menu to choose a sort option |
+| `PrefabPaginationBar` / `PrefabPageNotifier` | yes (list screen, via `PrefabPaginationBar.controlled`) | First/previous/next/last page controls |
+| `PrefabPage<T>` | yes (API client, notifier, list screen) | A page of items with total count and page metadata |
+| `PrefabListAdapter` / `prefabListAdapterProvider` | yes (API client) | Query parameter names and response shape of list requests |
 
 You can use these widgets in hand-written screens too.
 
@@ -453,5 +500,5 @@ These are known gaps in the current pre-release. Each has a backlog task.
 
 | Limitation | Workaround | Task |
 |---|---|---|
-| Search, sort and pagination are not generated | — | PF-13 |
 | Detail screens do not link to the lists of nested child entities; reach them by URL (`/products/1/reviews`) or add your own link | Navigate with `context.push` | PF-19 |
+| Sort and search use the Dart field name / free text; a `json_serializable` `fieldRename` is not applied to the `sort` value | Map names in a custom `PrefabListAdapter.queryParameters` | PF-13 |

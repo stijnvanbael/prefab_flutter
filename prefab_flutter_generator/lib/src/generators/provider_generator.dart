@@ -67,6 +67,8 @@ class ProviderGenerator extends Generator {
   // ---------------------------------------------------------------------------
 
   void _writeImports(String sourceFileName, StringBuffer buffer) {
+    buffer.writeln("import 'dart:async';");
+    buffer.writeln();
     buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
     buffer.writeln(
         "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';");
@@ -99,54 +101,18 @@ class ProviderGenerator extends Generator {
       // List provider keyed on parentType parentId.
       buffer.writeln(
           'final ${entityLower}sProvider = AsyncNotifierProvider.autoDispose'
-          '.family<${entity}sNotifier, List<$entity>, $parentParamType>(');
+          '.family<${entity}sNotifier, PrefabPage<$entity>, $parentParamType>(');
       buffer.writeln('  ${entity}sNotifier.new);');
       buffer.writeln();
 
       // Family notifier; the family argument is the parent id.
       buffer.writeln(
-          'class ${entity}sNotifier extends AutoDisposeFamilyAsyncNotifier<List<$entity>, $parentParamType> {');
-      buffer.writeln(
-          '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');
+          'class ${entity}sNotifier extends AutoDisposeFamilyAsyncNotifier<PrefabPage<$entity>, $parentParamType> {');
       buffer.writeln('  $parentParamType get $parentParamName => arg;');
       buffer.writeln();
-      buffer.writeln('  @override');
-      buffer.writeln('  Future<List<$entity>> build($parentParamType arg) =>');
-      buffer.writeln(
-          '      ref.read(${entityLower}ApiClientProvider).list($parentParamName: arg);');
-      buffer.writeln();
-      buffer.writeln('  Future<void> _load() async {');
-      buffer.writeln('    state = const AsyncLoading();');
-      buffer.writeln(
-          '    state = await AsyncValue.guard(() => _client.list($parentParamName: $parentParamName));');
-      buffer.writeln('  }');
-      buffer.writeln();
-      buffer.writeln('  Future<void> create($entity $entityLower) async {');
-      buffer.writeln(
-          '    await _client.create($entityLower, $parentParamName: $parentParamName);');
-      buffer.writeln('    await _load();');
-      buffer.writeln('  }');
-      if (manifest.hasUpdate) {
-        buffer.writeln();
-        buffer.writeln(
-            '  Future<void> updateEntity($entity $entityLower) async {');
-        buffer.writeln(
-            '    await _client.update($entityLower, $parentParamName: $parentParamName);');
-        buffer.writeln(
-            '    ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}${manifest.idBang}, $parentParamName)));');
-        buffer.writeln('    await _load();');
-        buffer.writeln('  }');
-      }
-      if (manifest.hasDelete) {
-        buffer.writeln();
-        buffer.writeln('  Future<void> delete($entity $entityLower) async {');
-        buffer.writeln(
-            '    await _client.delete($entityLower, $parentParamName: $parentParamName);');
-        buffer.writeln(
-            '    ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}${manifest.idBang}, $parentParamName)));');
-        buffer.writeln('    await _load();');
-        buffer.writeln('  }');
-      }
+      _writeNotifierBody(manifest, buffer,
+          buildSignature: '$parentParamType arg',
+          parentArg: '$parentParamName: $parentParamName');
       buffer.writeln('}');
     } else {
       // Detail provider keyed on the typed id.
@@ -160,48 +126,13 @@ class ProviderGenerator extends Generator {
       // List provider (no family arg).
       buffer.writeln(
           'final ${entityLower}sProvider = AsyncNotifierProvider.autoDispose'
-          '<${entity}sNotifier, List<$entity>>(${entity}sNotifier.new);');
+          '<${entity}sNotifier, PrefabPage<$entity>>(${entity}sNotifier.new);');
       buffer.writeln();
 
       // AsyncNotifier.
       buffer.writeln(
-          'class ${entity}sNotifier extends AutoDisposeAsyncNotifier<List<$entity>> {');
-      buffer.writeln(
-          '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');
-      buffer.writeln();
-      buffer.writeln('  @override');
-      buffer.writeln('  Future<List<$entity>> build() =>');
-      buffer.writeln('      ref.read(${entityLower}ApiClientProvider).list();');
-      buffer.writeln();
-      buffer.writeln('  Future<void> _load() async {');
-      buffer.writeln('    state = const AsyncLoading();');
-      buffer
-          .writeln('    state = await AsyncValue.guard(() => _client.list());');
-      buffer.writeln('  }');
-      buffer.writeln();
-      buffer.writeln('  Future<void> create($entity $entityLower) async {');
-      buffer.writeln('    await _client.create($entityLower);');
-      buffer.writeln('    await _load();');
-      buffer.writeln('  }');
-      if (manifest.hasUpdate) {
-        buffer.writeln();
-        buffer.writeln(
-            '  Future<void> updateEntity($entity $entityLower) async {');
-        buffer.writeln('    await _client.update($entityLower);');
-        buffer.writeln(
-            '    ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}${manifest.idBang}));');
-        buffer.writeln('    await _load();');
-        buffer.writeln('  }');
-      }
-      if (manifest.hasDelete) {
-        buffer.writeln();
-        buffer.writeln('  Future<void> delete($entity $entityLower) async {');
-        buffer.writeln('    await _client.delete($entityLower);');
-        buffer.writeln(
-            '    ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}${manifest.idBang}));');
-        buffer.writeln('    await _load();');
-        buffer.writeln('  }');
-      }
+          'class ${entity}sNotifier extends AutoDisposeAsyncNotifier<PrefabPage<$entity>> {');
+      _writeNotifierBody(manifest, buffer, buildSignature: '', parentArg: '');
       buffer.writeln('}');
     }
 
@@ -209,6 +140,134 @@ class ProviderGenerator extends Generator {
     buffer.writeln(
         'final ${entityLower}ApiClientProvider = Provider.autoDispose<${entity}ApiClient>(');
     buffer.writeln(
-        '  (ref) => ${entity}ApiClient(ref.watch(prefabDioProvider)));');
+        '  (ref) => ${entity}ApiClient(ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));');
+  }
+
+  /// Writes the members shared by the plain and the family list notifier:
+  /// the list query state (search, sort, page), `build`, `_load`, the query
+  /// setters and the create / update / delete mutations.
+  ///
+  /// [buildSignature] is the parameter list of `build` (`'int arg'` for a
+  /// family notifier, empty otherwise); [parentArg] is the named parent
+  /// argument passed to the API client (`'postId: postId'`, or empty).
+  void _writeNotifierBody(
+    EntityManifest manifest,
+    StringBuffer buffer, {
+    required String buildSignature,
+    required String parentArg,
+  }) {
+    final entity = manifest.entityName;
+    final entityLower = manifest.entityNameLower;
+    final hasParent = manifest.hasParent;
+    final parentParamName = manifest.parentParamName;
+    final listArgs = [
+      if (hasParent) parentArg,
+      'search: _search',
+      'sort: _sort',
+      'descending: _descending',
+      if (manifest.paged) ...['page: _page', 'pageSize: _pageSize'],
+    ].join(', ');
+    final clientTrailing = hasParent ? ', $parentArg' : '';
+    final detailKeyArgs = hasParent
+        ? '($entityLower.${manifest.idFieldName}${manifest.idBang}, $parentParamName)'
+        : '$entityLower.${manifest.idFieldName}${manifest.idBang}';
+
+    buffer.writeln(
+        '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');
+    buffer.writeln();
+    buffer.writeln('  String _search = \'\';');
+    buffer.writeln('  String? _sort;');
+    buffer.writeln('  bool _descending = false;');
+    buffer.writeln('  int _page = 0;');
+    buffer.writeln('  int? _pageSize;');
+    buffer.writeln('  Timer? _searchDebounce;');
+    buffer.writeln();
+    buffer.writeln('  /// The search text currently applied to the list.');
+    buffer.writeln('  String get search => _search;');
+    buffer.writeln();
+    buffer.writeln('  /// The field the list is sorted by, or `null`.');
+    buffer.writeln('  String? get sort => _sort;');
+    buffer.writeln();
+    buffer.writeln('  /// Whether the list is sorted descending.');
+    buffer.writeln('  bool get descending => _descending;');
+    buffer.writeln();
+    buffer.writeln('  /// Zero-based index of the current page.');
+    buffer.writeln('  int get page => _page;');
+    buffer.writeln();
+    buffer.writeln('  @override');
+    buffer.writeln('  Future<PrefabPage<$entity>> build($buildSignature) {');
+    buffer.writeln('    ref.onDispose(() => _searchDebounce?.cancel());');
+    buffer.writeln('    return _client.list($listArgs);');
+    buffer.writeln('  }');
+    buffer.writeln();
+    buffer.writeln('  Future<void> _load() async {');
+    buffer.writeln(
+        '    state = const AsyncLoading<PrefabPage<$entity>>().copyWithPrevious(state);');
+    buffer.writeln(
+        '    state = await AsyncValue.guard(() => _client.list($listArgs));');
+    buffer.writeln('  }');
+    buffer.writeln();
+    buffer.writeln('  /// Applies [query] after a short pause in typing and');
+    buffer.writeln('  /// returns to the first page.');
+    buffer.writeln('  void setSearch(String query) {');
+    buffer.writeln('    _searchDebounce?.cancel();');
+    buffer.writeln(
+        '    _searchDebounce = Timer(const Duration(milliseconds: 300), () {');
+    buffer.writeln('      if (query == _search) return;');
+    buffer.writeln('      _search = query;');
+    buffer.writeln('      _page = 0;');
+    buffer.writeln('      _load();');
+    buffer.writeln('    });');
+    buffer.writeln('  }');
+    buffer.writeln();
+    buffer.writeln(
+        '  /// Sorts by [field] (`null` clears the sort) and reloads.');
+    buffer.writeln(
+        '  Future<void> setSort(String? field, {bool descending = false}) {');
+    buffer.writeln('    _sort = field;');
+    buffer.writeln('    _descending = descending;');
+    buffer.writeln('    _page = 0;');
+    buffer.writeln('    return _load();');
+    buffer.writeln('  }');
+    if (manifest.paged) {
+      buffer.writeln();
+      buffer.writeln('  /// Loads the zero-based page [page].');
+      buffer.writeln('  Future<void> goToPage(int page) {');
+      buffer.writeln('    _page = page;');
+      buffer.writeln('    return _load();');
+      buffer.writeln('  }');
+      buffer.writeln();
+      buffer.writeln(
+          '  /// Changes the page size and returns to the first page.');
+      buffer.writeln('  Future<void> setPageSize(int pageSize) {');
+      buffer.writeln('    _pageSize = pageSize;');
+      buffer.writeln('    _page = 0;');
+      buffer.writeln('    return _load();');
+      buffer.writeln('  }');
+    }
+    buffer.writeln();
+    buffer.writeln('  Future<void> create($entity $entityLower) async {');
+    buffer.writeln('    await _client.create($entityLower$clientTrailing);');
+    buffer.writeln('    await _load();');
+    buffer.writeln('  }');
+    if (manifest.hasUpdate) {
+      buffer.writeln();
+      buffer.writeln(
+          '  Future<void> updateEntity($entity $entityLower) async {');
+      buffer.writeln('    await _client.update($entityLower$clientTrailing);');
+      buffer.writeln(
+          '    ref.invalidate(${entityLower}DetailProvider($detailKeyArgs));');
+      buffer.writeln('    await _load();');
+      buffer.writeln('  }');
+    }
+    if (manifest.hasDelete) {
+      buffer.writeln();
+      buffer.writeln('  Future<void> delete($entity $entityLower) async {');
+      buffer.writeln('    await _client.delete($entityLower$clientTrailing);');
+      buffer.writeln(
+          '    ref.invalidate(${entityLower}DetailProvider($detailKeyArgs));');
+      buffer.writeln('    await _load();');
+      buffer.writeln('  }');
+    }
   }
 }

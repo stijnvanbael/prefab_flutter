@@ -21,7 +21,8 @@ export 'src/enums/validator.dart';
 class View {
   final String title;
   final String path;
-  const View({required this.title, required this.path});
+  final bool paged;
+  const View({required this.title, required this.path, this.paged = true});
 }
 ''',
   'prefab_flutter|lib/src/annotations/update.dart': r'''
@@ -48,10 +49,14 @@ class FormOptions {
 class Field {
   final String? label;
   final bool hidden;
+  final bool searchable;
+  final bool sortable;
   final FormOptions form;
   const Field({
     this.label,
     this.hidden = false,
+    this.searchable = false,
+    this.sortable = false,
     this.form = const FormOptions(),
   });
 }
@@ -360,7 +365,8 @@ void main() {
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
           'a|lib/product.api_client.dart': decodedMatches(
-            contains('Future<List<Product>> list()'),
+            matches(RegExp(
+                r'Future<PrefabPage<Product>> list\(\s*\{String\? search')),
           ),
         },
       );
@@ -386,7 +392,8 @@ void main() {
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
           'a|lib/post.api_client.dart': decodedMatches(
-            contains('Future<List<Comment>> list({required int postId})'),
+            matches(RegExp(
+                r'Future<PrefabPage<Comment>> list\(\s*\{required int postId,')),
           ),
         },
       );
@@ -464,7 +471,8 @@ void main() {
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
           'a|lib/post.api_client.dart': decodedMatches(
-            contains('Future<List<Post>> list()'),
+            matches(
+                RegExp(r'Future<PrefabPage<Post>> list\(\s*\{String\? search')),
           ),
         },
       );
@@ -482,7 +490,8 @@ void main() {
             'a|lib/comment.api_client.dart': decodedMatches(
               allOf(
                 contains("'/posts/\$postId/comments'"),
-                contains('Future<List<Comment>> list({required int postId})'),
+                matches(RegExp(
+                    r'Future<PrefabPage<Comment>> list\(\s*\{required int postId,')),
               ),
             ),
             'a|lib/post.api_client.dart': anything,
@@ -521,10 +530,8 @@ void main() {
         outputs: {
           'a|lib/product.api_client.dart': decodedMatches(
             allOf(
-              contains('(response.data as List)'),
-              contains(
-                '.map((e) => Product.fromJson(e as Map<String, dynamic>))',
-              ),
+              contains('_adapter.parsePage('),
+              contains('Product.fromJson,'),
             ),
           ),
         },
@@ -583,6 +590,47 @@ void main() {
       final error = await _buildError(_assets('a', 'lib/product.dart', source));
       expect(error, contains('Product'));
       expect(error, contains('toJson()'));
+    });
+  });
+
+  group('PF-13 list query', () {
+    test('AC#7 list accepts search, sort and page and returns a PrefabPage',
+        () async {
+      await testBuilder(
+        apiClientBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.api_client.dart': decodedMatches(
+            allOf([
+              contains('Future<PrefabPage<Product>> list('),
+              contains('String? search'),
+              contains('String? sort'),
+              contains('bool descending = false'),
+              contains('int page = 0'),
+              contains('int? pageSize'),
+              contains('_adapter.queryParameters('),
+              contains('_adapter.parsePage('),
+              contains(
+                  "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart'"),
+              contains('final PrefabListAdapter _adapter')
+            ]),
+          ),
+        },
+      );
+    });
+
+    test('@View(paged: false) sends no page parameters', () async {
+      final source = _productSource.replaceFirst(
+          "path: 'products')", "path: 'products', paged: false)");
+      await testBuilder(
+        apiClientBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', source),
+        outputs: {
+          'a|lib/product.api_client.dart': decodedMatches(
+            isNot(contains('page: page')),
+          ),
+        },
+      );
     });
   });
 }
