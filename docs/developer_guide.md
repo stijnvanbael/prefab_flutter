@@ -87,17 +87,18 @@ in-memory sources and assert on the generated text:
 ```dart
 await testBuilder(
   fooBuilder(BuilderOptions.empty),
-  {..._prefabSources, 'a|lib/product.dart': productSource},
+  {...prefabSources, 'a|lib/product.dart': productSource},
   outputs: {
     'a|lib/product.foo.dart': decodedMatches(contains('class ProductFoo')),
   },
 );
 ```
 
-- Copy the `_prefabSources` map from an existing test (for example
-  `routes_generator_test.dart`). It supplies stub annotation sources so the
-  resolver can resolve `package:prefab_flutter/...`. When you add an
-  annotation or parameter, extend the stubs in each test file that needs it.
+- Import `support/prefab_sources.dart` and use `prefabSources`. It reads the
+  real annotation files under `prefab_flutter/lib/` at test time, so tests
+  always see the shipped annotations. Never copy annotation sources into a
+  test file; when you add an annotation or parameter, nothing in the tests
+  needs to change.
 - Name tests after the backlog task and acceptance criterion they cover
   (`'PF-20 AC#4 - ...'`).
 - To test the merged output, use `prefabBuilder` and `.prefab.dart`
@@ -105,6 +106,31 @@ await testBuilder(
 - For anything that must *compile*, add or extend an entity in
   `prefab_flutter_example`: CI generates its code and runs `flutter analyze
   --fatal-infos` on it.
+
+### Snapshot tests
+
+`test/snapshots_test.dart` runs `prefabBuilder` on every file in
+`test/snapshots/fixtures/` and compares the **complete** generated output with
+`test/snapshots/expected/<fixture>.prefab.dart`. A mismatch fails the test and
+prints a line diff (`-` expected, `+` actual). Snapshots are the safety net for
+refactoring the generator: output must not change by accident.
+
+- **Add a fixture:** create `test/snapshots/fixtures/<scenario>.dart` with one
+  entity scenario (it imports `package:prefab_flutter/prefab_flutter.dart`),
+  then run the update command below and review the new expected file. Prefer a
+  new fixture over changing an existing one, so parallel branches do not
+  conflict.
+- **Update snapshots** after an intended output change:
+
+  ```bash
+  cd prefab_flutter_generator
+  UPDATE_SNAPSHOTS=1 dart test test/snapshots_test.dart
+  ```
+
+  Then read `git diff test/snapshots/expected` before committing.
+- **Merge conflicts** in expected files: take `main`'s version, regenerate with
+  the command above, and review the diff.
+- Fixtures and expected files are excluded from `dart analyze`.
 
 ## Running tests
 
