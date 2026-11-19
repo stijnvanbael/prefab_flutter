@@ -143,9 +143,17 @@ class ListScreenGenerator extends Generator {
     buffer.writeln('          itemBuilder: (context, index) {');
     buffer.writeln('            final $entityLower = ${entityLower}s[index];');
     buffer.writeln('            return ListTile(');
-    if (manifest.visibleFields.isNotEmpty) {
-      buffer.writeln(
-          '              title: Text($entityLower.${manifest.firstLabelFieldName}.toString()),');
+    // Without any declared views only the first field is shown (title).
+    final slots = manifest.hasViews
+        ? manifest.fieldsForView('list').take(3).toList()
+        : manifest.visibleFields.take(1).toList();
+    const slotNames = ['title', 'subtitle', 'trailing'];
+    for (var i = 0; i < slots.length; i++) {
+      final f = slots[i];
+      final value = f.isNullable
+          ? "$entityLower.${f.name}?.toString() ?? '\u2014'"
+          : '$entityLower.${f.name}.toString()';
+      buffer.writeln('              ${slotNames[i]}: Text($value),');
     }
     buffer.writeln("              onTap: () => context.push('$itemPath'),");
     buffer.writeln('            );');

@@ -49,9 +49,11 @@ class Field {
   final String? label;
   final bool hidden;
   final FormOptions form;
+  final Set<String>? views;
   const Field({
     this.label,
     this.hidden = false,
+    this.views,
     this.form = const FormOptions(),
   });
 }
@@ -237,6 +239,33 @@ class Comment {
 }
 ''';
 
+const _viewsSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Item', path: 'items')
+class Item {
+  final int id;
+
+  @Field(views: {'detail'})
+  final String secret;
+
+  @Field(views: {'list'})
+  final String name;
+
+  @Field(views: {'list', 'detail'})
+  final String? note;
+
+  @Field(views: {'list'})
+  final int count;
+
+  @Field(views: {'list'})
+  final int extra;
+
+  Item({required this.id, required this.secret, required this.name,
+      this.note, required this.count, required this.extra});
+}
+''';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -252,6 +281,41 @@ Map<String, Object> _assets(String pkg, String path, String source) => {
 
 void main() {
   group('ListScreenGenerator', () {
+    test('PF-16 — fills title, subtitle and trailing from the list view',
+        () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/item.dart', _viewsSource),
+        outputs: {
+          'a|lib/item.list_screen.dart': decodedMatches(
+            allOf(
+              contains('title: Text(item.name.toString())'),
+              contains("subtitle: Text(item.note?.toString() ?? '\u2014')"),
+              contains('trailing: Text(item.count.toString())'),
+              isNot(contains('item.secret')),
+              isNot(contains('item.extra')),
+            ),
+          ),
+        },
+      );
+    });
+
+    test('PF-16 — without views only the title slot is filled', () async {
+      await testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.list_screen.dart': decodedMatches(
+            allOf(
+              contains('title: Text(product.name.toString())'),
+              isNot(contains('subtitle:')),
+              isNot(contains('trailing:')),
+            ),
+          ),
+        },
+      );
+    });
+
     // Non-parent entity
 
     test('generates a ListScreen ConsumerWidget for an entity', () async {

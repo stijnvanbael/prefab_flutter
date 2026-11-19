@@ -51,9 +51,11 @@ class Field {
   final String? label;
   final bool hidden;
   final FormOptions form;
+  final Set<String>? views;
   const Field({
     this.label,
     this.hidden = false,
+    this.views,
     this.form = const FormOptions(),
   });
 }
@@ -279,7 +281,47 @@ Map<String, Object> _assets(String pkg, String path, String source) => {
 // Tests
 // ---------------------------------------------------------------------------
 
+const _viewsSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Item', path: 'items')
+class Item {
+  final int id;
+
+  @Field(label: 'Only list', views: {'list'})
+  final String onlyList;
+
+  @Field(label: 'Only detail', views: {'detail'})
+  final String onlyDetail;
+
+  @Field(label: 'Everywhere')
+  final String everywhere;
+
+  Item({required this.id, required this.onlyList, required this.onlyDetail,
+      required this.everywhere});
+}
+''';
+
 void main() {
+  test('PF-16 — detail screen only shows fields in the detail view', () async {
+    await testBuilder(
+      detailScreenBuilder(BuilderOptions.empty),
+      {
+        ..._prefabSources,
+        'a|lib/item.dart': _viewsSource,
+      },
+      outputs: {
+        'a|lib/item.detail_screen.dart': decodedMatches(
+          allOf(
+            contains("Text('Only detail')"),
+            contains("Text('Everywhere')"),
+            isNot(contains("Text('Only list')")),
+          ),
+        ),
+      },
+    );
+  });
+
   group('DetailScreenGenerator', () {
     test('AC#1 — emits a ConsumerWidget for the annotated entity', () async {
       await testBuilder(
