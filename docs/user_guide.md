@@ -197,7 +197,7 @@ entity's **unnamed constructor**. Each constructor parameter gets its value from
 |---|---|---|
 | the id (`@Id` / `id`) | omitted | `widget.id` |
 | the `@Parent` field | `widget.<parentId>` | `widget.<parentId>` |
-| a visible `@FormField` | typed form state | typed form state |
+| a visible `@Field` | typed form state | typed form state |
 | a hidden or un-annotated field | omitted | copied from the loaded item |
 
 Form values are converted by type: `int` / `double` / `num` are parsed from the
