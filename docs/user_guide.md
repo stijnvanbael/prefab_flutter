@@ -180,6 +180,35 @@ The nullability of the Dart type decides whether a field is required:
 The edit form prefills nullable fields null-safely (`item.x ?? ''`).
 Parameterised validators such as `min(0)` or `pattern(...)` are planned in PF-31.
 
+### Saving
+
+The Save button validates the form and builds the entity by calling the
+entity's **unnamed constructor**. Each constructor parameter gets its value from:
+
+| Parameter | Create screen | Edit screen |
+|---|---|---|
+| the id (`@Id` / `id`) | omitted | `widget.id` |
+| the `@Parent` field | `widget.<parentId>` | `widget.<parentId>` |
+| a visible `@FormField` | typed form state | typed form state |
+| a hidden or un-annotated field | omitted | copied from the loaded item |
+
+Form values are converted by type: `int` / `double` / `num` are parsed from the
+text field (the form rejects non-numeric input first), `DateTime`, enums and
+`bool` come from their pickers, and an **empty input for a nullable field is
+passed as `null`**.
+
+Parameters that are omitted on create must be nullable, optional or have a
+default value. Otherwise the generator fails with a build-time error naming the
+parameter (so the id must be e.g. `final int? id;` with `this.id`). A form field
+of a type the form cannot convert (anything other than `String`, `int`,
+`double`, `num`, `bool`, `DateTime` or an enum) also fails the build, naming the
+field.
+
+The entity is then passed to the list notifier's `create()` (create screen) or
+`update()` (edit screen) and the screen pops on success. While the request is
+in flight the button is disabled and shows a progress indicator; an error is
+shown in a `SnackBar` and the screen stays open.
+
 ## Generated files
 
 For a source file `product.dart` the generator writes:
@@ -258,17 +287,17 @@ An entity with a `@Parent` field is shown under its parent:
 ```dart
 @View(title: 'Post', path: 'posts')
 class Post {
-  final int id;
+  final int? id;
   @FormField() final String title;
-  Post({required this.id, required this.title});
+  Post({this.id, required this.title});
 }
 
 @View(title: 'Comment', path: 'comments')
 class Comment {
-  final int id;
+  final int? id;
   @FormField() @Parent(Post) final int postId;
   @FormField() final String body;
-  Comment({required this.id, required this.postId, required this.body});
+  Comment({this.id, required this.postId, required this.body});
 }
 ```
 
@@ -367,6 +396,6 @@ These are known gaps in the current pre-release. Each has a backlog task.
 
 | Limitation | Workaround | Task |
 |---|---|---|
-| The Save button validates and closes the form but does not save, so empty nullable inputs are not yet converted to `null` on an entity (PF-11 AC#7) | None yet | PF-11 |
+| The save round-trip is covered by generator tests only; it is not yet exercised end-to-end in a running example app | — | PF-9 |
 | `@FormField` clashes with Flutter's `FormField` | `hide FormField` on one import | PF-30 |
 | Search, sort and pagination are not generated | — | PF-13 |

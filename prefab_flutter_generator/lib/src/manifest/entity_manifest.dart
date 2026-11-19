@@ -12,6 +12,35 @@ const _idChecker = TypeChecker.fromRuntime(Id);
 const _viewChecker = TypeChecker.fromRuntime(View);
 const _parentChecker = TypeChecker.fromRuntime(Parent);
 
+/// A parameter of the entity's unnamed constructor.
+class ConstructorParam {
+  /// Parameter name (matches the field it initialises).
+  final String name;
+
+  /// Whether the parameter is a named parameter.
+  final bool isNamed;
+
+  /// Whether the caller must supply a value (required, non-defaulted).
+  final bool isRequired;
+
+  /// Whether the parameter type is nullable.
+  final bool isNullable;
+
+  /// Whether the parameter declares a default value.
+  final bool hasDefault;
+
+  const ConstructorParam({
+    required this.name,
+    required this.isNamed,
+    required this.isRequired,
+    required this.isNullable,
+    required this.hasDefault,
+  });
+
+  /// Whether the parameter may be left out (or passed `null`) on create.
+  bool get isOptional => !isRequired;
+}
+
 /// Summarises everything the generators need to know about a single
 /// [@View]-annotated entity class.
 class EntityManifest {
@@ -56,6 +85,9 @@ class EntityManifest {
   /// Whether the parent is declared in the same library as this entity.
   final bool parentInSameLibrary;
 
+  /// Parameters of the unnamed constructor, or `null` when the class has none.
+  final List<ConstructorParam>? constructorParams;
+
   EntityManifest({
     required this.entityName,
     required this.title,
@@ -70,6 +102,7 @@ class EntityManifest {
     this.parentTitle,
     this.parentIdType,
     this.parentInSameLibrary = true,
+    this.constructorParams,
   }) : entityNameLower = _toLowerCamel(entityName);
 
   // ---------------------------------------------------------------------------
@@ -273,6 +306,16 @@ class EntityManifest {
       parentIdType: parentIdType,
       parentInSameLibrary:
           parentElement == null || parentElement.library == element.library,
+      constructorParams: element.unnamedConstructor?.parameters
+          .map((p) => ConstructorParam(
+                name: p.name,
+                isNamed: p.isNamed,
+                isRequired: p.isRequiredNamed || p.isRequiredPositional,
+                isNullable: p.type.nullabilitySuffix ==
+                    NullabilitySuffix.question,
+                hasDefault: p.hasDefaultValue,
+              ))
+          .toList(),
     );
   }
 

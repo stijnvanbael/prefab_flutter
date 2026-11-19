@@ -73,10 +73,10 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Item {
   @Id()
-  final String sku;
+  final String? sku;
   @FormField()
   final String name;
-  Item({required this.sku, required this.name});
+  Item({this.sku, required this.name});
   factory Item.fromJson(Map<String, dynamic> json) => throw 0;
   Map<String, dynamic> toJson() => {};
 
@@ -103,10 +103,10 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Item', path: 'items')
 @Update()
 class Item {
-  final int id;
+  final int? id;
   @FormField()
   final String name;
-  Item({required this.id, required this.name});
+  Item({this.id, required this.name});
   factory Item.fromJson(Map<String, dynamic> json) => throw 0;
   Map<String, dynamic> toJson() => {};
 
@@ -161,9 +161,11 @@ void main() {
         formScreenBuilder(BuilderOptions.empty),
         _assets(_stringIdSource),
         outputs: {
-          'a|lib/item.form_screen.dart': decodedMatches(
-            isNot(contains('sku')),
-          ),
+          'a|lib/item.form_screen.dart': decodedMatches(allOf(
+            isNot(contains('_skuController')),
+            // The id is copied from the route on edit and omitted on create.
+            contains('sku: widget.id'),
+          )),
         },
       );
     });

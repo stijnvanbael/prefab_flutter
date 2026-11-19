@@ -67,19 +67,19 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 @Delete()
 class Post {
-  final int id;
+  final int? id;
 
   @FormField(label: 'Title')
   final String title;
 
-  Post({required this.id, required this.title});
+  Post({this.id, required this.title});
 }
 
 @View(title: 'Comment', path: 'comments')
 @Update()
 @Delete()
 class Comment {
-  final int id;
+  final int? id;
 
   @Parent(Post)
   @FormField(hidden: true)
@@ -88,7 +88,7 @@ class Comment {
   @FormField(label: 'Content')
   final String content;
 
-  Comment({required this.id, required this.postId, required this.content});
+  Comment({this.id, required this.postId, required this.content});
 }
 ''';
 

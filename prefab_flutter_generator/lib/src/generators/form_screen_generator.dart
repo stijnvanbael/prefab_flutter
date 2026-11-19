@@ -184,8 +184,10 @@ class FormScreenGenerator extends Generator {
         'class $stateClassName extends ConsumerState<$widgetClassName> {');
     buffer.writeln('  final _formKey = GlobalKey<FormState>();');
 
+    buffer.writeln('  bool _saving = false;');
     if (isEdit) {
       buffer.writeln('  bool _prefilled = false;');
+      buffer.writeln('  ${manifest.entityName}? _item;');
     }
 
     for (final field in fields) {
@@ -223,6 +225,9 @@ class FormScreenGenerator extends Generator {
       buffer.writeln();
       _writePrefillControllers(manifest, buffer);
     }
+
+    buffer.writeln();
+    _writeSaveMethod(manifest, isEdit, buffer);
 
     buffer.writeln();
     buffer.writeln('  @override');
@@ -309,13 +314,145 @@ class FormScreenGenerator extends Generator {
 
   void _writeSaveButton(String saveButtonLabel, StringBuffer buffer) {
     buffer.writeln('            ElevatedButton(');
-    buffer.writeln('              onPressed: () {');
-    buffer.writeln('                if (_formKey.currentState!.validate()) {');
-    buffer.writeln('                  context.pop();');
-    buffer.writeln('                }');
-    buffer.writeln('              },');
-    buffer.writeln("              child: const Text('$saveButtonLabel'),");
+    buffer.writeln('              onPressed: _saving ? null : _save,');
+    buffer.writeln('              child: _saving');
+    buffer.writeln('                  ? const SizedBox(');
+    buffer.writeln('                      width: 20,');
+    buffer.writeln('                      height: 20,');
+    buffer.writeln(
+        '                      child: CircularProgressIndicator(strokeWidth: 2),');
+    buffer.writeln('                    )');
+    buffer.writeln("                  : const Text('$saveButtonLabel'),");
     buffer.writeln('            ),');
+  }
+
+  // ---------------------------------------------------------------------------
+  // _save method generation
+  // ---------------------------------------------------------------------------
+
+  void _writeSaveMethod(
+      EntityManifest manifest, bool isEdit, StringBuffer buffer) {
+    final entity = manifest.entityName;
+    final providerArgs =
+        manifest.hasParent ? '(widget.${manifest.parentParamName})' : '';
+    final provider = '${manifest.entityNameLower}sProvider$providerArgs';
+    final mutation = isEdit ? 'update' : 'create';
+
+    final arguments = _buildConstructorArguments(manifest, isEdit);
+
+    buffer.writeln('  Future<void> _save() async {');
+    buffer.writeln('    if (!_formKey.currentState!.validate()) return;');
+    buffer.writeln('    setState(() => _saving = true);');
+    buffer.writeln(
+        '    // Keep the (auto-dispose) provider alive while the request runs.');
+    buffer.writeln('    final subscription = ref.listenManual($provider, (_, __) {});');
+    buffer.writeln('    try {');
+    buffer.writeln('      final entity = $entity(');
+    for (final argument in arguments) {
+      buffer.writeln('        $argument,');
+    }
+    buffer.writeln('      );');
+    buffer.writeln(
+        '      await ref.read($provider.notifier).$mutation(entity);');
+    buffer.writeln('      if (!mounted) return;');
+    buffer.writeln('      context.pop();');
+    buffer.writeln('    } catch (e) {');
+    buffer.writeln('      if (!mounted) return;');
+    buffer.writeln('      setState(() => _saving = false);');
+    buffer.writeln(
+        '      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));');
+    buffer.writeln('    } finally {');
+    buffer.writeln('      subscription.close();');
+    buffer.writeln('    }');
+    buffer.writeln('  }');
+  }
+
+  /// Maps every parameter of the entity's unnamed constructor to a source
+  /// expression and returns the call arguments in declaration order.
+  ///
+  /// Sources: the id (`widget.id` on edit, omitted on create), the parent id
+  /// (`widget.<parent>`), a form field (typed form state), or — for hidden and
+  /// un-annotated fields — the loaded item on edit. A required parameter with
+  /// no source is a build-time error.
+  List<String> _buildConstructorArguments(EntityManifest manifest, bool isEdit) {
+    final params = manifest.constructorParams;
+    if (params == null) {
+      throw InvalidGenerationSourceError(
+        '${manifest.entityName} needs an unnamed constructor so the generated '
+        'form can create instances.',
+      );
+    }
+    final formFields = {for (final f in manifest.formFields) f.name: f};
+    final arguments = <String>[];
+    for (final param in params) {
+      final String? expression;
+      if (param.name == manifest.idFieldName) {
+        expression = isEdit ? 'widget.id' : null;
+      } else if (param.name == manifest.parentParamName) {
+        expression = 'widget.${param.name}';
+      } else if (formFields.containsKey(param.name)) {
+        expression = _formValueExpression(formFields[param.name]!);
+      } else {
+        expression = isEdit ? '_item!.${param.name}' : null;
+      }
+
+      if (expression == null) {
+        // No source: the parameter must be optional (or nullable) so it can
+        // be omitted / passed as null.
+        if (param.isRequired && !param.isNullable) {
+          throw InvalidGenerationSourceError(
+            'Cannot build ${manifest.entityName} in the create form: the '
+            'constructor parameter "${param.name}" is required but has no '
+            'value source. Make it nullable or give it a default value, or '
+            'expose it with @FormField.',
+          );
+        }
+        if (!param.isNamed) {
+          if (param.hasDefault && !param.isNullable) {
+            throw InvalidGenerationSourceError(
+              'Cannot build ${manifest.entityName} in the create form: the '
+              'optional positional parameter "${param.name}" has no value '
+              'source. Make it a named parameter.',
+            );
+          }
+          arguments.add('null');
+        }
+        continue;
+      }
+      arguments.add(param.isNamed ? '${param.name}: $expression' : expression);
+    }
+    return arguments;
+  }
+
+  /// Dart expression that turns the form state of [field] into a typed value.
+  String _formValueExpression(FieldManifest field) {
+    final name = field.name;
+    switch (_resolveWidgetKind(field)) {
+      case _WidgetKind.toggle:
+        return '_${name}Value';
+      case _WidgetKind.datePicker:
+        return field.isNullable ? '_${name}Value' : '_${name}Value!';
+      case _WidgetKind.dropdown:
+        return field.isNullable ? '_${name}Value' : '_${name}Value!';
+      default:
+        final text = '_${name}Controller.text';
+        final String parsed;
+        switch (field.dartType) {
+          case 'String':
+            parsed = text;
+          case 'int':
+          case 'double':
+          case 'num':
+            parsed = '${field.dartType}.parse($text)';
+          default:
+            throw InvalidGenerationSourceError(
+              'Field "${field.name}" has type ${field.dartType}, which the '
+              'generated form cannot convert from text. Supported types are '
+              'String, int, double, num, bool, DateTime and enums.',
+            );
+        }
+        return field.isNullable ? '$text.isEmpty ? null : $parsed' : parsed;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -327,6 +464,7 @@ class FormScreenGenerator extends Generator {
     final fields = manifest.formFields;
 
     buffer.writeln('  void _prefillControllers($entity item) {');
+    buffer.writeln('    _item = item;');
     for (final field in fields) {
       final kind = _resolveWidgetKind(field);
       switch (kind) {
@@ -504,12 +642,19 @@ class FormScreenGenerator extends Generator {
       if (field.isRequired) Validator.required,
       ...field.validators.where((v) => v != Validator.required),
     ];
-    if (validators.isEmpty) return;
+    final numeric = _isNumericText(field);
+    if (validators.isEmpty && !numeric) return;
     buffer.writeln('              validator: (value) {');
     if (!field.isRequired) {
       // Optional field: an empty value is valid, skip the other checks.
       buffer.writeln(
           "                if (value == null || value.isEmpty) return null;");
+    }
+    if (numeric) {
+      // Parseability check so the save handler can parse safely.
+      final isInt = field.dartType == 'int';
+      buffer.writeln(
+          "                if (${field.dartType}.tryParse(value) == null) return '${isInt ? 'Must be a whole number' : 'Must be a number'}';");
     }
     for (final validator in validators) {
       _writeValidatorCheck(validator, buffer);
@@ -517,6 +662,10 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('                return null;');
     buffer.writeln('              },');
   }
+
+  bool _isNumericText(FieldManifest field) =>
+      _resolveWidgetKind(field) == _WidgetKind.text &&
+      const {'int', 'double', 'num'}.contains(field.dartType);
 
   void _writeValidatorCheck(Validator validator, StringBuffer buffer) {
     switch (validator) {
