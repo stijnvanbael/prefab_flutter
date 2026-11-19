@@ -42,7 +42,7 @@ class MockBackendAdapter implements HttpClientAdapter {
 
     switch (options.method) {
       case 'GET':
-        if (id == null) return _json(200, rows);
+        if (id == null) return _json(200, _list(rows, options.queryParameters));
         final row = _find(rows, id);
         return row == null ? _json(404, {}) : _json(200, row);
       case 'POST':
@@ -62,6 +62,36 @@ class MockBackendAdapter implements HttpClientAdapter {
         return _json(204, {});
     }
     return _json(405, {});
+  }
+
+  /// Applies the prefab list contract: `q` (search on string values),
+  /// `sort` (`field` / `-field`), `page` and `size`. Answers `{items, total}`
+  /// when paged and a bare array otherwise.
+  Object _list(List<Map<String, dynamic>> rows, Map<String, dynamic> query) {
+    var result = List<Map<String, dynamic>>.of(rows);
+    final q = '${query['q'] ?? ''}'.toLowerCase();
+    if (q.isNotEmpty) {
+      result = result
+          .where((r) => r.values
+              .any((v) => v is String && v.toLowerCase().contains(q)))
+          .toList();
+    }
+    final sort = query['sort'] as String?;
+    if (sort != null) {
+      final desc = sort.startsWith('-');
+      final key = desc ? sort.substring(1) : sort;
+      result.sort((a, b) {
+        final c = (a[key] as Comparable).compareTo(b[key]);
+        return desc ? -c : c;
+      });
+    }
+    if (query['page'] == null) return result;
+    final size = int.parse('${query['size']}');
+    final page = int.parse('${query['page']}');
+    return {
+      'items': result.skip(page * size).take(size).toList(),
+      'total': result.length,
+    };
   }
 
   Map<String, dynamic>? _find(List<Map<String, dynamic>> rows, String id) {

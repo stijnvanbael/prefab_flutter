@@ -21,7 +21,8 @@ export 'src/enums/validator.dart';
 class View {
   final String title;
   final String path;
-  const View({required this.title, required this.path});
+  final bool paged;
+  const View({required this.title, required this.path, this.paged = true});
 }
 ''',
   'prefab_flutter|lib/src/annotations/update.dart': r'''
@@ -48,10 +49,14 @@ class FormOptions {
 class Field {
   final String? label;
   final bool hidden;
+  final bool searchable;
+  final bool sortable;
   final FormOptions form;
   const Field({
     this.label,
     this.hidden = false,
+    this.searchable = false,
+    this.sortable = false,
     this.form = const FormOptions(),
   });
 }
@@ -276,7 +281,7 @@ void main() {
           'a|lib/product.provider.dart': decodedMatches(
             allOf(
               contains(
-                'class ProductsNotifier extends AutoDisposeAsyncNotifier<List<Product>>',
+                'class ProductsNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Product>>',
               ),
               contains('AsyncNotifierProvider.autoDispose'),
               isNot(contains('StateNotifier')),
@@ -374,7 +379,7 @@ void main() {
             'a|lib/post.provider.dart': decodedMatches(
               allOf(
                 contains('AsyncNotifierProvider.autoDispose'),
-                contains('.family<CommentsNotifier, List<Comment>, int>'),
+                contains('.family<CommentsNotifier, PrefabPage<Comment>, int>'),
               ),
             ),
           },
@@ -390,7 +395,8 @@ void main() {
           'a|lib/post.provider.dart': decodedMatches(
             allOf(
               contains('class CommentsNotifier'),
-              contains('AutoDisposeFamilyAsyncNotifier<List<Comment>, int>'),
+              contains(
+                  'AutoDisposeFamilyAsyncNotifier<PrefabPage<Comment>, int>'),
               contains('int get postId => arg'),
             ),
           ),
@@ -406,7 +412,8 @@ void main() {
           _assets('a', 'lib/post.dart', _parentChildSource),
           outputs: {
             'a|lib/post.provider.dart': decodedMatches(
-              contains('_client.list(postId: postId)'),
+              matches(RegExp(
+                  r'_client\.list\(\s*postId: postId,\s*search: _search')),
             ),
           },
         );
@@ -507,5 +514,97 @@ void main() {
         );
       },
     );
+  });
+
+  group('PF-13 list query state', () {
+    const unpaged = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Product', path: 'products', paged: false)
+class Product {
+  final int id;
+  @Field()
+  final String name;
+  Product({required this.id, required this.name});
+}
+''';
+
+    Future<void> expectProvider(String path, String source, Matcher m) =>
+        testBuilder(
+          providerBuilder(BuilderOptions.empty),
+          _assets('a', 'lib/$path.dart', source),
+          outputs: {'a|lib/$path.provider.dart': decodedMatches(m)},
+        );
+
+    test('AC#6 notifier holds search, sort, direction and page', () async {
+      await expectProvider(
+        'product',
+        _productSource,
+        allOf(
+          contains('String _search'),
+          contains('String? _sort'),
+          contains('bool _descending'),
+          contains('int _page'),
+          contains('void setSearch(String query)'),
+          contains('Future<void> setSort(String? field'),
+          contains('Future<void> goToPage(int page)'),
+        ),
+      );
+    });
+
+    test('AC#6 search input is debounced and resets the page', () async {
+      await expectProvider(
+        'product',
+        _productSource,
+        allOf(
+          contains("import 'dart:async'"),
+          contains('Timer(const Duration(milliseconds: 300)'),
+          contains('_page = 0'),
+          contains('_searchDebounce?.cancel()'),
+        ),
+      );
+    });
+
+    test('AC#6 every query change reloads through _load', () async {
+      await expectProvider(
+        'product',
+        _productSource,
+        allOf(
+          matches(RegExp(r'setSort\([^)]*\)\s*\{[^}]*return _load\(\);')),
+          matches(RegExp(r'goToPage\(int page\)\s*\{[^}]*return _load\(\);')),
+        ),
+      );
+    });
+
+    test('API client provider passes the list adapter', () async {
+      await expectProvider(
+        'product',
+        _productSource,
+        contains('ref.watch(prefabListAdapterProvider)'),
+      );
+    });
+
+    test('@Parent family notifier keeps the query state too', () async {
+      await expectProvider(
+        'post',
+        _parentChildSource,
+        allOf(
+          contains('void setSearch(String query)'),
+          contains('AutoDisposeFamilyAsyncNotifier<PrefabPage<Comment>, int>'),
+        ),
+      );
+    });
+
+    test('@View(paged: false) has no paging methods', () async {
+      await expectProvider(
+        'product',
+        unpaged,
+        allOf(
+          contains('void setSearch'),
+          isNot(contains('goToPage')),
+          isNot(contains('page: _page')),
+        ),
+      );
+    });
   });
 }

@@ -98,6 +98,9 @@ class EntityManifest {
   /// Parameters of the unnamed constructor, or `null` when the class has none.
   final List<ConstructorParam>? constructorParams;
 
+  /// Whether the list is paged server-side ([@View.paged]).
+  final bool paged;
+
   EntityManifest({
     required this.entityName,
     required this.title,
@@ -114,6 +117,7 @@ class EntityManifest {
     this.parentIdType,
     this.parentInSameLibrary = true,
     this.constructorParams,
+    this.paged = true,
   }) : entityNameLower = _toLowerCamel(entityName);
 
   // ---------------------------------------------------------------------------
@@ -134,6 +138,20 @@ class EntityManifest {
 
   /// All fields that should appear in the form screen (non-hidden, non-parent).
   List<FieldManifest> get formFields => visibleFields;
+
+  /// Visible fields that take part in the list search.
+  List<FieldManifest> get searchableFields =>
+      visibleFields.where((f) => f.searchable).toList();
+
+  /// Visible fields offered in the list sort menu.
+  List<FieldManifest> get sortableFields =>
+      visibleFields.where((f) => f.sortable).toList();
+
+  /// Whether the list screen shows a search bar.
+  bool get hasSearch => searchableFields.isNotEmpty;
+
+  /// Whether the list screen shows a sort menu.
+  bool get hasSort => sortableFields.isNotEmpty;
 
   /// Name of the first visible field, used as the item label in delete dialogs.
   /// Falls back to the id field when no visible fields are declared.
@@ -179,6 +197,8 @@ class EntityManifest {
   ) {
     final title = viewAnnotation.read('title').stringValue;
     final path = viewAnnotation.read('path').stringValue;
+
+    final paged = viewAnnotation.peek('paged')?.boolValue ?? true;
 
     final hasUpdate = _updateChecker.hasAnnotationOf(element);
     final hasDelete = _deleteChecker.hasAnnotationOf(element);
@@ -311,6 +331,9 @@ class EntityManifest {
           isNullable:
               field.type.nullabilitySuffix == NullabilitySuffix.question,
           views: views,
+          // peek: tolerate older annotation sources without these flags.
+          searchable: reader.peek('searchable')?.boolValue ?? false,
+          sortable: reader.peek('sortable')?.boolValue ?? false,
         ),
       );
     }
@@ -326,6 +349,7 @@ class EntityManifest {
       idType: idType,
       idIsNullable:
           idField.type.nullabilitySuffix == NullabilitySuffix.question,
+      paged: paged,
       parentEntityName: parentElement?.name,
       parentPath: parentPath,
       parentTitle: parentTitle,

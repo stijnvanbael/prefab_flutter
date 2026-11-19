@@ -1,3 +1,4 @@
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
 
@@ -90,6 +91,116 @@ void main() {
       const option = PrefabSortOption<String>(id: 'name_asc', label: 'Name A-Z');
       expect(option.id, 'name_asc');
       expect(option.label, 'Name A-Z');
+    });
+  });
+
+  group('PrefabListAdapter', () {
+    const adapter = PrefabListAdapter();
+    Map<String, dynamic> fromJson(Map<String, dynamic> j) => j;
+
+    test('uses q, sort, page and size by default', () {
+      expect(
+        adapter.queryParameters(
+          search: 'tea',
+          sort: 'name',
+          descending: true,
+          page: 2,
+          pageSize: 10,
+        ),
+        {'q': 'tea', 'sort': '-name', 'page': 2, 'size': 10},
+      );
+    });
+
+    test('leaves out empty search, absent sort and unpaged page', () {
+      expect(adapter.queryParameters(search: ''), isEmpty);
+      expect(adapter.queryParameters(sort: 'name'), {'sort': 'name'});
+      expect(adapter.queryParameters(page: 0), {'page': 0, 'size': 20});
+    });
+
+    test('parameter names are configurable', () {
+      const custom = PrefabListAdapter(searchParam: 'query', sizeParam: 'limit');
+      expect(
+        custom.queryParameters(search: 'x', page: 1, pageSize: 5),
+        {'query': 'x', 'page': 1, 'limit': 5},
+      );
+    });
+
+    test('parses { items, total }', () {
+      final page = adapter.parsePage(
+        {
+          'items': [
+            {'id': 1},
+            {'id': 2},
+          ],
+          'total': 25,
+        },
+        fromJson,
+        page: 1,
+        pageSize: 2,
+      );
+      expect(page.items.length, 2);
+      expect(page.totalItems, 25);
+      expect(page.page, 1);
+      expect(page.totalPages, 13);
+    });
+
+    test('parses a bare array as a single page', () {
+      final page = adapter.parsePage([
+        {'id': 1},
+        {'id': 2},
+      ], fromJson);
+      expect(page.totalItems, 2);
+      expect(page.totalPages, 1);
+    });
+
+    test('rejects an unexpected response', () {
+      expect(() => adapter.parsePage('oops', fromJson), throwsFormatException);
+    });
+  });
+
+  group('PrefabPaginationBar.controlled', () {
+    testWidgets('reports navigation through onPageChanged', (tester) async {
+      int? target;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PrefabPaginationBar.controlled(
+              page: 1,
+              totalPages: 3,
+              onPageChanged: (p) => target = p,
+            ),
+          ),
+        ),
+      );
+      expect(find.text('2 / 3'), findsOneWidget);
+      await tester.tap(find.byTooltip('Next page'));
+      expect(target, 2);
+      await tester.tap(find.byTooltip('Previous page'));
+      expect(target, 0);
+    });
+  });
+
+  group('PrefabSortMenu', () {
+    testWidgets('builds with a selected option inside an AppBar', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            appBar: AppBar(
+              actions: const [
+                PrefabSortMenu<String>(
+                  options: [
+                    PrefabSortOption(id: 'name', label: 'Name'),
+                    PrefabSortOption(id: '-name', label: 'Name desc'),
+                  ],
+                  selectedId: '-name',
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.byTooltip('Sort: Name desc'), findsOneWidget);
     });
   });
 }

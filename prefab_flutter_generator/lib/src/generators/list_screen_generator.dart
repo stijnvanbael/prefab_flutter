@@ -69,6 +69,8 @@ class ListScreenGenerator extends Generator {
     buffer.writeln("import 'package:material_ui/material_ui.dart';");
     buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
     buffer.writeln("import 'package:go_router/go_router.dart';");
+    buffer.writeln(
+        "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';");
     buffer.writeln();
     final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
     buffer.writeln("import '$base.dart';");
@@ -120,9 +122,33 @@ class ListScreenGenerator extends Generator {
           '    final ${entityLower}sAsync = ref.watch(${entityLower}sProvider);');
     }
 
+    if (manifest.hasSearch || manifest.hasSort || manifest.paged) {
+      buffer.writeln('    final notifier = ref.read($providerRef.notifier);');
+    }
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
+    if (manifest.hasSort) {
+      buffer.writeln('        actions: [');
+      buffer.writeln('          PrefabSortMenu<$entity>(');
+      buffer.writeln('            options: const [');
+      for (final f in manifest.sortableFields) {
+        buffer.writeln(
+            "              PrefabSortOption(id: '${f.name}', label: '${_escape(f.label)} ↑', icon: Icons.arrow_upward),");
+        buffer.writeln(
+            "              PrefabSortOption(id: '-${f.name}', label: '${_escape(f.label)} ↓', icon: Icons.arrow_downward),");
+      }
+      buffer.writeln('            ],');
+      buffer.writeln(
+          "            selectedId: notifier.sort == null ? null : '\${notifier.descending ? '-' : ''}\${notifier.sort}',");
+      buffer
+          .writeln('            onSortChanged: (option) => notifier.setSort(');
+      buffer.writeln("              option.id.replaceFirst('-', ''),");
+      buffer.writeln("              descending: option.id.startsWith('-'),");
+      buffer.writeln('            ),');
+      buffer.writeln('          ),');
+      buffer.writeln('        ],');
+    }
     buffer.writeln('      ),');
     if (manifest.hasUpdate) {
       buffer.writeln('      floatingActionButton: FloatingActionButton(');
@@ -134,14 +160,26 @@ class ListScreenGenerator extends Generator {
       buffer.writeln('        child: const Icon(Icons.add),');
       buffer.writeln('      ),');
     }
-    buffer.writeln('      body: ${entityLower}sAsync.when(');
-    buffer
-        .writeln('        data: (${entityLower}s) => ${entityLower}s.isEmpty');
+    buffer.writeln('      body: Column(');
+    buffer.writeln('        children: [');
+    if (manifest.hasSearch) {
+      buffer.writeln('          Padding(');
+      buffer.writeln('            padding: const EdgeInsets.all(8),');
+      buffer.writeln('            child: PrefabSearchBar(');
+      buffer.writeln('              initialValue: notifier.search,');
+      buffer.writeln('              onChanged: notifier.setSearch,');
+      buffer.writeln('            ),');
+      buffer.writeln('          ),');
+    }
+    buffer.writeln('          Expanded(');
+    buffer.writeln('            child: ${entityLower}sAsync.when(');
+    buffer.writeln('        skipLoadingOnReload: true,');
+    buffer.writeln('        data: (page) => page.items.isEmpty');
     buffer.writeln("            ? const Center(child: Text('No items found'))");
     buffer.writeln('            : ListView.builder(');
-    buffer.writeln('          itemCount: ${entityLower}s.length,');
+    buffer.writeln('          itemCount: page.items.length,');
     buffer.writeln('          itemBuilder: (context, index) {');
-    buffer.writeln('            final $entityLower = ${entityLower}s[index];');
+    buffer.writeln('            final $entityLower = page.items[index];');
     buffer.writeln('            return ListTile(');
     // Without any declared views only the first field is shown (title).
     final slots = manifest.hasViews
@@ -163,9 +201,26 @@ class ListScreenGenerator extends Generator {
         '        loading: () => const Center(child: CircularProgressIndicator()),');
     buffer.writeln(
         "        error: (error, stackTrace) => Center(child: Text('Error: \$error')),");
+    buffer.writeln('            ),');
+    buffer.writeln('          ),');
+    if (manifest.paged) {
+      buffer.writeln('          PrefabPaginationBar.controlled(');
+      buffer.writeln(
+          '            page: ${entityLower}sAsync.valueOrNull?.page ?? 0,');
+      buffer.writeln(
+          '            totalPages: ${entityLower}sAsync.valueOrNull?.totalPages ?? 0,');
+      buffer.writeln('            onPageChanged: notifier.goToPage,');
+      buffer.writeln('          ),');
+    }
+    buffer.writeln('        ],');
     buffer.writeln('      ),');
     buffer.writeln('    );');
     buffer.writeln('  }');
     buffer.writeln('}');
   }
+
+  static String _escape(String value) => value
+      .replaceAll(r'\', r'\\')
+      .replaceAll("'", r"\'")
+      .replaceAll(r'$', r'\$');
 }

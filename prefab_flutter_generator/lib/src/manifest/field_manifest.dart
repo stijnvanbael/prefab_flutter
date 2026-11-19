@@ -32,6 +32,12 @@ class FieldManifest {
   /// Names of the views the field appears in, or `null` for all views.
   final Set<String>? views;
 
+  /// When `true` the field takes part in the list search ([@Field.searchable]).
+  final bool searchable;
+
+  /// When `true` the field is offered in the list sort menu ([@Field.sortable]).
+  final bool sortable;
+
   const FieldManifest({
     required this.name,
     required this.label,
@@ -43,6 +49,8 @@ class FieldManifest {
     this.isEnum = false,
     this.isNullable = false,
     this.views,
+    this.searchable = false,
+    this.sortable = false,
   });
 
   /// Whether the field appears in the view named [viewName].

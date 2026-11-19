@@ -20,8 +20,8 @@ class PrefabSortOption<T> {
 
 /// A pop-up sort menu widget for list screens.
 ///
-/// Displays the currently selected sort option on the button and a
-/// [PopupMenuButton] with all available options. Calls [onSortChanged]
+/// Shows a sort icon button (the selected option is in its tooltip) that opens
+/// a [PopupMenuButton] with all available options. Calls [onSortChanged]
 /// whenever the user selects a different option.
 ///
 /// Example:
@@ -65,7 +65,7 @@ class PrefabSortMenu<T> extends StatelessWidget {
     final selected = _selected;
 
     return PopupMenuButton<PrefabSortOption<T>>(
-      tooltip: tooltip,
+      tooltip: selected == null ? tooltip : '$tooltip: ${selected.label}',
       icon: const Icon(Icons.sort),
       onSelected: onSortChanged,
       itemBuilder: (context) => options.map((option) {
@@ -105,12 +105,6 @@ class PrefabSortMenu<T> extends StatelessWidget {
           ),
         );
       }).toList(),
-      child: selected != null
-          ? Chip(
-              avatar: selected.icon != null ? Icon(selected.icon, size: 16) : null,
-              label: Text(selected.label),
-            )
-          : null,
     );
   }
 }

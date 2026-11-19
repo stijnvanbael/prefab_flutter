@@ -1,5 +1,7 @@
 ## Unreleased
 
+* **Breaking:** generated list screens, notifiers and API clients are search, sort and pagination aware: `ApiClient.list(...)` returns a `PrefabPage<Entity>`, `EntitysNotifier` is an `AutoDisposeAsyncNotifier<PrefabPage<Entity>>` with `setSearch`, `setSort`, `goToPage` and `setPageSize`, and list screens get a search bar, sort menu and pagination bar. The server must answer `{ items, total }` (a bare array still works); override `prefabListAdapterProvider` to adapt other backends (PF-13).
+
 * **Breaking:** the generated form screens now save: they build the entity through its unnamed constructor and call the provider's `create()`/`update()`. The id (and any field not on the form) must be nullable, optional or have a default, otherwise the build fails naming the parameter (PF-11).
 
 * **Breaking:** the six generated files per source (`.detail_screen.dart`, `.list_screen.dart`, `.form_screen.dart`, `.provider.dart`, `.api_client.dart`, `.routes.dart`) are replaced by a single `.prefab.dart` library, produced by one builder (`prefabBuilder`); the generated files no longer import each other (PF-32).

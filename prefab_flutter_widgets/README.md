@@ -8,8 +8,9 @@ referenced by generated list screens.
 | Widget / Class | Description |
 |---|---|
 | `PrefabPage<T>` | Model class carrying a page of items plus pagination metadata |
+| `PrefabListAdapter` | Maps list queries to REST query parameters (`q`, `sort`, `page`, `size`) and parses `{ items, total }` responses |
 | `PrefabSearchBar` | Search input widget with an `onChanged` callback |
-| `PrefabPaginationBar` | Pagination controls connected to a `PrefabPageNotifier` |
+| `PrefabPaginationBar` | Pagination controls connected to a `PrefabPageNotifier` (or, with `.controlled`, to any state) |
 | `PrefabDeleteDialog<T>` | Generic confirmation dialog for deleting an entity |
 | `PrefabSortMenu<T>` | Pop-up sort menu for list screens |
 

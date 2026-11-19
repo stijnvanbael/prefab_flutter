@@ -41,6 +41,13 @@ class Field {
   /// When `true` the field is excluded from both the form and detail screens.
   final bool hidden;
 
+  /// When `true` the generated list screen shows a search bar and the field
+  /// is included in the server-side search (the `q` query parameter).
+  final bool searchable;
+
+  /// When `true` the generated list screen offers this field in its sort menu.
+  final bool sortable;
+
   /// Form-only settings (widget and validators).
   final FormOptions form;
 
@@ -52,6 +59,8 @@ class Field {
     this.label,
     this.hidden = false,
     this.views,
+    this.searchable = false,
+    this.sortable = false,
     this.form = const FormOptions(),
   });
 }

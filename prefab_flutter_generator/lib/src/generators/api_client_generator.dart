@@ -94,6 +94,8 @@ class ApiClientGenerator extends Generator {
 
   void _writeImports(String sourceFileName, StringBuffer buffer) {
     buffer.writeln("import 'package:dio/dio.dart';");
+    buffer.writeln(
+        "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';");
     buffer.writeln();
     final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
     buffer.writeln("import '$base.dart';");
@@ -113,35 +115,55 @@ class ApiClientGenerator extends Generator {
     // Determine whether this entity is nested under a parent.
     final hasParent = manifest.hasParent;
     final parentParamName = manifest.parentParamName; // e.g. 'postId'
-    final parentParamType =
-        hasParent ? manifest.parentField!.dartType : null;
+    final parentParamType = hasParent ? manifest.parentField!.dartType : null;
 
     // The URL base path: '/parentPath/$parentParam/path' or '/path'.
-    final parentPath =
-        manifest.parentPath;
-    final urlBase = hasParent
-        ? '/$parentPath/\$$parentParamName/$path'
-        : '/$path';
+    final parentPath = manifest.parentPath;
+    final urlBase =
+        hasParent ? '/$parentPath/\$$parentParamName/$path' : '/$path';
 
-    // Named parent parameter declaration, e.g. '{required String postId}'.
-    final parentParam =
-        hasParent ? '{required $parentParamType $parentParamName}' : '';
     final parentParamTrailing =
         hasParent ? ', {required $parentParamType $parentParamName}' : '';
 
     buffer.writeln('class ${entity}ApiClient {');
     buffer.writeln('  final Dio _dio;');
+    buffer.writeln('  final PrefabListAdapter _adapter;');
     buffer.writeln();
-    buffer.writeln('  ${entity}ApiClient(this._dio);');
+    buffer.writeln(
+        '  ${entity}ApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);');
     buffer.writeln();
 
-    // list
-    buffer.writeln('  Future<List<$entity>> list($parentParam) async {');
-    buffer.writeln("    final response = await _dio.get('$urlBase');");
-    buffer.writeln(
-        '    return (response.data as List)\n'
-        '        .map((e) => $entity.fromJson(e as Map<String, dynamic>))\n'
-        '        .toList();');
+    // list: search, sort and pagination go to the server as query parameters
+    // (names and response shape come from the PrefabListAdapter).
+    final listParams = [
+      if (hasParent) 'required $parentParamType $parentParamName',
+      'String? search',
+      'String? sort',
+      'bool descending = false',
+      'int page = 0',
+      'int? pageSize',
+    ].join(', ');
+    buffer.writeln('  Future<PrefabPage<$entity>> list({$listParams}) async {');
+    buffer.writeln('    final response = await _dio.get(');
+    buffer.writeln("      '$urlBase',");
+    buffer.writeln('      queryParameters: _adapter.queryParameters(');
+    buffer.writeln('        search: search,');
+    buffer.writeln('        sort: sort,');
+    buffer.writeln('        descending: descending,');
+    if (manifest.paged) {
+      buffer.writeln('        page: page,');
+      buffer.writeln('        pageSize: pageSize,');
+    }
+    buffer.writeln('      ),');
+    buffer.writeln('    );');
+    buffer.writeln('    return _adapter.parsePage(');
+    buffer.writeln('      response.data,');
+    buffer.writeln('      $entity.fromJson,');
+    if (manifest.paged) {
+      buffer.writeln('      page: page,');
+      buffer.writeln('      pageSize: pageSize,');
+    }
+    buffer.writeln('    );');
     buffer.writeln('  }');
     buffer.writeln();
 
@@ -149,7 +171,8 @@ class ApiClientGenerator extends Generator {
     buffer.writeln(
         '  Future<$entity> getById(${manifest.idType} id$parentParamTrailing) async {');
     buffer.writeln("    final response = await _dio.get('$urlBase/\$id');");
-    buffer.writeln('    return $entity.fromJson(response.data as Map<String, dynamic>);');
+    buffer.writeln(
+        '    return $entity.fromJson(response.data as Map<String, dynamic>);');
     buffer.writeln('  }');
     buffer.writeln();
 
@@ -158,7 +181,8 @@ class ApiClientGenerator extends Generator {
         '  Future<$entity> create($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
     buffer.writeln(
         "    final response = await _dio.post('$urlBase', data: ${manifest.entityNameLower}.toJson());");
-    buffer.writeln('    return $entity.fromJson(response.data as Map<String, dynamic>);');
+    buffer.writeln(
+        '    return $entity.fromJson(response.data as Map<String, dynamic>);');
     buffer.writeln('  }');
     buffer.writeln();
 
@@ -167,7 +191,8 @@ class ApiClientGenerator extends Generator {
         '  Future<$entity> update($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
     buffer.writeln(
         "    final response = await _dio.put('$urlBase/\${${manifest.entityNameLower}.${manifest.idFieldName}}', data: ${manifest.entityNameLower}.toJson());");
-    buffer.writeln('    return $entity.fromJson(response.data as Map<String, dynamic>);');
+    buffer.writeln(
+        '    return $entity.fromJson(response.data as Map<String, dynamic>);');
     buffer.writeln('  }');
     buffer.writeln();
 

@@ -21,7 +21,8 @@ export 'src/enums/validator.dart';
 class View {
   final String title;
   final String path;
-  const View({required this.title, required this.path});
+  final bool paged;
+  const View({required this.title, required this.path, this.paged = true});
 }
 ''',
   'prefab_flutter|lib/src/annotations/update.dart': r'''
@@ -48,12 +49,16 @@ class FormOptions {
 class Field {
   final String? label;
   final bool hidden;
+  final bool searchable;
+  final bool sortable;
   final FormOptions form;
   final Set<String>? views;
   const Field({
     this.label,
     this.hidden = false,
     this.views,
+    this.searchable = false,
+    this.sortable = false,
     this.form = const FormOptions(),
   });
 }
@@ -263,6 +268,63 @@ class Item {
 
   Item({required this.id, required this.secret, required this.name,
       this.note, required this.count, required this.extra});
+}
+''';
+
+const _searchSortSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Product', path: 'products')
+class Product {
+  final int id;
+
+  @Field(label: 'Name', searchable: true, sortable: true)
+  final String name;
+
+  @Field(label: 'Unit price', sortable: true)
+  final double price;
+
+  Product({required this.id, required this.name, required this.price});
+}
+''';
+
+const _unpagedSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Product', path: 'products', paged: false)
+class Product {
+  final int id;
+
+  @Field(label: 'Name')
+  final String name;
+
+  Product({required this.id, required this.name});
+}
+''';
+
+const _parentSearchSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Post', path: 'posts')
+class Post {
+  final int id;
+  @Field()
+  final String title;
+  Post({required this.id, required this.title});
+}
+
+@View(title: 'Comment', path: 'comments')
+class Comment {
+  final int id;
+
+  @Parent(Post)
+  @Field(hidden: true)
+  final int postId;
+
+  @Field(searchable: true, sortable: true)
+  final String content;
+
+  Comment({required this.id, required this.postId, required this.content});
 }
 ''';
 
@@ -542,6 +604,86 @@ class Product {
             isNot(contains('FloatingActionButton')),
           ),
         },
+      );
+    });
+  });
+
+  group('PF-13 search, sort and pagination', () {
+    Future<void> expectScreen(String source, Matcher matcher,
+        {String file = 'product'}) {
+      return testBuilder(
+        listScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/$file.dart', source),
+        outputs: {'a|lib/$file.list_screen.dart': decodedMatches(matcher)},
+      );
+    }
+
+    test('AC#3 searchable field adds a PrefabSearchBar', () async {
+      await expectScreen(
+        _searchSortSource,
+        allOf(
+          contains('PrefabSearchBar('),
+          contains('onChanged: notifier.setSearch'),
+          contains('initialValue: notifier.search'),
+          contains(
+              "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart'"),
+        ),
+      );
+    });
+
+    test('AC#3 without searchable fields there is no search bar', () async {
+      await expectScreen(_productSource, isNot(contains('PrefabSearchBar')));
+    });
+
+    test('AC#4 sortable fields are listed in a PrefabSortMenu', () async {
+      await expectScreen(
+        _searchSortSource,
+        allOf(
+          contains('PrefabSortMenu<Product>('),
+          contains("id: 'name'"),
+          contains("id: '-name'"),
+          contains("id: 'price'"),
+          contains("label: 'Unit price ↓'"),
+          contains('notifier.setSort('),
+        ),
+      );
+    });
+
+    test('AC#4 without sortable fields there is no sort menu', () async {
+      await expectScreen(_productSource, isNot(contains('PrefabSortMenu')));
+    });
+
+    test('AC#5 paged list has a PrefabPaginationBar footer', () async {
+      await expectScreen(
+        _productSource,
+        allOf(
+          contains('PrefabPaginationBar.controlled('),
+          contains('onPageChanged: notifier.goToPage'),
+          contains('.totalPages'),
+          contains('page.items'),
+        ),
+      );
+    });
+
+    test('AC#5 @View(paged: false) has no pagination bar', () async {
+      await expectScreen(
+        _unpagedSource,
+        allOf(
+          isNot(contains('PrefabPaginationBar')),
+          contains('page.items'),
+        ),
+      );
+    });
+
+    test('@Parent list screen drives the family notifier', () async {
+      await expectScreen(
+        _parentSearchSource,
+        allOf(
+          contains('ref.read(commentsProvider(postId).notifier)'),
+          contains('PrefabSearchBar('),
+          contains('PrefabSortMenu<Comment>('),
+        ),
+        file: 'post',
       );
     });
   });

@@ -10,11 +10,16 @@ part 'product.g.dart';
 class Product {
   final int? id;
 
-  @Field(form: FormOptions(validators: [Validator.required]))
+  @Field(
+    searchable: true,
+    sortable: true,
+    form: FormOptions(validators: [Validator.required]),
+  )
   final String name;
 
   @Field(
     label: 'Price (EUR)',
+    sortable: true,
     form: FormOptions(validators: [Validator.positive]),
   )
   final double price;
