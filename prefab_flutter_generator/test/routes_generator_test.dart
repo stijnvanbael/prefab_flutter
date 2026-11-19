@@ -14,7 +14,7 @@ const _prefabSources = {
 export 'src/annotations/view.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/delete.dart';
-export 'src/annotations/form_field.dart';
+export 'src/annotations/field.dart';
 export 'src/annotations/parent.dart';
 export 'src/enums/field_widget.dart';
 export 'src/enums/validator.dart';
@@ -36,9 +36,27 @@ class Delete {
   const Delete();
 }
 ''',
-  'prefab_flutter|lib/src/annotations/form_field.dart': r'''
+  'prefab_flutter|lib/src/annotations/field.dart': r'''
 import 'package:prefab_flutter/src/enums/field_widget.dart';
 import 'package:prefab_flutter/src/enums/validator.dart';
+class FormOptions {
+  final FieldWidget widget;
+  final List<Validator> validators;
+  const FormOptions({
+    this.widget = FieldWidget.auto,
+    this.validators = const [],
+  });
+}
+class Field {
+  final String? label;
+  final bool hidden;
+  final FormOptions form;
+  const Field({
+    this.label,
+    this.hidden = false,
+    this.form = const FormOptions(),
+  });
+}
 class FormField {
   final String? label;
   final FieldWidget widget;
@@ -80,10 +98,10 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 class Product {
   final int id;
 
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
 
-  @FormField(label: 'Price')
+  @Field(label: 'Price')
   final double price;
 
   Product({
@@ -101,7 +119,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Tag', path: 'tags')
 class Tag {
   late final int id;
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
 
   Tag({required this.name});
@@ -116,7 +134,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Product {
   late final int id;
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
 
   Product({required this.name});
@@ -125,7 +143,7 @@ class Product {
 @View(title: 'Tag', path: 'tags')
 class Tag {
   late final int id;
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
 
   Tag({required this.name});
@@ -142,7 +160,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 class Post {
   final int id;
 
-  @FormField(label: 'Title')
+  @Field(label: 'Title')
   final String title;
 
   Post({required this.id, required this.title});
@@ -155,10 +173,10 @@ class Comment {
   final int id;
 
   @Parent(Post)
-  @FormField(hidden: true)
+  @Field(hidden: true)
   final int postId;
 
-  @FormField(label: 'Content')
+  @Field(label: 'Content')
   final String content;
 
   Comment({required this.id, required this.postId, required this.content});
@@ -172,7 +190,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Post', path: 'posts')
 class Post {
   final int id;
-  @FormField(label: 'Title')
+  @Field(label: 'Title')
   final String title;
   Post({required this.id, required this.title});
 }
@@ -187,9 +205,9 @@ import 'post.dart';
 class Comment {
   final int id;
   @Parent(Post)
-  @FormField(hidden: true)
+  @Field(hidden: true)
   final int postId;
-  @FormField(label: 'Content')
+  @Field(label: 'Content')
   final String content;
   Comment({required this.id, required this.postId, required this.content});
 }

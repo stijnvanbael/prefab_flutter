@@ -11,7 +11,7 @@ Apply these annotations to your Dart entity classes and run `build_runner` to ge
 | `@View` | Marks a class as a prefab entity and drives all code generation |
 | `@Update` | Adds an **Edit** action to the generated detail screen |
 | `@Delete` | Adds a **Delete** action backed by a confirmation dialog |
-| `@FormField` | Marks a field for inclusion in generated form and detail screens |
+| `@Field` | Marks a field for inclusion in generated form and detail screens |
 | `@Parent(Type)` | Marks a field as a reference to the parent entity `Type` (nested resource) |
 | `@Id` | Marks the entity's identifier field (defaults to a field named `id`) |
 
@@ -46,10 +46,10 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 class Product {
   final int? id;
 
-  @FormField(label: 'Name', validators: [Validator.required])
+  @Field(label: 'Name', form: FormOptions(validators: [Validator.required]))
   final String name;
 
-  @FormField(label: 'Price', validators: [Validator.positiveNumber])
+  @Field(label: 'Price', form: FormOptions(validators: [Validator.positiveNumber]))
   final double price;
 
   Product({this.id, required this.name, required this.price});

@@ -36,10 +36,10 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 class Product {
   final int? id;
 
-  @FormField(label: 'Name', validators: [Validator.required])
+  @Field(label: 'Name', form: FormOptions(validators: [Validator.required]))
   final String name;
 
-  @FormField(label: 'Price')
+  @Field(label: 'Price')
   final double price;
 
   Product({this.id, required this.name, required this.price});

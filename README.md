@@ -18,7 +18,7 @@ Annotate an entity class, run `build_runner`, and Prefab Flutter generates:
 
 | Package | Kind | Role |
 |---|---|---|
-| [`prefab_flutter`](prefab_flutter) | Dart | Annotations (`@View`, `@FormField`, `@Update`, `@Delete`, `@Parent`, `@Id`) and enums |
+| [`prefab_flutter`](prefab_flutter) | Dart | Annotations (`@View`, `@Field`, `@Update`, `@Delete`, `@Parent`, `@Id`) and enums |
 | [`prefab_flutter_generator`](prefab_flutter_generator) | Dart, dev dependency | `build_runner` generators |
 | [`prefab_flutter_widgets`](prefab_flutter_widgets) | Flutter | Runtime widgets used by generated code (delete dialog, search bar, sort menu, pagination bar) |
 
@@ -73,13 +73,13 @@ part 'product.g.dart';
 class Product {
   final int? id;
 
-  @FormField(validators: [Validator.required])
+  @Field(form: FormOptions(validators: [Validator.required]))
   final String name;
 
-  @FormField(label: 'Price (EUR)', validators: [Validator.positiveNumber])
+  @Field(label: 'Price (EUR)', form: FormOptions(validators: [Validator.positiveNumber]))
   final double price;
 
-  @FormField()
+  @Field()
   final bool inStock;
 
   Product({

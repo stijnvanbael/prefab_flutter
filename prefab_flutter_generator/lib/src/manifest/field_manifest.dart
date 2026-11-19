@@ -5,7 +5,7 @@ class FieldManifest {
   /// Dart field name (e.g. `'firstName'`).
   final String name;
 
-  /// Human-readable label (from [@FormField.label] or derived from [name]).
+  /// Human-readable label (from [@Field.label] or derived from [name]).
   final String label;
 
   /// When `true` the field is excluded from form and detail screens.
@@ -20,7 +20,7 @@ class FieldManifest {
   /// Validation rules applied to this field in the form screen.
   final List<Validator> validators;
 
-  /// Widget hint from the [@FormField.widget] annotation.
+  /// Widget hint from the [@Field.form] annotation.
   final FieldWidget fieldWidget;
 
   /// When `true` the Dart type of the field is an enum.

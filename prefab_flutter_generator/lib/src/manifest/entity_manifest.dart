@@ -7,6 +7,8 @@ import 'field_manifest.dart';
 
 const _updateChecker = TypeChecker.fromRuntime(Update);
 const _deleteChecker = TypeChecker.fromRuntime(Delete);
+const _fieldChecker = TypeChecker.fromRuntime(Field);
+// ignore: deprecated_member_use
 const _formFieldChecker = TypeChecker.fromRuntime(FormField);
 const _idChecker = TypeChecker.fromRuntime(Id);
 const _viewChecker = TypeChecker.fromRuntime(View);
@@ -62,7 +64,7 @@ class EntityManifest {
   /// Whether the entity class carries the [@Delete] annotation.
   final bool hasDelete;
 
-  /// All fields declared with [@FormField] in source order.
+  /// All fields declared with [@Field] (or the deprecated [@FormField]) in source order.
   final List<FieldManifest> fields;
 
   /// Name of the identifier field (the [@Id] field, or `id`).
@@ -201,10 +203,16 @@ class EntityManifest {
     for (final field in instanceFields) {
       if (field == idField) continue;
 
-      final formFieldAnnotation = _formFieldChecker.firstAnnotationOf(field);
-      if (formFieldAnnotation == null) continue;
+      final fieldAnnotation = _fieldChecker.firstAnnotationOf(field);
+      final legacyAnnotation =
+          fieldAnnotation == null ? _formFieldChecker.firstAnnotationOf(field) : null;
+      final annotation = fieldAnnotation ?? legacyAnnotation;
+      if (annotation == null) continue;
 
-      final reader = ConstantReader(formFieldAnnotation);
+      final reader = ConstantReader(annotation);
+      // Form-only settings: `@Field.form`, or the top level of `@FormField`.
+      final formReader =
+          fieldAnnotation != null ? reader.read('form') : reader;
 
       final labelReader = reader.read('label');
       final label = labelReader.isNull
@@ -257,7 +265,7 @@ class EntityManifest {
         parentElement = parentTypeElement;
       }
 
-      final validatorsObjList = reader.read('validators').listValue;
+      final validatorsObjList = formReader.read('validators').listValue;
       final validators = validatorsObjList
           .map((obj) {
             final name = obj.variable?.name;
@@ -271,7 +279,7 @@ class EntityManifest {
           .whereType<Validator>()
           .toList();
 
-      final widgetName = reader.read('widget').objectValue.variable?.name;
+      final widgetName = formReader.read('widget').objectValue.variable?.name;
       final fieldWidget = widgetName != null
           ? FieldWidget.values.byName(widgetName)
           : FieldWidget.auto;
