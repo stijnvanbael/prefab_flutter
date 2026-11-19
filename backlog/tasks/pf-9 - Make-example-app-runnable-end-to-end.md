@@ -25,4 +25,5 @@ The prefab_flutter_example cannot compile or run because the runtime widgets lib
 - [ ] #5 CI runs build_runner on the example app and `flutter analyze --fatal-infos` on the result, so generated code that does not compile fails the build
 - [ ] #6 The example covers at least one top-level entity and one nested (@Parent) entity
 - [ ] #7 The example entity uses json_serializable (`fromJson`/`toJson`) and the generated client deserializes responses correctly (moved from PF-12 AC #6)
+- [ ] #8 Creating and editing an entity in the example app round-trips through the generated form save (create()/update()) against the backend (moved from PF-11 AC#8)
 <!-- AC:END -->

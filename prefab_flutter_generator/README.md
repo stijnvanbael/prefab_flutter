@@ -34,7 +34,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 @Delete()
 class Product {
-  final int id;
+  final int? id;
 
   @FormField(label: 'Name', validators: [Validator.required])
   final String name;
@@ -42,7 +42,7 @@ class Product {
   @FormField(label: 'Price')
   final double price;
 
-  Product({required this.id, required this.name, required this.price});
+  Product({this.id, required this.name, required this.price});
 }
 ```
 

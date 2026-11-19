@@ -71,7 +71,7 @@ part 'product.g.dart';
 @Update()
 @Delete()
 class Product {
-  final int id;
+  final int? id;
 
   @FormField(validators: [Validator.required])
   final String name;
@@ -83,7 +83,7 @@ class Product {
   final bool inStock;
 
   Product({
-    required this.id,
+    this.id,
     required this.name,
     required this.price,
     required this.inStock,
