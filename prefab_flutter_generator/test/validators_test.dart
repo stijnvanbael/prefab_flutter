@@ -386,7 +386,7 @@ void main() {
       () => _expectOutput(
         '@Field() final int f;',
         allOf(
-          contains('TextInputType.numberWithOptions(signed: true)'),
+          contains('const TextInputType.numberWithOptions(signed: true)'),
           contains(r"FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$'))"),
         ),
       ),
@@ -397,8 +397,8 @@ void main() {
       () => _expectOutput(
         '@Field() final double f;',
         allOf(
-          contains(
-              'TextInputType.numberWithOptions(signed: true, decimal: true)'),
+          contains('const TextInputType.numberWithOptions('),
+          contains('decimal: true'),
           contains(
               r"FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d*$'))"),
           contains('double.tryParse(value) == null'),
@@ -411,7 +411,7 @@ void main() {
       () => _expectOutput(
         '@Field(form: FormOptions(widget: FieldWidget.numberInput)) '
         'final String f;',
-        contains('keyboardType: TextInputType.numberWithOptions'),
+        contains('keyboardType: const TextInputType.numberWithOptions'),
       ),
     );
 
@@ -420,7 +420,7 @@ void main() {
       () => _expectOutput(
         '@Field(form: FormOptions(validators: [Validator.min(1)])) final int f;',
         allOf(
-          contains('TextInputType.numberWithOptions(signed: true)'),
+          contains('const TextInputType.numberWithOptions(signed: true)'),
           contains('n < 1'),
         ),
       ),

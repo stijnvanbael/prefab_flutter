@@ -46,7 +46,9 @@ class FormScreenGenerator extends Generator {
     final sourceFileName = buildStep.inputId.path.split('/').last;
     final buffer = StringBuffer();
     _writeHeader(buffer);
-    _writeImports(sourceFileName, buffer);
+    final usesNumberInput = manifests.any((m) => m.formFields
+        .any((f) => _resolveWidgetKind(f) == _WidgetKind.numberInput));
+    _writeImports(sourceFileName, buffer, usesNumberInput);
     for (final manifest in manifests) {
       if (manifest.hasCreate) {
         buffer.writeln();
@@ -118,8 +120,17 @@ class FormScreenGenerator extends Generator {
   // Imports
   // ---------------------------------------------------------------------------
 
-  void _writeImports(String sourceFileName, StringBuffer buffer) {
+  void _writeImports(
+    String sourceFileName,
+    StringBuffer buffer,
+    bool usesNumberInput,
+  ) {
     final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
+    // FilteringTextInputFormatter lives in services, which material_ui does
+    // not re-export.
+    if (usesNumberInput) {
+      buffer.writeln("import 'package:flutter/services.dart';");
+    }
     buffer.writeln("import 'package:material_ui/material_ui.dart';");
     buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
     buffer.writeln("import 'package:go_router/go_router.dart';");
@@ -616,8 +627,8 @@ class FormScreenGenerator extends Generator {
   void _writeNumberField(FieldManifest field, StringBuffer buffer) {
     final isInt = field.dartType == 'int';
     final keyboard = isInt
-        ? 'TextInputType.numberWithOptions(signed: true)'
-        : 'TextInputType.numberWithOptions(signed: true, decimal: true)';
+        ? 'const TextInputType.numberWithOptions(signed: true)'
+        : 'const TextInputType.numberWithOptions(signed: true, decimal: true)';
     final pattern = isInt ? r'^-?\d*$' : r'^-?\d*\.?\d*$';
     buffer.writeln('            TextFormField(');
     buffer.writeln('              controller: _${field.name}Controller,');
