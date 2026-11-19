@@ -175,7 +175,7 @@ For a source file `product.dart` the generator writes:
 | `product.form_screen.dart` | `ProductCreateScreen` and `ProductEditScreen(id:)` (only with `@Update`) |
 | `product.provider.dart` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`StateNotifierProvider`) with `ProductsNotifier`, and `productApiClientProvider` |
 | `product.api_client.dart` | `ProductApiClient` with `list`, `getById`, `create`, `update` and `delete` |
-| `product.routes.dart` | `$prefabRoutes`, a `List<RouteBase>` with the routes of every entity in the file |
+| `product.routes.dart` | `$productRoutes` (named after the source file), a `List<RouteBase>` with the routes of every entity in the file |
 
 Several `@View` classes may live in one source file; their code is combined
 in the same generated files.
@@ -197,19 +197,20 @@ For `@View(path: 'products')` with `@Update`:
 Register them with:
 
 ```dart
-GoRouter(routes: $prefabRoutes)
+GoRouter(routes: $productRoutes)
 ```
 
-Each generated routes file declares its own `$prefabRoutes`. If your entities
-are spread over several source files, import the route files with prefixes and
-concatenate the lists:
+The getter name is derived from the source file name: `product.dart` gives
+`$productRoutes`, `user_account.dart` gives `$userAccountRoutes`. Because every
+file has a unique name, an app with entities in several source files can import
+all the routes files without prefixes and concatenate the lists:
 
 ```dart
-import 'product.routes.dart' as product;
-import 'customer.routes.dart' as customer;
+import 'product.routes.dart';
+import 'customer.routes.dart';
 
 final router = GoRouter(
-  routes: [...product.$prefabRoutes, ...customer.$prefabRoutes],
+  routes: [...$productRoutes, ...$customerRoutes],
 );
 ```
 
@@ -322,7 +323,6 @@ These are known gaps in the current pre-release. Each has a backlog task.
 | The list screen has no button to open the create screen | Navigate to `/{path}/create` yourself | PF-26 |
 | Nested create, edit and delete do not compile | Don't use `@Update`/`@Delete` on nested entities yet | PF-25 |
 | The detail screen shows stale data after an edit | Invalidate `{entity}DetailProvider` yourself | PF-28 |
-| `$prefabRoutes` has the same name in every routes file | Import with prefixes (see [Routes](#routes)) | PF-27 |
 | Nullable fields are not handled (`null` shows as the text "null"; prefill may not compile) | Use non-nullable fields | PF-15 |
 | `Validator.required` on an enum dropdown emits `value.isEmpty` and does not compile | Leave validators off dropdown fields | PF-31 |
 | `@FormField` clashes with Flutter's `FormField` | `hide FormField` on one import | PF-30 |

@@ -44,7 +44,7 @@ Builder apiClientBuilder(BuilderOptions options) =>
       generatedExtension: '.api_client.dart',
     );
 
-/// Generates GoRouter `TypedGoRoute` declarations and the `$prefabRoutes` list.
+/// Generates GoRouter `TypedGoRoute` declarations and the per-file `$<file>Routes` list.
 Builder routesBuilder(BuilderOptions options) =>
     LibraryBuilder(
       RoutesGenerator(),

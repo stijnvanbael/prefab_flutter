@@ -187,7 +187,7 @@ void main() {
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
           'a|lib/product.routes.dart': decodedMatches(
-            contains('List<RouteBase> get \$prefabRoutes'),
+            contains('List<RouteBase> get \$productRoutes'),
           ),
         },
       );
@@ -312,10 +312,22 @@ void main() {
             // The getter declaration should appear exactly once.
             matches(
               RegExp(
-                r'List<RouteBase> get \$prefabRoutes',
+                r'List<RouteBase> get \$entitiesRoutes',
                 multiLine: true,
               ),
             ),
+          ),
+        },
+      );
+    });
+
+    test('getter name is camel-cased from a snake_case file name', () async {
+      await testBuilder(
+        routesBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/user_account.dart', _productSource),
+        outputs: {
+          'a|lib/user_account.routes.dart': decodedMatches(
+            contains('List<RouteBase> get \$userAccountRoutes'),
           ),
         },
       );
