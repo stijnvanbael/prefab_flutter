@@ -95,11 +95,16 @@ class Comment {
 const _orphanSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
+class Post {
+  final int id;
+  Post({required this.id});
+}
+
 @View(title: 'Comment', path: 'comments')
 class Comment {
   final int id;
 
-  @Parent()
+  @Parent(Post)
   @FormField(hidden: true)
   final int postId;
 
@@ -188,7 +193,7 @@ void main() {
         error = e;
       }
       expect(
-          '$error\n${logs.join('\n')}', contains('no @View-annotated class'));
+          '$error\n${logs.join('\n')}', contains('references a class without a @View annotation'));
     });
   });
 }
