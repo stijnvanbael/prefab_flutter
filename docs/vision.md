@@ -145,4 +145,6 @@ generating) and notifications.
 | Reference apps | Energy balancing and self-study, built in parallel |
 
 Architecture decisions are recorded in `backlog/decisions/`; the first is
-the generator architecture (PF-37).
+the [generator architecture](../backlog/decisions/decision-1%20-%20Generator-architecture.md)
+(PF-37): templates per artifact with extension points for feature modules,
+and promotion by a `@Promoted()` declaration with the artifact's name.

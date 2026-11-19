@@ -50,6 +50,13 @@ prefab_flutter_generator/
    not directly in the generator, so every generator sees the same defaults
    and inference.
 
+This structure is being replaced by artifacts, extension points and feature
+modules, as decided in
+[decision-1](../backlog/decisions/decision-1%20-%20Generator-architecture.md)
+(core planned in PF-38, feature modules in PF-39). A throwaway prototype of
+the detail screen lives in `prefab_flutter_generator/prototype/pf37/`; it is
+not part of the generator and not run by CI.
+
 ## Adding a generator
 
 Say you want to generate `{Entity}Foo` classes.
