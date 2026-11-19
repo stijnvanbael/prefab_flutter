@@ -1,7 +1,7 @@
 ---
 id: PF-25
 title: Fix nested resource screens
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-11-18 10:00'
 updated_date: '2026-11-18 10:00'
@@ -23,11 +23,18 @@ Each of these is a compile or navigation error.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 FormScreenGenerator adds the parent id parameter to create and edit screens of nested entities and passes it to providers
-- [ ] #2 The edit screen of a nested entity watches the detail provider with the (id, parentId) record
-- [ ] #3 The detail screen's Edit action navigates to the nested edit path
-- [ ] #4 The detail screen's Delete action uses the family list provider with the parent id
+- [x] #1 FormScreenGenerator adds the parent id parameter to create and edit screens of nested entities and passes it to providers
+- [x] #2 The edit screen of a nested entity watches the detail provider with the (id, parentId) record
+- [x] #3 The detail screen's Edit action navigates to the nested edit path
+- [x] #4 The detail screen's Delete action uses the family list provider with the parent id
 - [ ] #5 Navigation paths are built in one shared helper used by all generators, instead of being duplicated per generator
-- [ ] #6 Generator tests cover create, edit, delete and navigation for a nested entity
+- [x] #6 Generator tests cover create, edit, delete and navigation for a nested entity
 - [ ] #7 The example app's nested entity compiles and works (PF-9)
 <!-- AC:END -->
+
+## Implementation Notes
+
+- Added `EntityPaths` (`manifest/entity_paths.dart`), used by the list and detail generators; a missing parent entity now fails generation instead of guessing `{parent}s`.
+- `DetailScreenGenerator` and `FormScreenGenerator` are now library-level generators (like the list generator). Before, a source file with two `@View` classes (any nested entity) emitted the header and imports twice and produced invalid Dart.
+- Tests: `test/nested_screens_test.dart`.
+- Not done: #5 only partly — `RoutesGenerator` still builds its own relative GoRouter tree rather than using `EntityPaths`; #7 needs the example app (PF-9).
