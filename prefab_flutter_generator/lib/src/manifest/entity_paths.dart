@@ -12,10 +12,9 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 /// Returned strings are Dart string-literal contents (without quotes) that may
 /// contain interpolations such as `$postId`.
 class EntityPaths {
-  final Map<String, EntityManifest> _byName;
-
-  EntityPaths(Iterable<EntityManifest> manifests)
-      : _byName = {for (final m in manifests) m.entityNameLower: m};
+  /// The parent's path and id are resolved by [EntityManifest], so the
+  /// manifests are only accepted for API stability.
+  const EntityPaths(Iterable<EntityManifest> manifests);
 
   /// Collects the manifests of every [@View] class in [element]'s library.
   factory EntityPaths.forLibraryOf(Element element) {
