@@ -38,10 +38,10 @@ fi
 open_ids=$(for f in backlog/tasks/*.md; do
   id_of "$f"
 done | tr '[:lower:]' '[:upper:]')
-limitations=$(sed -n '/^## Known limitations/,/^## /p' docs/user_guide.md)
+limitations=$(cat docs/user_guide/known-limitations.md)
 for id in $(echo "$limitations" | grep -oE 'PF-[0-9]+' | sort -u); do
   if ! echo "$open_ids" | grep -qx "$id"; then
-    fail "docs/user_guide.md Known limitations references $id, which is not an open task in backlog/tasks"
+    fail "docs/user_guide/known-limitations.md references $id, which is not an open task in backlog/tasks"
   fi
 done
 

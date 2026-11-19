@@ -102,7 +102,7 @@ item:
    `docs/developer_guide.md#running-tests` pass for every package you changed.
    If you change the generator, also run the example app steps (it compiles
    the generated code).
-3. `docs/user_guide.md` and `README.md` describe the new behaviour; search
+3. The matching page in `docs/user_guide/` and `README.md` describe the new behaviour; search
    them for text your change made untrue (e.g. `grep -n "planned in PF-<n>"`
    for your task id).
 4. Known limitations: rows fixed by this change are removed; new limitations
@@ -116,14 +116,14 @@ item:
 Every change that affects users or the project's status MUST update the documentation in the same commit / pull request. Treat stale documentation as a bug.
 
 - **`README.md`** (repository root): the project overview, package table, quick start and status. Update it when installation, dependencies, the minimal example, the generated output or the project status changes.
-- **`docs/user_guide.md`**: the complete user-facing reference. Update it whenever you add, change or remove an annotation, annotation parameter, `FieldWidget` or `Validator` value, generated file, generated class/provider/method, route, REST call, runtime widget, or default/inferred behaviour.
-- **Known limitations** (in `docs/user_guide.md`): when you fix a limitation, remove its row; when you discover or introduce one, add a row with the backlog task id.
+- **`docs/user_guide/`**: the complete user-facing reference, one page per topic (`docs/user_guide.md` is only the index). Change the page your feature belongs to (annotations, field widgets, validators, generated files, routes, nested resources, HTTP client, REST contract, runtime widgets) whenever you add, change or remove an annotation, annotation parameter, `FieldWidget` or `Validator` value, generated file, generated class/provider/method, route, REST call, runtime widget, or default/inferred behaviour.
+- **Known limitations** (in `docs/user_guide/known-limitations.md`): when you fix a limitation, remove its row; when you discover or introduce one, add a row with the backlog task id.
 - **Backlog tasks** (`backlog/tasks`): when you finish work, tick the acceptance criteria that are met, set the status, and add implementation notes for anything left undone or moved to another task. Do not leave merged work in "To Do".
 - **Package READMEs and changelogs** (`prefab_flutter*/README.md`, `prefab_flutter*/changelog.d/`): keep them consistent with the root README and the user guide. Changelog entries go into fragments, see "Avoiding merge conflicts".
 
 Documentation describes what the code does **today**. Mention planned behaviour only with its backlog task id (e.g. "planned in PF-13").
 
-Before finishing a task, check: does `README.md` or `docs/user_guide.md` describe anything this change made untrue or incomplete?
+Before finishing a task, check: does `README.md` or a page in `docs/user_guide/` describe anything this change made untrue or incomplete?
 
 ## PULL REQUESTS
 
