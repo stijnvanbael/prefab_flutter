@@ -6,6 +6,7 @@ import 'package:test/test.dart';
 const _prefabSources = {
   'prefab_flutter|lib/prefab_flutter.dart': r'''
 export 'src/annotations/view.dart';
+export 'src/annotations/create.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/delete.dart';
 export 'src/annotations/field.dart';
@@ -18,6 +19,11 @@ class View {
   final String title;
   final String path;
   const View({required this.title, required this.path});
+}
+''',
+  'prefab_flutter|lib/src/annotations/create.dart': r'''
+class Create {
+  const Create();
 }
 ''',
   'prefab_flutter|lib/src/annotations/update.dart': r'''
@@ -197,6 +203,7 @@ class Order {
 }
 
 @View(title: 'Order Line', path: 'lines')
+@Create()
 @Update()
 @Delete()
 class OrderLine {
@@ -213,6 +220,7 @@ class OrderLine {
 }
 
 @View(title: 'Note', path: 'notes')
+@Create()
 @Update()
 @Delete()
 class OrderLineNote {
