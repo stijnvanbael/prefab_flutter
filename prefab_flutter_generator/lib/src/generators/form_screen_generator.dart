@@ -6,44 +6,43 @@ import 'package:source_gen/source_gen.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/field_manifest.dart';
 
+const _viewChecker = TypeChecker.fromRuntime(View);
+
 /// Resolved widget kind after applying [FieldWidget.auto] type inference.
 enum _WidgetKind { text, multilineText, password, datePicker, dropdown, toggle }
 
 /// Generates `{Entity}CreateScreen` and `{Entity}EditScreen` [ConsumerWidget]s
 /// for every class annotated with [@View] that also carries [@Update].
-class FormScreenGenerator extends GeneratorForAnnotation<View> {
+class FormScreenGenerator extends Generator {
   @override
-  String generateForAnnotatedElement(
-    Element element,
-    ConstantReader annotation,
-    BuildStep buildStep,
-  ) {
-    if (element is! ClassElement) {
-      throw InvalidGenerationSourceError(
-        '@View can only be applied to classes.',
-        element: element,
-      );
+  String generate(LibraryReader library, BuildStep buildStep) {
+    final manifests = <EntityManifest>[];
+    final all = <EntityManifest>[];
+    for (final a in library.annotatedWith(_viewChecker)) {
+      final element = a.element;
+      if (element is! ClassElement) {
+        throw InvalidGenerationSourceError(
+          '@View can only be applied to classes.',
+          element: element,
+        );
+      }
+      final manifest = EntityManifest.from(element, a.annotation);
+      all.add(manifest);
+      // Only generate form screens when @Update is present.
+      if (manifest.hasUpdate) manifests.add(manifest);
     }
+    if (manifests.isEmpty) return '';
 
-    final manifest = EntityManifest.from(element, annotation);
-
-    // Only generate form screens when @Update is present.
-    if (!manifest.hasUpdate) return '';
-
-    final inputPath = buildStep.inputId.path;
-    final sourceFileName = inputPath.split('/').last;
-
-    return _generate(manifest, sourceFileName);
-  }
-
-  String _generate(EntityManifest manifest, String sourceFileName) {
+    final sourceFileName = buildStep.inputId.path.split('/').last;
     final buffer = StringBuffer();
     _writeHeader(buffer);
     _writeImports(sourceFileName, buffer);
-    buffer.writeln();
-    _writeCreateScreen(manifest, buffer);
-    buffer.writeln();
-    _writeEditScreen(manifest, buffer);
+    for (final manifest in manifests) {
+      buffer.writeln();
+      _writeCreateScreen(manifest, buffer);
+      buffer.writeln();
+      _writeEditScreen(manifest, buffer);
+    }
     return buffer.toString();
   }
 
@@ -103,7 +102,15 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
 
     buffer.writeln(
         'class ${entity}CreateScreen extends ConsumerStatefulWidget {');
-    buffer.writeln('  const ${entity}CreateScreen({super.key});');
+    if (manifest.hasParent) {
+      buffer.writeln(
+          '  final ${manifest.parentField!.dartType} ${manifest.parentParamName};');
+      buffer.writeln();
+      buffer.writeln(
+          '  const ${entity}CreateScreen({super.key, required this.${manifest.parentParamName}});');
+    } else {
+      buffer.writeln('  const ${entity}CreateScreen({super.key});');
+    }
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln(
@@ -128,11 +135,20 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
   void _writeEditScreen(EntityManifest manifest, StringBuffer buffer) {
     final entity = manifest.entityName;
 
-    buffer.writeln('class ${entity}EditScreen extends ConsumerStatefulWidget {');
+    buffer
+        .writeln('class ${entity}EditScreen extends ConsumerStatefulWidget {');
     buffer.writeln('  final ${manifest.idType} id;');
     buffer.writeln();
-    buffer
-        .writeln('  const ${entity}EditScreen({super.key, required this.id});');
+    if (manifest.hasParent) {
+      buffer.writeln(
+          '  final ${manifest.parentField!.dartType} ${manifest.parentParamName};');
+      buffer.writeln();
+      buffer.writeln(
+          '  const ${entity}EditScreen({super.key, required this.id, required this.${manifest.parentParamName}});');
+    } else {
+      buffer.writeln(
+          '  const ${entity}EditScreen({super.key, required this.id});');
+    }
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln(
@@ -253,8 +269,11 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
       EntityManifest manifest, String saveButtonLabel, StringBuffer buffer) {
     final entityLower = manifest.entityNameLower;
 
+    final detailArg = manifest.hasParent
+        ? '((widget.id, widget.${manifest.parentParamName}))'
+        : '(widget.id)';
     buffer.writeln(
-        '    final asyncItem = ref.watch(${entityLower}DetailProvider(widget.id));');
+        '    final asyncItem = ref.watch(${entityLower}DetailProvider$detailArg);');
     buffer.writeln('    asyncItem.whenData((item) {');
     buffer.writeln('      if (!_prefilled) {');
     buffer.writeln('        _prefilled = true;');
@@ -268,8 +287,8 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
     buffer.writeln('      body: asyncItem.when(');
     buffer.writeln(
         '        loading: () => const Center(child: CircularProgressIndicator()),');
-    buffer.writeln(
-        '        error: (e, _) => Center(child: Text(e.toString())),');
+    buffer
+        .writeln('        error: (e, _) => Center(child: Text(e.toString())),');
     buffer.writeln('        data: (_) => Form(');
     buffer.writeln('          key: _formKey,');
     buffer.writeln('          child: ListView(');
@@ -320,8 +339,8 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
         default:
           // text, multilineText, password
           if (field.dartType == 'String') {
-            buffer
-                .writeln('    _${field.name}Controller.text = item.${field.name};');
+            buffer.writeln(
+                '    _${field.name}Controller.text = item.${field.name};');
           } else {
             buffer.writeln(
                 '    _${field.name}Controller.text = item.${field.name}.toString();');
@@ -457,13 +476,13 @@ class FormScreenGenerator extends GeneratorForAnnotation<View> {
         buffer.writeln(
             r"                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value ?? '')) return 'Invalid email address';");
       case Validator.positiveNumber:
-        buffer.writeln(
-            "                final n = double.tryParse(value ?? '');");
+        buffer
+            .writeln("                final n = double.tryParse(value ?? '');");
         buffer.writeln(
             "                if (n == null || n <= 0) return 'Must be a positive number';");
       case Validator.url:
-        buffer.writeln(
-            "                final uri = Uri.tryParse(value ?? '');");
+        buffer
+            .writeln("                final uri = Uri.tryParse(value ?? '');");
         buffer.writeln(
             "                if (uri == null || !uri.isAbsolute) return 'Invalid URL';");
     }

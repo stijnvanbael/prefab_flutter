@@ -252,8 +252,12 @@ Effects:
 - `commentsProvider` is a family keyed on `postId`; `commentDetailProvider` is
   keyed on the record `(id, postId)`.
 
-Nested create, edit and delete do not compile yet; see
-[Known limitations](#known-limitations).
+- `CommentCreateScreen` and `CommentEditScreen` take a required `postId`;
+  the edit screen watches `commentDetailProvider((id, postId))`.
+- The detail screen's Edit action opens `/posts/$postId/comments/$id/edit`, and
+  its Delete action uses `commentsProvider(postId).notifier`.
+- List and detail navigation paths are built by one shared helper, so they
+  always match the routes.
 
 ## Configuring the HTTP client
 
@@ -321,7 +325,6 @@ These are known gaps in the current pre-release. Each has a backlog task.
 | Responses are cast (`as Product`) instead of deserialized, so every request fails at runtime | None yet | PF-12 |
 | The Save button validates and closes the form but does not save | None yet | PF-11 |
 | The list screen has no button to open the create screen | Navigate to `/{path}/create` yourself | PF-26 |
-| Nested create, edit and delete do not compile | Don't use `@Update`/`@Delete` on nested entities yet | PF-25 |
 | The detail screen shows stale data after an edit | Invalidate `{entity}DetailProvider` yourself | PF-28 |
 | Nullable fields are not handled (`null` shows as the text "null"; prefill may not compile) | Use non-nullable fields | PF-15 |
 | `Validator.required` on an enum dropdown emits `value.isEmpty` and does not compile | Leave validators off dropdown fields | PF-31 |

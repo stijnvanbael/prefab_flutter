@@ -4,6 +4,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 import 'package:source_gen/source_gen.dart';
 
 import '../manifest/entity_manifest.dart';
+import '../manifest/entity_paths.dart';
 
 const _viewChecker = TypeChecker.fromRuntime(View);
 
@@ -30,8 +31,7 @@ class ListScreenGenerator extends Generator {
     }
 
     final sourceFileName = buildStep.inputId.path.split('/').last;
-    // Map entityNameLower → manifest for parent path look-up.
-    final byName = {for (final m in manifests) m.entityNameLower: m};
+    final paths = EntityPaths(manifests);
 
     final buffer = StringBuffer();
     _writeHeader(buffer);
@@ -39,21 +39,8 @@ class ListScreenGenerator extends Generator {
     buffer.writeln();
 
     for (final manifest in manifests) {
-      final parentName = manifest.parentEntityNameLower;
-      EntityManifest? parentManifest;
-      if (parentName != null) {
-        parentManifest = byName[parentName];
-        if (parentManifest == null) {
-          throw InvalidGenerationSourceError(
-            'Entity "${manifest.entityName}" has a @Parent field referencing '
-            '"$parentName", but no @View-annotated class with that name was '
-            'found in the same source file. Define the parent entity in the '
-            'same source file as its children.',
-            element: null,
-          );
-        }
-      }
-      _writeListScreenClass(manifest, parentManifest, buffer);
+      paths.parentOf(manifest); // throws when the parent is missing
+      _writeListScreenClass(manifest, paths, buffer);
       buffer.writeln();
     }
 
@@ -95,22 +82,17 @@ class ListScreenGenerator extends Generator {
 
   void _writeListScreenClass(
     EntityManifest manifest,
-    EntityManifest? parentManifest,
+    EntityPaths paths,
     StringBuffer buffer,
   ) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
     final hasParent = manifest.hasParent;
     final parentParamName = manifest.parentParamName;
-    final parentParamType =
-        hasParent ? manifest.parentField!.dartType : null;
+    final parentParamType = hasParent ? manifest.parentField!.dartType : null;
 
-    // Navigation target for tapping an item.
-    final parentPath =
-        parentManifest?.path ?? '${manifest.parentEntityNameLower}s';
-    final itemPath = hasParent
-        ? '/$parentPath/\$$parentParamName/${manifest.path}/\${$entityLower.${manifest.idFieldName}}'
-        : '/${manifest.path}/\${$entityLower.${manifest.idFieldName}}';
+    final itemPath =
+        paths.itemPath(manifest, '\${$entityLower.${manifest.idFieldName}}');
 
     buffer.writeln('class ${entity}ListScreen extends ConsumerWidget {');
     if (hasParent) {
@@ -119,13 +101,11 @@ class ListScreenGenerator extends Generator {
       buffer.writeln(
           '  const ${entity}ListScreen({super.key, required this.$parentParamName});');
     } else {
-      buffer.writeln(
-          '  const ${entity}ListScreen({super.key});');
+      buffer.writeln('  const ${entity}ListScreen({super.key});');
     }
     buffer.writeln();
     buffer.writeln('  @override');
-    buffer.writeln(
-        '  Widget build(BuildContext context, WidgetRef ref) {');
+    buffer.writeln('  Widget build(BuildContext context, WidgetRef ref) {');
 
     // Watch the correct provider variant.
     if (hasParent) {
@@ -140,22 +120,17 @@ class ListScreenGenerator extends Generator {
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
     buffer.writeln('      ),');
-    buffer.writeln(
-        '      body: ${entityLower}sAsync.when(');
-    buffer.writeln(
-        '        data: (${entityLower}s) => ListView.builder(');
+    buffer.writeln('      body: ${entityLower}sAsync.when(');
+    buffer.writeln('        data: (${entityLower}s) => ListView.builder(');
     buffer.writeln('          itemCount: ${entityLower}s.length,');
-    buffer.writeln(
-        '          itemBuilder: (context, index) {');
-    buffer.writeln(
-        '            final $entityLower = ${entityLower}s[index];');
+    buffer.writeln('          itemBuilder: (context, index) {');
+    buffer.writeln('            final $entityLower = ${entityLower}s[index];');
     buffer.writeln('            return ListTile(');
     if (manifest.visibleFields.isNotEmpty) {
       buffer.writeln(
           '              title: Text($entityLower.${manifest.firstLabelFieldName}.toString()),');
     }
-    buffer.writeln(
-        "              onTap: () => context.push('$itemPath'),");
+    buffer.writeln("              onTap: () => context.push('$itemPath'),");
     buffer.writeln('            );');
     buffer.writeln('          },');
     buffer.writeln('        ),');
