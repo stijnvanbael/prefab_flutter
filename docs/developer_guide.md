@@ -129,8 +129,10 @@ The packages are not on pub.dev yet. Publish in dependency order:
 The example app is never published.
 
 1. All CI jobs are green on `main`.
-2. Bump `version` in each package's `pubspec.yaml`, and move the matching
-   `CHANGELOG.md` entries from "Unreleased" to the new version with a date.
+2. Bump `version` in each package's `pubspec.yaml`. In `CHANGELOG.md`, add
+   the bullets of every fragment in the package's `changelog.d/` to
+   "Unreleased", rename "Unreleased" to the new version with a date, and
+   delete the merged fragment files.
 3. Make versions consistent: the `^x.y.z` constraints that
    `prefab_flutter_generator` has on `prefab_flutter`, and the version in the
    dependency snippets of the root `README.md` and package READMEs.
@@ -155,3 +157,8 @@ The example app is never published.
 - Every user-visible change updates the user guide in the same pull request.
 - Backlog tasks live in `backlog/tasks`; move a task to `backlog/completed`
   with `git mv` once its status is `Done`.
+  `tool/check_backlog.sh` (also run in CI) checks this and the other backlog
+  rules.
+- Changelog entries are written as fragments in `<package>/changelog.d/<task-id>.md`
+  instead of editing `CHANGELOG.md`, so parallel branches do not conflict.
+  They are merged into `CHANGELOG.md` when releasing.

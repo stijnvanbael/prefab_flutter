@@ -12,6 +12,18 @@ permissions:
 
 jobs:
   # -------------------------------------------------------------------------
+  # backlog — task status, ids and documentation references agree
+  # -------------------------------------------------------------------------
+  backlog:
+    name: backlog (consistency check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check backlog
+        run: tool/check_backlog.sh
+
+  # -------------------------------------------------------------------------
   # prefab_flutter — pure-Dart annotations package
   # -------------------------------------------------------------------------
   prefab_flutter:

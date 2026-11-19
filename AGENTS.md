@@ -26,9 +26,78 @@ You MUST read the overview resource to understand the complete workflow. The inf
 
 </CRITICAL_INSTRUCTION>
 
-**Completed tasks**: always move a task file from `backlog/tasks/` to `backlog/completed/` (use `git mv`) as soon as its status is set to `Done`. Never leave a `Done` task in `backlog/tasks/`.
-
 <!-- BACKLOG.MD MCP GUIDELINES END -->
+
+## WORKING WITH THE BACKLOG FILES
+
+The block above is maintained by Backlog.md; do not edit it. If the Backlog MCP
+tools or resources are not available in your session (common in cloud
+sessions), edit the task files in `backlog/` directly, keeping the existing
+front matter and the `<!-- SECTION:... -->` / `<!-- AC:... -->` markers.
+
+- **Statuses** are exactly `To Do`, `In Progress` or `Done`.
+- **Completed tasks**: as soon as a task's status is `Done`, move its file from
+  `backlog/tasks/` to `backlog/completed/` with `git mv`. Never leave a `Done`
+  task in `backlog/tasks/`.
+- **New task ids**: take the highest `PF-<n>` in `backlog/tasks/` *and*
+  `backlog/completed/` plus one. Other branches may take the same number; if
+  CI reports a duplicate id after you rebase, renumber *your* task (file name
+  and `id:`), not the one already on `main`.
+- **Milestones** live in `backlog/milestones/`. A task joins one with a
+  `milestone: m-<n>` line in its front matter. Do not create milestones
+  without being asked; the roadmap is the owner's decision.
+- **Work left undone** goes into a new task (or an existing one), and the
+  implementation notes of the finished task name that task id.
+
+`tool/check_backlog.sh` checks the mechanical rules (Done tasks moved,
+unique ids, Known limitations only reference open tasks, milestones exist).
+CI runs it; run it yourself before every push.
+
+## AVOIDING MERGE CONFLICTS
+
+Several agents work on backlog tasks at the same time, each on its own branch.
+Most conflicts come from everyone appending to the same few lines. Follow
+these rules so parallel branches touch different lines:
+
+- **Changelogs: never edit a `CHANGELOG.md` directly.** Add one fragment file
+  per task and package: `<package>/changelog.d/<task-id>.md` (e.g.
+  `prefab_flutter_generator/changelog.d/PF-18.md`), containing the bullet
+  points you would have added under "Unreleased", with the task id at the end
+  of each bullet. Fragments are merged into `CHANGELOG.md` when releasing
+  (see the publishing checklist in `docs/developer_guide.md`).
+- **Tests: one test file per feature or task** (e.g.
+  `test/number_input_test.dart`), not new groups appended to the large
+  per-generator test files. Only change existing tests that your change makes
+  wrong.
+- **Documentation: change the section your feature belongs to**, not
+  summaries elsewhere. Add new table rows and list items in their logical
+  place rather than always at the end.
+- **Do not reformat or reorder code you are not changing** (including running
+  a formatter over whole files that were not formatted before). Formatting
+  noise causes conflicts in every parallel branch.
+- **Rebase onto `origin/main` before you start, and again before every
+  push** (see below). Re-run `tool/check_backlog.sh` and the affected tests
+  after resolving conflicts.
+
+## DEFINITION OF DONE
+
+Before you mark a task `Done` or a pull request ready for review, check every
+item:
+
+1. All acceptance criteria are ticked, or the implementation notes explain
+   why one is not met and which task now covers it.
+2. Tests are added for the new behaviour, and the commands in
+   `docs/developer_guide.md#running-tests` pass for every package you changed.
+   If you change the generator, also run the example app steps (it compiles
+   the generated code).
+3. `docs/user_guide.md` and `README.md` describe the new behaviour; search
+   them for text your change made untrue (e.g. `grep -n "planned in PF-<n>"`
+   for your task id).
+4. Known limitations: rows fixed by this change are removed; new limitations
+   are added with an open task id.
+5. A changelog fragment exists for every published package you changed.
+6. The task file has status `Done`, is moved to `backlog/completed/`, and
+   `tool/check_backlog.sh` passes.
 
 ## DOCUMENTATION MUST STAY UP TO DATE
 
@@ -38,7 +107,7 @@ Every change that affects users or the project's status MUST update the document
 - **`docs/user_guide.md`**: the complete user-facing reference. Update it whenever you add, change or remove an annotation, annotation parameter, `FieldWidget` or `Validator` value, generated file, generated class/provider/method, route, REST call, runtime widget, or default/inferred behaviour.
 - **Known limitations** (in `docs/user_guide.md`): when you fix a limitation, remove its row; when you discover or introduce one, add a row with the backlog task id.
 - **Backlog tasks** (`backlog/tasks`): when you finish work, tick the acceptance criteria that are met, set the status, and add implementation notes for anything left undone or moved to another task. Do not leave merged work in "To Do".
-- **Package READMEs and CHANGELOGs** (`prefab_flutter*/README.md`, `CHANGELOG.md`): keep them consistent with the root README and the user guide.
+- **Package READMEs and changelogs** (`prefab_flutter*/README.md`, `prefab_flutter*/changelog.d/`): keep them consistent with the root README and the user guide. Changelog entries go into fragments, see "Avoiding merge conflicts".
 
 Documentation describes what the code does **today**. Mention planned behaviour only with its backlog task id (e.g. "planned in PF-13").
 
