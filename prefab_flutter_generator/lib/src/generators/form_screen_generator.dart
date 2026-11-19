@@ -192,7 +192,9 @@ class FormScreenGenerator extends Generator {
       final kind = _resolveWidgetKind(field);
       switch (kind) {
         case _WidgetKind.toggle:
-          buffer.writeln('  bool _${field.name}Value = false;');
+          buffer.writeln(field.isNullable
+              ? '  bool? _${field.name}Value;'
+              : '  bool _${field.name}Value = false;');
         case _WidgetKind.datePicker:
           buffer.writeln(
               '  final _${field.name}Controller = TextEditingController();');
@@ -332,19 +334,25 @@ class FormScreenGenerator extends Generator {
           buffer.writeln('    _${field.name}Value = item.${field.name};');
         case _WidgetKind.datePicker:
           buffer.writeln('    _${field.name}Value = item.${field.name};');
-          buffer.writeln(
-              '    _${field.name}Controller.text = item.${field.name}.toIso8601String();');
+          final iso = field.isNullable
+              ? "item.${field.name}?.toIso8601String() ?? ''"
+              : 'item.${field.name}.toIso8601String()';
+          buffer.writeln('    _${field.name}Controller.text = $iso;');
         case _WidgetKind.dropdown:
           buffer.writeln('    _${field.name}Value = item.${field.name};');
         default:
           // text, multilineText, password
+          final String expr;
           if (field.dartType == 'String') {
-            buffer.writeln(
-                '    _${field.name}Controller.text = item.${field.name};');
+            expr = field.isNullable
+                ? "item.${field.name} ?? ''"
+                : 'item.${field.name}';
           } else {
-            buffer.writeln(
-                '    _${field.name}Controller.text = item.${field.name}.toString();');
+            expr = field.isNullable
+                ? "item.${field.name}?.toString() ?? ''"
+                : 'item.${field.name}.toString()';
           }
+          buffer.writeln('    _${field.name}Controller.text = $expr;');
       }
     }
     buffer.writeln('  }');
@@ -433,18 +441,50 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('              value: _${field.name}Value,');
     buffer.writeln(
         "              decoration: const InputDecoration(labelText: '${field.label}'),");
+    buffer.writeln('              items: [');
+    if (field.isNullable) {
+      buffer.writeln(
+          "                const DropdownMenuItem<$type>(value: null, child: Text('')),");
+    }
     buffer.writeln(
-        '              items: $type.values.map((v) => DropdownMenuItem<$type>(');
-    buffer.writeln('                value: v,');
-    buffer.writeln('                child: Text(v.name),');
-    buffer.writeln('              )).toList(),');
+        '                ...$type.values.map((v) => DropdownMenuItem<$type>(');
+    buffer.writeln('                  value: v,');
+    buffer.writeln('                  child: Text(v.name),');
+    buffer.writeln('                )),');
+    buffer.writeln('              ],');
     buffer.writeln(
         '              onChanged: (v) => setState(() => _${field.name}Value = v),');
-    _writeValidators(field, buffer);
+    if (field.isRequired) {
+      buffer.writeln(
+          "              validator: (value) => value == null ? 'Required' : null,");
+    }
     buffer.writeln('            ),');
   }
 
   void _writeSwitchField(FieldManifest field, StringBuffer buffer) {
+    if (field.isNullable) {
+      // Nullable bool: dropdown with an empty (null) option.
+      buffer.writeln('            DropdownButtonFormField<bool>(');
+      buffer.writeln('              value: _${field.name}Value,');
+      buffer.writeln(
+          "              decoration: const InputDecoration(labelText: '${field.label}'),");
+      buffer.writeln('              items: const [');
+      buffer.writeln(
+          "                DropdownMenuItem<bool>(value: null, child: Text('')),");
+      buffer.writeln(
+          "                DropdownMenuItem<bool>(value: true, child: Text('Yes')),");
+      buffer.writeln(
+          "                DropdownMenuItem<bool>(value: false, child: Text('No')),");
+      buffer.writeln('              ],');
+      buffer.writeln(
+          '              onChanged: (v) => setState(() => _${field.name}Value = v),');
+      if (field.validators.contains(Validator.required)) {
+        buffer.writeln(
+            "              validator: (value) => value == null ? 'Required' : null,");
+      }
+      buffer.writeln('            ),');
+      return;
+    }
     buffer.writeln('            SwitchListTile(');
     buffer.writeln("              title: const Text('${field.label}'),");
     buffer.writeln('              value: _${field.name}Value,');
@@ -458,9 +498,20 @@ class FormScreenGenerator extends Generator {
   // ---------------------------------------------------------------------------
 
   void _writeValidators(FieldManifest field, StringBuffer buffer) {
-    if (field.validators.isEmpty) return;
+    // `required` always runs first (or an empty-is-valid guard for optional
+    // fields), so `value` is promoted to a non-null String for the others.
+    final validators = [
+      if (field.isRequired) Validator.required,
+      ...field.validators.where((v) => v != Validator.required),
+    ];
+    if (validators.isEmpty) return;
     buffer.writeln('              validator: (value) {');
-    for (final validator in field.validators) {
+    if (!field.isRequired) {
+      // Optional field: an empty value is valid, skip the other checks.
+      buffer.writeln(
+          "                if (value == null || value.isEmpty) return null;");
+    }
+    for (final validator in validators) {
       _writeValidatorCheck(validator, buffer);
     }
     buffer.writeln('                return null;');
@@ -474,15 +525,15 @@ class FormScreenGenerator extends Generator {
             "                if (value == null || value.isEmpty) return 'Required';");
       case Validator.email:
         buffer.writeln(
-            r"                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value ?? '')) return 'Invalid email address';");
+            r"                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) return 'Invalid email address';");
       case Validator.positiveNumber:
         buffer
-            .writeln("                final n = double.tryParse(value ?? '');");
+            .writeln("                final n = double.tryParse(value);");
         buffer.writeln(
             "                if (n == null || n <= 0) return 'Must be a positive number';");
       case Validator.url:
         buffer
-            .writeln("                final uri = Uri.tryParse(value ?? '');");
+            .writeln("                final uri = Uri.tryParse(value);");
         buffer.writeln(
             "                if (uri == null || !uri.isAbsolute) return 'Invalid URL';");
     }

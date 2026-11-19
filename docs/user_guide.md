@@ -160,10 +160,25 @@ order; the first failing check shows its message.
 | `positiveNumber` | parses as a number greater than 0 | `Must be a positive number` |
 | `url` | parses as an absolute URI | `Invalid URL` |
 
-Validators are not applied to `toggle` fields. On `dropdown` fields the
-generated checks assume a `String` value and do not compile (PF-31). Nothing is required by default,
-including non-nullable fields (PF-15 plans to infer this). Parameterised
-validators such as `min(0)` or `pattern(...)` are planned in PF-31.
+Validators are not applied to non-nullable `toggle` fields. On `dropdown` fields
+only the required check applies (`Required` when no option is selected); the
+other validators are ignored there.
+
+### Nullable and optional fields
+
+The nullability of the Dart type decides whether a field is required:
+
+| Field type | Form behaviour | Detail screen |
+|---|---|---|
+| Non-nullable (`String`, `int`, `DateTime`, enum) | Required automatically (`Required`), no `Validator.required` needed | Value |
+| Nullable (`String?`, `int?`, `DateTime?`, enum?) | Optional: empty input is valid and other validators are skipped when empty. Add `Validator.required` to require it | `—` (em dash) when `null` |
+| `bool` | `SwitchListTile`, starts `false` | Value |
+| `bool?` | Dropdown with an empty, `Yes` and `No` option; starts `null` | `—` when `null` |
+| Nullable enum | Dropdown with an empty option; starts `null` | `—` when `null` |
+| Nullable `DateTime` | Date picker, starts empty | `—` when `null` |
+
+The edit form prefills nullable fields null-safely (`item.x ?? ''`).
+Parameterised validators such as `min(0)` or `pattern(...)` are planned in PF-31.
 
 ## Generated files
 
@@ -352,8 +367,6 @@ These are known gaps in the current pre-release. Each has a backlog task.
 
 | Limitation | Workaround | Task |
 |---|---|---|
-| The Save button validates and closes the form but does not save | None yet | PF-11 |
-| Nullable fields are not handled (`null` shows as the text "null"; prefill may not compile) | Use non-nullable fields | PF-15 |
-| `Validator.required` on an enum dropdown emits `value.isEmpty` and does not compile | Leave validators off dropdown fields | PF-31 |
+| The Save button validates and closes the form but does not save, so empty nullable inputs are not yet converted to `null` on an entity (PF-11 AC#7) | None yet | PF-11 |
 | `@FormField` clashes with Flutter's `FormField` | `hide FormField` on one import | PF-30 |
 | Search, sort and pagination are not generated | — | PF-13 |

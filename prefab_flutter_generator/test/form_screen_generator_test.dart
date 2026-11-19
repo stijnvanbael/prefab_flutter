@@ -297,6 +297,40 @@ Map<String, Object> _assets(String pkg, String path, String source) => {
       '$pkg|$path': source,
     };
 
+/// Entity mixing nullable and non-nullable fields.
+const _nullableSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+enum Color { red, green }
+
+@View(title: 'Item', path: 'items')
+@Update()
+class Item {
+  late final int id;
+  @FormField(label: 'Name')
+  final String name;
+  @FormField(label: 'Nickname')
+  final String? nickname;
+  @FormField(label: 'Email', validators: [Validator.email])
+  final String? email;
+  @FormField(label: 'Code', validators: [Validator.required])
+  final String? code;
+  @FormField(label: 'Age')
+  final int? age;
+  @FormField(label: 'Born')
+  final DateTime? born;
+  @FormField(label: 'Active')
+  final bool? active;
+  @FormField(label: 'Done')
+  final bool done;
+  @FormField(label: 'Color')
+  final Color? color;
+
+  Item({required this.name, this.nickname, this.email, this.code, this.age,
+      this.born, this.active, required this.done, this.color});
+}
+''';
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -663,6 +697,35 @@ void main() {
             contains('bool _prefilled = false'),
             contains('_prefillControllers'),
           )),
+        },
+      );
+    });
+
+    test('PF-15 — nullable fields: null-safe prefill, optional, required default',
+        () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/item.dart', _nullableSource),
+        outputs: {
+          'a|lib/item.form_screen.dart': decodedMatches(allOf(
+            allOf(
+            // non-nullable text is required without Validator.required
+            contains("if (value == null || value.isEmpty) return 'Required';"),
+            contains('_nameController.text = item.name;'),
+            contains("_nicknameController.text = item.nickname ?? '';"),
+            contains("_ageController.text = item.age?.toString() ?? '';"),
+            contains("item.born?.toIso8601String() ?? ''"),
+          ),
+          allOf(
+            // optional validated field skips empty values
+            contains('if (value == null || value.isEmpty) return null;'),
+            // nullable bool / enum start as null with an empty option
+            contains('bool? _activeValue;'),
+            contains('DropdownButtonFormField<bool>'),
+            contains('bool _doneValue = false;'),
+            contains('Color? _colorValue;'),
+            contains("DropdownMenuItem<Color>(value: null, child: Text(''))"),
+          ))),
         },
       );
     });

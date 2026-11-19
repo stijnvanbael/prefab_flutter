@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:prefab_flutter/prefab_flutter.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -253,6 +254,7 @@ class EntityManifest {
         validators: validators,
         fieldWidget: fieldWidget,
         isEnum: isEnum,
+        isNullable: field.type.nullabilitySuffix == NullabilitySuffix.question,
       ));
     }
 
