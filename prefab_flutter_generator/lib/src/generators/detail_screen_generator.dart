@@ -197,7 +197,9 @@ class DetailScreenGenerator extends Generator {
 
   void _writeBody(EntityManifest manifest, StringBuffer buffer) {
     final entityLower = manifest.entityNameLower;
-    final visibleFields = manifest.visibleFields;
+    final detailFields = manifest.fieldsForView('detail');
+    final visibleFields =
+        detailFields.isEmpty ? manifest.visibleFields : detailFields;
 
     buffer.writeln('      body: ${entityLower}Async.when(');
     buffer.writeln('        data: ($entityLower) => ListView(');

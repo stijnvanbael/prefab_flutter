@@ -104,6 +104,7 @@ ignored by every generator. Display and listing settings sit directly on
 |---|---|---|---|
 | `label` | `String?` | field name in title case (`firstName` → `First Name`) | Label in forms and the detail screen |
 | `hidden` | `bool` | `false` | Exclude the field from forms and the detail screen |
+| `views` | `Set<String>?` | `null` (all views) | Views the field appears in: `'list'`, `'detail'` (see [Views](#views)) |
 | `form` | `FormOptions` | `FormOptions()` | Form-only settings, below |
 
 `FormOptions` parameters:
@@ -114,7 +115,30 @@ ignored by every generator. Display and listing settings sit directly on
 | `validators` | `List<Validator>` | `[]` | Checks run when the form is submitted (see [Validators](#validators)) |
 
 The **first** visible `@Field` in source order is used as the item title in
-the list screen and as the item name in the delete dialog.
+the list screen (unless `views` is used, see below) and as the item name in
+the delete dialog.
+
+#### Views
+
+`views` controls where a field is shown. A field without `views` appears in
+every view. The generators use two view names:
+
+| View | Screen | Slot mapping |
+|---|---|---|
+| `'list'` | List screen | The first, second and third field in the view fill the `ListTile` `title`, `subtitle` and `trailing` slots; further fields are ignored |
+| `'detail'` | Detail screen | All fields in the view are listed; if none is in the view, all visible fields are shown |
+
+When no field of an entity declares `views`, the list tile shows only the
+first visible field as its title, exactly as before. Forms are not affected
+by `views`.
+
+```dart
+@Field(views: {'list', 'detail'})
+final String name;
+
+@Field(views: {'detail'})
+final String description;
+```
 
 ```dart
 @Field(label: 'Description', form: FormOptions(widget: FieldWidget.multilineText))

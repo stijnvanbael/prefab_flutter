@@ -29,6 +29,9 @@ class FieldManifest {
   /// When `true` the Dart type of the field is nullable (e.g. `String?`).
   final bool isNullable;
 
+  /// Names of the views the field appears in, or `null` for all views.
+  final Set<String>? views;
+
   const FieldManifest({
     required this.name,
     required this.label,
@@ -39,7 +42,11 @@ class FieldManifest {
     this.fieldWidget = FieldWidget.auto,
     this.isEnum = false,
     this.isNullable = false,
+    this.views,
   });
+
+  /// Whether the field appears in the view named [viewName].
+  bool inView(String viewName) => views == null || views!.contains(viewName);
 
   /// Whether the form must reject an empty value: non-nullable fields are
   /// required by default, nullable fields only with [Validator.required].

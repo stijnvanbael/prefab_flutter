@@ -44,9 +44,14 @@ class Field {
   /// Form-only settings (widget and validators).
   final FormOptions form;
 
+  /// Names of the views the field appears in (`'list'`, `'detail'`).
+  /// `null` (the default) means the field appears in all views.
+  final Set<String>? views;
+
   const Field({
     this.label,
     this.hidden = false,
+    this.views,
     this.form = const FormOptions(),
   });
 }
