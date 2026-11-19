@@ -219,6 +219,31 @@ class ProductOrder {
 }
 ''';
 
+const _chainSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View()
+class Post {
+  final String? id;
+  @Field()
+  final String name;
+  Post({this.id, required this.name});
+  factory Post.fromJson(Map<String, dynamic> json) => throw 0;
+  Map<String, dynamic> toJson() => {};
+}
+
+@View()
+class Comment {
+  final String? id;
+  @Field()
+  @Parent(Post)
+  final String postId;
+  Comment({this.id, required this.postId});
+  factory Comment.fromJson(Map<String, dynamic> json) => throw 0;
+  Map<String, dynamic> toJson() => {};
+}
+''';
+
 Map<String, Object> _assets(String source, String file) => {
       ...Map<String, Object>.from(_prefabSources),
       'a|lib/$file.dart': source,
@@ -256,6 +281,18 @@ void main() {
         'a|lib/product_order.routes.dart': decodedMatches(
           allOf(contains("path: '/orders-x'"),
               isNot(contains('product-orders'))),
+        ),
+      },
+    );
+  });
+
+  test('bare @View() works for parent entities', () async {
+    await testBuilder(
+      routesBuilder(BuilderOptions.empty),
+      _assets(_chainSource, 'chain'),
+      outputs: {
+        'a|lib/chain.routes.dart': decodedMatches(
+          allOf(contains("'/posts'"), contains("comments")),
         ),
       },
     );

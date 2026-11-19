@@ -559,8 +559,8 @@ class EntityManifest {
       result.add(AncestorManifest(
         entityName: cls.name,
         entityNameLower: lower,
-        path: view.read('path').stringValue,
-        title: view.read('title').stringValue,
+        path: viewPath(view, cls.name),
+        title: viewTitle(view, cls.name),
         idType: idField?.type.getDisplayString(withNullability: false) ??
             'String',
         idFieldName: idField?.name ?? 'id',
