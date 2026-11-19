@@ -34,5 +34,6 @@ The hard part is entity construction. The generator calls the entity's unnamed c
 - [ ] #4 Numeric text fields are parsed to int/double before construction
 - [ ] #5 A loading indicator is shown and the save button is disabled while the request is in flight
 - [ ] #6 Errors from create/update are shown in a SnackBar and the screen stays open
-- [ ] #7 The round-trip works end-to-end in the example app (PF-9)
+- [ ] #7 An empty input for a nullable field is passed as `null` to the entity constructor, and non-nullable fields are parsed or required (moved from PF-15 AC#4; the nullability metadata is `FieldManifest.isNullable`)
+- [ ] #8 The round-trip works end-to-end in the example app (PF-9)
 <!-- AC:END -->

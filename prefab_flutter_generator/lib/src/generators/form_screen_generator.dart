@@ -498,10 +498,11 @@ class FormScreenGenerator extends Generator {
   // ---------------------------------------------------------------------------
 
   void _writeValidators(FieldManifest field, StringBuffer buffer) {
+    // `required` always runs first (or an empty-is-valid guard for optional
+    // fields), so `value` is promoted to a non-null String for the others.
     final validators = [
-      if (field.isRequired && !field.validators.contains(Validator.required))
-        Validator.required,
-      ...field.validators,
+      if (field.isRequired) Validator.required,
+      ...field.validators.where((v) => v != Validator.required),
     ];
     if (validators.isEmpty) return;
     buffer.writeln('              validator: (value) {');
@@ -524,15 +525,15 @@ class FormScreenGenerator extends Generator {
             "                if (value == null || value.isEmpty) return 'Required';");
       case Validator.email:
         buffer.writeln(
-            r"                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value ?? '')) return 'Invalid email address';");
+            r"                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) return 'Invalid email address';");
       case Validator.positiveNumber:
         buffer
-            .writeln("                final n = double.tryParse(value ?? '');");
+            .writeln("                final n = double.tryParse(value);");
         buffer.writeln(
             "                if (n == null || n <= 0) return 'Must be a positive number';");
       case Validator.url:
         buffer
-            .writeln("                final uri = Uri.tryParse(value ?? '');");
+            .writeln("                final uri = Uri.tryParse(value);");
         buffer.writeln(
             "                if (uri == null || !uri.isAbsolute) return 'Invalid URL';");
     }
