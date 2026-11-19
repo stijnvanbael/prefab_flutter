@@ -89,38 +89,6 @@ class Product {
 }
 ''';
 
-const _parentChildSource = r'''
-import 'package:prefab_flutter/prefab_flutter.dart';
-
-@View(title: 'Post', path: 'posts')
-@Update()
-@Delete()
-class Post {
-  final int id;
-
-  @FormField(label: 'Title')
-  final String title;
-
-  Post({required this.id, required this.title});
-}
-
-@View(title: 'Comment', path: 'comments')
-@Update()
-@Delete()
-class Comment {
-  final int id;
-
-  @Parent(Post)
-  @FormField(hidden: true)
-  final int postId;
-
-  @FormField(label: 'Content')
-  final String content;
-
-  Comment({required this.id, required this.postId, required this.content});
-}
-''';
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
