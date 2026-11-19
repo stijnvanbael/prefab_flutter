@@ -175,8 +175,29 @@ For a source file `product.dart` the generator writes:
 | `product.detail_screen.dart` | `ProductDetailScreen(id:)`: one `ListTile` per visible field, plus Edit/Delete actions |
 | `product.form_screen.dart` | `ProductCreateScreen` and `ProductEditScreen(id:)` (only with `@Update`) |
 | `product.provider.dart` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `create`, `update` and `delete` (`update` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
-| `product.api_client.dart` | `ProductApiClient` with `list`, `getById`, `create`, `update` and `delete` |
+| `product.api_client.dart` | `ProductApiClient` with `list`, `getById`, `create`, `update` and `delete`; responses are read with `Product.fromJson` and request bodies are sent as `product.toJson()` |
 | `product.routes.dart` | `$productRoutes` (named after the source file), a `List<RouteBase>` with the routes of every entity in the file |
+
+### JSON serialization requirement
+
+Every `@View` class needs a `fromJson(Map<String, dynamic> json)` factory and a
+`toJson()` method; the generated API client uses them instead of casting
+`response.data`. The easiest way is `json_serializable`:
+
+```dart
+@JsonSerializable()
+@View(title: 'Product', path: 'products')
+class Product {
+  // ...fields...
+  factory Product.fromJson(Map<String, dynamic> json) => _$ProductFromJson(json);
+  Map<String, dynamic> toJson() => _$ProductToJson(this);
+}
+```
+
+Add `json_annotation` and `json_serializable` to your `pubspec.yaml` and add
+`part 'product.g.dart';`. Hand-written implementations work too. If either is
+missing the build fails with an error naming the entity. List responses are
+decoded with `(response.data as List).map((e) => Product.fromJson(e as Map<String, dynamic>))`.
 
 Several `@View` classes may live in one source file; their code is combined
 in the same generated files.
@@ -331,7 +352,6 @@ These are known gaps in the current pre-release. Each has a backlog task.
 
 | Limitation | Workaround | Task |
 |---|---|---|
-| Responses are cast (`as Product`) instead of deserialized, so every request fails at runtime | None yet | PF-12 |
 | The Save button validates and closes the form but does not save | None yet | PF-11 |
 | Nullable fields are not handled (`null` shows as the text "null"; prefill may not compile) | Use non-nullable fields | PF-15 |
 | `Validator.required` on an enum dropdown emits `value.isEmpty` and does not compile | Leave validators off dropdown fields | PF-31 |

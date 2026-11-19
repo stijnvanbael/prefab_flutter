@@ -1,7 +1,7 @@
 ---
 id: PF-12
 title: JSON deserialization in ApiClientGenerator
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-05-03 10:30'
 updated_date: '2026-11-18 10:00'
@@ -18,11 +18,17 @@ The generated API client casts response.data directly to the entity type (e.g. r
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 ApiClientGenerator detects a fromJson(Map<String, dynamic>) factory and a toJson() method on the entity class
-- [ ] #2 List responses are deserialized via (response.data as List).map((e) => Entity.fromJson(e as Map<String, dynamic>)).toList()
-- [ ] #3 Single-object responses are deserialized via Entity.fromJson(response.data as Map<String, dynamic>)
-- [ ] #4 create() and update() send entity.toJson() as the request body
-- [ ] #5 A clear build-time error names the entity when fromJson or toJson is missing
+- [x] #1 ApiClientGenerator detects a fromJson(Map<String, dynamic>) factory and a toJson() method on the entity class
+- [x] #2 List responses are deserialized via (response.data as List).map((e) => Entity.fromJson(e as Map<String, dynamic>)).toList()
+- [x] #3 Single-object responses are deserialized via Entity.fromJson(response.data as Map<String, dynamic>)
+- [x] #4 create() and update() send entity.toJson() as the request body
+- [x] #5 A clear build-time error names the entity when fromJson or toJson is missing
 - [ ] #6 The example app entity uses json_serializable and the generated client deserializes responses correctly
-- [ ] #7 The user guide documents the fromJson/toJson requirement
+- [x] #7 The user guide documents the fromJson/toJson requirement
 <!-- AC:END -->
+
+## Implementation Notes
+
+- ApiClientGenerator checks for a `fromJson` named constructor and a `toJson()` method and fails the build with an error naming the entity; list/single responses use `fromJson`, create/update send `toJson()`.
+- AC #6 is not done: the repository has no example app. The README quick-start entity now uses json_serializable instead.
+- Also fixed a compile error in `routes_generator.dart` (call to a removed `EntityPaths.parentOf`) and a stale test expectation in `nested_screens_test.dart`; parent validation lives in `EntityManifest.from`.

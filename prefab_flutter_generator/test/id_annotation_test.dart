@@ -77,6 +77,9 @@ class Item {
   @FormField()
   final String name;
   Item({required this.sku, required this.name});
+  factory Item.fromJson(Map<String, dynamic> json) => throw 0;
+  Map<String, dynamic> toJson() => {};
+
 }
 ''';
 
@@ -88,6 +91,9 @@ class Item {
   @FormField()
   final String name;
   Item({required this.name});
+  factory Item.fromJson(Map<String, dynamic> json) => throw 0;
+  Map<String, dynamic> toJson() => {};
+
 }
 ''';
 
@@ -101,6 +107,9 @@ class Item {
   @FormField()
   final String name;
   Item({required this.id, required this.name});
+  factory Item.fromJson(Map<String, dynamic> json) => throw 0;
+  Map<String, dynamic> toJson() => {};
+
 }
 ''';
 

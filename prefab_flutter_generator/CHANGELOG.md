@@ -2,6 +2,7 @@
 
 * Generated list providers now use `AsyncNotifierProvider.autoDispose` with `AutoDisposeAsyncNotifier` / `AutoDisposeFamilyAsyncNotifier` instead of the legacy `StateNotifier`; the provider names and the `create`/`update`/`delete` methods are unchanged. Supported `flutter_riverpod`: `>=2.5.0 <3.0.0` (PF-29).
 * Fix a compile error in the routes generator and a stale nested-screens test left by merging PF-24 and PF-25.
+* **Breaking:** generated API clients deserialize responses with `Entity.fromJson(Map<String, dynamic>)` and send `entity.toJson()` as the request body instead of casting `response.data`. Entities need a `fromJson` factory and a `toJson()` method (e.g. via `json_serializable`); the build fails with an error naming the entity when either is missing (PF-12).
 * **Breaking:** the generated routes getter is no longer called `$prefabRoutes`; it is named after the source file (`product.dart` -> `$productRoutes`, `user_account.dart` -> `$userAccountRoutes`), so several routes files can be imported without name clashes (PF-27).
   **Migration:** rename `$prefabRoutes` in your `GoRouter(routes: ...)` to the new name, and combine several files with `[...$productRoutes, ...$customerRoutes]`.
 * Fix nested (`@Parent`) entities: create/edit screens take the parent id, the edit screen uses the `(id, parentId)` detail provider, and detail Edit/Delete use nested paths and the family list provider (PF-25).

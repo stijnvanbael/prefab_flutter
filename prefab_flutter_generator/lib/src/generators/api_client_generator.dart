@@ -32,6 +32,7 @@ class ApiClientGenerator extends Generator {
     for (final a in annotated) {
       final element = a.element;
       if (element is! ClassElement) continue;
+      _requireJsonSupport(element);
       manifests.add(EntityManifest.from(element, a.annotation));
     }
 
@@ -48,6 +49,28 @@ class ApiClientGenerator extends Generator {
     }
 
     return buffer.toString();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Validation
+  // ---------------------------------------------------------------------------
+
+  /// Fails the build unless [element] has a `fromJson(Map<String, dynamic>)`
+  /// constructor and a `toJson()` method (e.g. from `json_serializable`).
+  void _requireJsonSupport(ClassElement element) {
+    final fromJson = element.getNamedConstructor('fromJson');
+    final toJson = element.getMethod('toJson');
+    final missing = <String>[
+      if (fromJson == null) 'a "fromJson(Map<String, dynamic> json)" factory',
+      if (toJson == null) 'a "toJson()" method',
+    ];
+    if (missing.isEmpty) return;
+    throw InvalidGenerationSourceError(
+      'Entity "${element.name}" needs ${missing.join(' and ')} so that the '
+      'generated API client can (de)serialize it. Annotate the class with '
+      '@JsonSerializable() (json_serializable) or write them by hand.',
+      element: element,
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -116,7 +139,9 @@ class ApiClientGenerator extends Generator {
     buffer.writeln('  Future<List<$entity>> list($parentParam) async {');
     buffer.writeln("    final response = await _dio.get('$urlBase');");
     buffer.writeln(
-        '    return (response.data as List).map((e) => e as $entity).toList();');
+        '    return (response.data as List)\n'
+        '        .map((e) => $entity.fromJson(e as Map<String, dynamic>))\n'
+        '        .toList();');
     buffer.writeln('  }');
     buffer.writeln();
 
@@ -124,7 +149,7 @@ class ApiClientGenerator extends Generator {
     buffer.writeln(
         '  Future<$entity> getById(${manifest.idType} id$parentParamTrailing) async {');
     buffer.writeln("    final response = await _dio.get('$urlBase/\$id');");
-    buffer.writeln('    return response.data as $entity;');
+    buffer.writeln('    return $entity.fromJson(response.data as Map<String, dynamic>);');
     buffer.writeln('  }');
     buffer.writeln();
 
@@ -132,8 +157,8 @@ class ApiClientGenerator extends Generator {
     buffer.writeln(
         '  Future<$entity> create($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
     buffer.writeln(
-        "    final response = await _dio.post('$urlBase', data: ${manifest.entityNameLower});");
-    buffer.writeln('    return response.data as $entity;');
+        "    final response = await _dio.post('$urlBase', data: ${manifest.entityNameLower}.toJson());");
+    buffer.writeln('    return $entity.fromJson(response.data as Map<String, dynamic>);');
     buffer.writeln('  }');
     buffer.writeln();
 
@@ -141,8 +166,8 @@ class ApiClientGenerator extends Generator {
     buffer.writeln(
         '  Future<$entity> update($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
     buffer.writeln(
-        "    final response = await _dio.put('$urlBase/\${${manifest.entityNameLower}.${manifest.idFieldName}}', data: ${manifest.entityNameLower});");
-    buffer.writeln('    return response.data as $entity;');
+        "    final response = await _dio.put('$urlBase/\${${manifest.entityNameLower}.${manifest.idFieldName}}', data: ${manifest.entityNameLower}.toJson());");
+    buffer.writeln('    return $entity.fromJson(response.data as Map<String, dynamic>);');
     buffer.writeln('  }');
     buffer.writeln();
 
