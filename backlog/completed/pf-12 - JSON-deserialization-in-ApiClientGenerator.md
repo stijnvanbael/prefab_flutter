@@ -1,7 +1,7 @@
 ---
 id: PF-12
 title: JSON deserialization in ApiClientGenerator
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-05-03 10:30'
 updated_date: '2026-11-18 10:00'
@@ -23,12 +23,12 @@ The generated API client casts response.data directly to the entity type (e.g. r
 - [x] #3 Single-object responses are deserialized via Entity.fromJson(response.data as Map<String, dynamic>)
 - [x] #4 create() and update() send entity.toJson() as the request body
 - [x] #5 A clear build-time error names the entity when fromJson or toJson is missing
-- [ ] #6 The example app entity uses json_serializable and the generated client deserializes responses correctly
+- [x] #6 Moved to PF-9 (AC #7): the example app entity uses json_serializable and the generated client deserializes responses correctly
 - [x] #7 The user guide documents the fromJson/toJson requirement
 <!-- AC:END -->
 
 ## Implementation Notes
 
 - ApiClientGenerator checks for a `fromJson` named constructor and a `toJson()` method and fails the build with an error naming the entity; list/single responses use `fromJson`, create/update send `toJson()`.
-- AC #6 is not done: the repository has no example app. The README quick-start entity now uses json_serializable instead.
+- AC #6 moved to PF-9 (AC #7): the repository has no example app yet. The README quick-start entity now uses json_serializable.
 - Also fixed a compile error in `routes_generator.dart` (call to a removed `EntityPaths.parentOf`) and a stale test expectation in `nested_screens_test.dart`; parent validation lives in `EntityManifest.from`.
