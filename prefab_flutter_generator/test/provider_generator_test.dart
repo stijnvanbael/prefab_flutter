@@ -325,5 +325,39 @@ void main() {
         },
       );
     });
+
+    // PF-28 — detail provider invalidation
+
+    test('PF-28 update and delete invalidate the detail provider', () async {
+      await testBuilder(
+        providerBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.provider.dart': decodedMatches(allOf(
+            contains('ProductsNotifier(this._ref, this._client)'),
+            matches(RegExp(
+                r'update\(Product product\) async \{\n[^}]*'
+                r'_ref\.invalidate\(productDetailProvider\(product\.id\)\);')),
+            matches(RegExp(
+                r'delete\(Product product\) async \{\n[^}]*'
+                r'_ref\.invalidate\(productDetailProvider\(product\.id\)\);')),
+          )),
+        },
+      );
+    });
+
+    test('PF-28 @Parent — invalidates the (id, parentId) detail provider',
+        () async {
+      await testBuilder(
+        providerBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/post.dart', _parentChildSource),
+        outputs: {
+          'a|lib/post.provider.dart': decodedMatches(
+            contains(
+                '_ref.invalidate(commentDetailProvider((comment.id, postId)));'),
+          ),
+        },
+      );
+    });
   });
 }
