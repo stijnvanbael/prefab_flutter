@@ -211,16 +211,23 @@ shown in a `SnackBar` and the screen stays open.
 
 ## Generated files
 
-For a source file `product.dart` the generator writes:
+For a source file `product.dart` the generator writes one library,
+`product.prefab.dart`. Import that single file to use everything below; it
+contains:
 
-| File | Contents |
+| Generated code | Contents |
 |---|---|
-| `product.list_screen.dart` | `ProductListScreen`: a `ListView` of items (or a "No items found" message when empty); tapping one opens its detail screen. With `@Update`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
-| `product.detail_screen.dart` | `ProductDetailScreen(id:)`: one `ListTile` per visible field, plus Edit/Delete actions |
-| `product.form_screen.dart` | `ProductCreateScreen` and `ProductEditScreen(id:)` (only with `@Update`) |
-| `product.provider.dart` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `create`, `update` and `delete` (`update` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
-| `product.api_client.dart` | `ProductApiClient` with `list`, `getById`, `create`, `update` and `delete`; responses are read with `Product.fromJson` and request bodies are sent as `product.toJson()` |
-| `product.routes.dart` | `$productRoutes` (named after the source file), a `List<RouteBase>` with the routes of every entity in the file |
+| `ProductListScreen` | A `ListView` of items (or a "No items found" message when empty); tapping one opens its detail screen. With `@Update`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
+| `ProductDetailScreen(id:)` | One `ListTile` per visible field, plus Edit/Delete actions |
+| `ProductCreateScreen` and `ProductEditScreen(id:)` | Only with `@Update` |
+| `productDetailProvider`, `productsProvider`, `ProductsNotifier`, `productApiClientProvider` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `create`, `update` and `delete` (`update` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
+| `ProductApiClient` | `list`, `getById`, `create`, `update` and `delete`; responses are read with `Product.fromJson` and request bodies are sent as `product.toJson()` |
+| `$productRoutes` | Named after the source file; a `List<RouteBase>` with the routes of every entity in the file |
+
+A file without `@View` classes produces no output. The previous layout of six
+files per source (`.list_screen.dart`, `.detail_screen.dart`, `.form_screen.dart`,
+`.provider.dart`, `.api_client.dart`, `.routes.dart`) was replaced by the single
+`.prefab.dart` file (PF-32); delete the old files when migrating.
 
 ### JSON serialization requirement
 
@@ -272,8 +279,8 @@ file has a unique name, an app with entities in several source files can import
 all the routes files without prefixes and concatenate the lists:
 
 ```dart
-import 'product.routes.dart';
-import 'customer.routes.dart';
+import 'product.prefab.dart';
+import 'customer.prefab.dart';
 
 final router = GoRouter(
   routes: [...$productRoutes, ...$customerRoutes],

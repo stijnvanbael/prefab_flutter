@@ -102,9 +102,7 @@ class Product {
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-This writes `product.list_screen.dart`, `product.detail_screen.dart`,
-`product.form_screen.dart`, `product.provider.dart`, `product.api_client.dart`
-and `product.routes.dart` next to `product.dart`.
+This writes a single file, `product.prefab.dart`, next to `product.dart`.
 
 ### 4. Register the routes
 
@@ -115,7 +113,7 @@ import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
 
-import 'product.routes.dart';
+import 'product.prefab.dart';
 
 final router = GoRouter(initialLocation: '/products', routes: $productRoutes);
 

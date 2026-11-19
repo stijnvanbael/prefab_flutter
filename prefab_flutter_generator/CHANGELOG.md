@@ -2,6 +2,8 @@
 
 * **Breaking:** the generated form screens now save: they build the entity through its unnamed constructor and call the provider's `create()`/`update()`. The id (and any field not on the form) must be nullable, optional or have a default, otherwise the build fails naming the parameter (PF-11).
 
+* **Breaking:** the six generated files per source (`.detail_screen.dart`, `.list_screen.dart`, `.form_screen.dart`, `.provider.dart`, `.api_client.dart`, `.routes.dart`) are replaced by a single `.prefab.dart` library, produced by one builder (`prefabBuilder`); the generated files no longer import each other (PF-32).
+  **Migration:** delete the old generated files, import `x.prefab.dart` instead of `x.routes.dart`, and re-run `dart run build_runner build --delete-conflicting-outputs`.
 * Generated list providers now use `AsyncNotifierProvider.autoDispose` with `AutoDisposeAsyncNotifier` / `AutoDisposeFamilyAsyncNotifier` instead of the legacy `StateNotifier`; the provider names and the `create`/`update`/`delete` methods are unchanged. Supported `flutter_riverpod`: `>=2.5.0 <3.0.0` (PF-29).
 * Fix a compile error in the routes generator and a stale nested-screens test left by merging PF-24 and PF-25.
 * **Breaking:** generated API clients deserialize responses with `Entity.fromJson(Map<String, dynamic>)` and send `entity.toJson()` as the request body instead of casting `response.data`. Entities need a `fromJson` factory and a `toJson()` method (e.g. via `json_serializable`); the build fails with an error naming the entity when either is missing (PF-12).
