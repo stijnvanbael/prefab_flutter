@@ -16,6 +16,49 @@ const _idChecker = TypeChecker.fromRuntime(Id);
 const _viewChecker = TypeChecker.fromRuntime(View);
 const _parentChecker = TypeChecker.fromRuntime(Parent);
 
+/// Reads the `fieldRename` of the class's `@JsonSerializable` (by name, so the
+/// generator needs no dependency on `json_annotation`), or `none`.
+String _readFieldRename(ClassElement element) {
+  for (final meta in element.metadata) {
+    final value = meta.computeConstantValue();
+    if (value?.type?.element?.name != 'JsonSerializable') continue;
+    final rename = value!.getField('fieldRename');
+    final name = rename?.getField('_name')?.toStringValue();
+    if (name != null) return name;
+    final index = rename?.getField('index')?.toIntValue();
+    const order = ['none', 'kebab', 'snake', 'pascal', 'screamingSnake'];
+    if (index != null && index < order.length) return order[index];
+  }
+  return 'none';
+}
+
+/// The JSON name of [field]: `@JsonKey(name:)`, else [fieldRename] applied to
+/// the Dart name.
+String _readJsonName(FieldElement field, String fieldRename) {
+  for (final meta in field.metadata) {
+    final value = meta.computeConstantValue();
+    if (value?.type?.element?.name != 'JsonKey') continue;
+    final name = value!.getField('name')?.toStringValue();
+    if (name != null) return name;
+  }
+  final words = field.name
+      .replaceAllMapped(RegExp('(?<=[a-z0-9])([A-Z])'), (m) => '_${m[1]}')
+      .toLowerCase()
+      .split('_');
+  switch (fieldRename) {
+    case 'kebab':
+      return words.join('-');
+    case 'snake':
+      return words.join('_');
+    case 'pascal':
+      return words.map((w) => w[0].toUpperCase() + w.substring(1)).join();
+    case 'screamingSnake':
+      return words.join('_').toUpperCase();
+    default:
+      return field.name;
+  }
+}
+
 /// A parameter of the entity's unnamed constructor.
 class ConstructorParam {
   /// Parameter name (matches the field it initialises).
@@ -339,6 +382,7 @@ class EntityManifest {
       );
     }
 
+    final fieldRename = _readFieldRename(element);
     final fields = <FieldManifest>[];
     ClassElement? parentElement;
     String? parentPath, parentTitle, parentIdType, parentParamName;
@@ -442,6 +486,7 @@ class EntityManifest {
           // peek: tolerate older annotation sources without these flags.
           searchable: reader.peek('searchable')?.boolValue ?? false,
           sortable: reader.peek('sortable')?.boolValue ?? false,
+          jsonName: _readJsonName(field, fieldRename),
         ),
       );
     }
