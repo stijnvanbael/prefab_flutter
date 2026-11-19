@@ -75,17 +75,28 @@ ids (`@Parent` fields) are converted the same way based on their own type. The
 id field is never shown as an editable form or detail field, and the generated
 URLs use its name (e.g. `/{path}/${entity.sku}`).
 
+### `@Create` (class)
+
+Enables creating:
+
+- the `create` route and `{Entity}CreateScreen`,
+- the floating action button on the list screen,
+- `create()` on the list notifier and the API client.
+
 ### `@Update` (class)
 
-Enables editing **and** creating:
+Enables editing:
 
 - an **Edit** action in the detail screen's AppBar,
-- the `create` and `:id/edit` routes,
-- `{Entity}CreateScreen` and `{Entity}EditScreen`,
-- an `updateEntity()` method on the list notifier.
+- the `:id/edit` route and `{Entity}EditScreen`,
+- `updateEntity()` on the list notifier and the API client.
 
-Without `@Update` no form screens are generated. (Separate `@Create` and
-`@Update` annotations are planned in PF-14.)
+`@Create` and `@Update` are independent, so an entity can be create-only
+(e.g. audit log entries), edit-only, both, or read-only (neither). Without
+either annotation no form screens are generated.
+
+> **Migration:** `@Update` used to enable creating as well. Add `@Create()`
+> next to `@Update()` to keep the previous behaviour.
 
 ### `@Delete` (class)
 
@@ -279,11 +290,12 @@ contains:
 
 | Generated code | Contents |
 |---|---|
-| `ProductListScreen` | A `ListView` of items (or a "No items found" message when empty); tapping one opens its detail screen. With a `searchable` field it has a `PrefabSearchBar`, with `sortable` fields a `PrefabSortMenu` in the AppBar, and (unless `@View(paged: false)`) a `PrefabPaginationBar` footer. With `@Update`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
+| `ProductListScreen` | A `ListView` of items (or a "No items found" message when empty); tapping one opens its detail screen. With a `searchable` field it has a `PrefabSearchBar`, with `sortable` fields a `PrefabSortMenu` in the AppBar, and (unless `@View(paged: false)`) a `PrefabPaginationBar` footer. With `@Create`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
 | `ProductDetailScreen(id:)` | One `ListTile` per visible field, plus Edit/Delete actions |
-| `ProductCreateScreen` and `ProductEditScreen(id:)` | Only with `@Update` |
-| `productDetailProvider`, `productsProvider`, `ProductsNotifier`, `productApiClientProvider` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `setSearch`, `setSort`, `goToPage`, `setPageSize`, `create`, `updateEntity` and `delete` (`updateEntity` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
-| `ProductApiClient` | `list` (returns a `PrefabPage<Product>`), `getById`, `create`, `update` and `delete`; responses are read with `Product.fromJson` and request bodies are sent as `product.toJson()` |
+| `ProductCreateScreen` | Only with `@Create` |
+| `ProductEditScreen(id:)` | Only with `@Update` |
+| `productDetailProvider`, `productsProvider`, `ProductsNotifier`, `productApiClientProvider` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `setSearch`, `setSort`, `goToPage`, `setPageSize`, `create` (with `@Create`), `updateEntity` (with `@Update`) and `delete` (with `@Delete`) (`updateEntity` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
+| `ProductApiClient` | `list` (returns a `PrefabPage<Product>`), `getById`, `delete`, plus `create` (with `@Create`) and `update` (with `@Update`); responses are read with `Product.fromJson` and request bodies are sent as `product.toJson()` |
 | `$productRoutes` | Named after the source file; a `List<RouteBase>` with the routes of every entity in the file |
 
 A file without `@View` classes produces no output. The previous layout of six
@@ -320,7 +332,7 @@ form fields from it before showing the form.
 
 ## Routes
 
-For `@View(path: 'products')` with `@Update`:
+For `@View(path: 'products')` with `@Create` and `@Update` (the `create` route needs `@Create`, the `edit` route needs `@Update`):
 
 | Path | Screen |
 |---|---|

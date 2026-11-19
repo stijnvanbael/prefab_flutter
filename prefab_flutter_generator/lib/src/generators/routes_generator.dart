@@ -23,7 +23,7 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 ///         GoRoute(path: 'edit', …)  // only when @Update is present
 ///       ],
 ///     ),
-///     GoRoute(path: 'create', …)    // only when @Update is present
+///     GoRoute(path: 'create', …)    // only when @Create is present
 ///   ],
 /// )
 /// ```
@@ -96,7 +96,7 @@ class RoutesGenerator extends Generator {
     final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
     buffer.writeln("import '$base.detail_screen.dart';");
     buffer.writeln("import '$base.list_screen.dart';");
-    if (manifests.any((m) => m.hasUpdate)) {
+    if (manifests.any((m) => m.hasCreate || m.hasUpdate)) {
       buffer.writeln("import '$base.form_screen.dart';");
     }
   }
@@ -181,9 +181,9 @@ class RoutesGenerator extends Generator {
         '$i  builder: (context, state) => const ${entity}ListScreen(),');
     buffer.writeln('$i  routes: [');
 
-    // The create route (only with @Update) must precede ':id' so '/create' is
+    // The create route (only with @Create) must precede ':id' so '/create' is
     // not parsed as an id.
-    if (manifest.hasUpdate) {
+    if (manifest.hasCreate) {
       buffer.writeln('$i    GoRoute(');
       buffer.writeln("$i      path: 'create',");
       buffer.writeln(
@@ -251,9 +251,9 @@ class RoutesGenerator extends Generator {
         "$i  builder: (context, state) => ${entity}ListScreen($parentParamName: ${manifest.parseParentId("state.pathParameters['$parentIdParam']!")}),");
     buffer.writeln('$i  routes: [');
 
-    // The create route (only with @Update) must precede ':id' so '/create' is
+    // The create route (only with @Create) must precede ':id' so '/create' is
     // not parsed as an id.
-    if (manifest.hasUpdate) {
+    if (manifest.hasCreate) {
       buffer.writeln('$i    GoRoute(');
       buffer.writeln("$i      path: 'create',");
       buffer.writeln(

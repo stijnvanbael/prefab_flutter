@@ -10,6 +10,7 @@ import 'package:test/test.dart';
 const _prefabSources = {
   'prefab_flutter|lib/prefab_flutter.dart': r'''
 export 'src/annotations/view.dart';
+export 'src/annotations/create.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/delete.dart';
 export 'src/annotations/field.dart';
@@ -22,6 +23,11 @@ class View {
   final String title;
   final String path;
   const View({required this.title, required this.path});
+}
+''',
+  'prefab_flutter|lib/src/annotations/create.dart': r'''
+class Create {
+  const Create();
 }
 ''',
   'prefab_flutter|lib/src/annotations/update.dart': r'''
@@ -196,6 +202,7 @@ const _requiredSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Product', path: 'products')
+@Create()
 @Update()
 class Product {
   late final int id;
@@ -211,6 +218,7 @@ const _emailSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'User', path: 'users')
+@Create()
 @Update()
 class User {
   late final int id;
@@ -226,6 +234,7 @@ const _positiveNumberSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Product', path: 'products')
+@Create()
 @Update()
 class Product {
   late final int id;
@@ -241,6 +250,7 @@ const _urlSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Resource', path: 'resources')
+@Create()
 @Update()
 class Resource {
   late final int id;
@@ -270,6 +280,7 @@ const _multiValidatorSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Contact', path: 'contacts')
+@Create()
 @Update()
 class Contact {
   late final int id;
@@ -285,6 +296,7 @@ const _boolSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Setting', path: 'settings')
+@Create()
 @Update()
 class Setting {
   late final int id;
@@ -300,6 +312,7 @@ const _dateTimeSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Event', path: 'events')
+@Create()
 @Update()
 class Event {
   late final int id;
@@ -315,6 +328,7 @@ const _multilineSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Article', path: 'articles')
+@Create()
 @Update()
 class Article {
   late final int id;
@@ -330,6 +344,7 @@ const _passwordSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Account', path: 'accounts')
+@Create()
 @Update()
 class Account {
   late final int id;
@@ -347,6 +362,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 enum Status { active, inactive }
 
 @View(title: 'Task', path: 'tasks')
+@Create()
 @Update()
 class Task {
   late final int id;
@@ -362,6 +378,7 @@ const _toggleSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Flag', path: 'flags')
+@Create()
 @Update()
 class Flag {
   late final int id;
@@ -379,6 +396,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 enum Priority { low, medium, high }
 
 @View(title: 'Item', path: 'items')
+@Create()
 @Update()
 class Item {
   late final int id;
@@ -427,6 +445,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 enum Color { red, green }
 
 @View(title: 'Item', path: 'items')
+@Create()
 @Update()
 class Item {
   late final int id;
@@ -463,6 +482,7 @@ const _legacySource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Product', path: 'products')
+@Create()
 @Update()
 class Product {
   late final int id;

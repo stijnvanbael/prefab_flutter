@@ -150,7 +150,7 @@ class ListScreenGenerator extends Generator {
       buffer.writeln('        ],');
     }
     buffer.writeln('      ),');
-    if (manifest.hasUpdate) {
+    if (manifest.hasCreate) {
       buffer.writeln('      floatingActionButton: FloatingActionButton(');
       buffer.writeln("        tooltip: 'Create ${manifest.title}',");
       buffer.writeln('        onPressed: () async {');

@@ -6,6 +6,7 @@ import 'package:source_gen/source_gen.dart';
 
 import 'field_manifest.dart';
 
+const _createChecker = TypeChecker.fromRuntime(Create);
 const _updateChecker = TypeChecker.fromRuntime(Update);
 const _deleteChecker = TypeChecker.fromRuntime(Delete);
 const _fieldChecker = TypeChecker.fromRuntime(Field);
@@ -59,6 +60,9 @@ class EntityManifest {
   /// URL path segment from [@View.path] (e.g. `'products'`).
   final String path;
 
+  /// Whether the entity class carries the [@Create] annotation.
+  final bool hasCreate;
+
   /// Whether the entity class carries the [@Update] annotation.
   final bool hasUpdate;
 
@@ -105,6 +109,7 @@ class EntityManifest {
     required this.entityName,
     required this.title,
     required this.path,
+    required this.hasCreate,
     required this.hasUpdate,
     required this.hasDelete,
     required this.fields,
@@ -200,6 +205,7 @@ class EntityManifest {
 
     final paged = viewAnnotation.peek('paged')?.boolValue ?? true;
 
+    final hasCreate = _createChecker.hasAnnotationOf(element);
     final hasUpdate = _updateChecker.hasAnnotationOf(element);
     final hasDelete = _deleteChecker.hasAnnotationOf(element);
 
@@ -342,6 +348,7 @@ class EntityManifest {
       entityName: element.name,
       title: title,
       path: path,
+      hasCreate: hasCreate,
       hasUpdate: hasUpdate,
       hasDelete: hasDelete,
       fields: fields,

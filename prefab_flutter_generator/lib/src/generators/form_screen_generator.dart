@@ -21,7 +21,7 @@ enum _WidgetKind {
 }
 
 /// Generates `{Entity}CreateScreen` and `{Entity}EditScreen` [ConsumerWidget]s
-/// for every class annotated with [@View] that also carries [@Update].
+/// for every class annotated with [@View] that also carries [@Create] (create screen) and/or [@Update] (edit screen).
 class FormScreenGenerator extends Generator {
   @override
   String generate(LibraryReader library, BuildStep buildStep) {
@@ -37,8 +37,8 @@ class FormScreenGenerator extends Generator {
       }
       final manifest = EntityManifest.from(element, a.annotation);
       all.add(manifest);
-      // Only generate form screens when @Update is present.
-      if (manifest.hasUpdate) manifests.add(manifest);
+      // Create screen needs @Create, edit screen needs @Update.
+      if (manifest.hasCreate || manifest.hasUpdate) manifests.add(manifest);
     }
     if (manifests.isEmpty) return '';
 
@@ -47,10 +47,14 @@ class FormScreenGenerator extends Generator {
     _writeHeader(buffer);
     _writeImports(sourceFileName, buffer);
     for (final manifest in manifests) {
-      buffer.writeln();
-      _writeCreateScreen(manifest, buffer);
-      buffer.writeln();
-      _writeEditScreen(manifest, buffer);
+      if (manifest.hasCreate) {
+        buffer.writeln();
+        _writeCreateScreen(manifest, buffer);
+      }
+      if (manifest.hasUpdate) {
+        buffer.writeln();
+        _writeEditScreen(manifest, buffer);
+      }
     }
     return buffer.toString();
   }

@@ -12,6 +12,7 @@ import 'package:test/test.dart';
 const _prefabSources = {
   'prefab_flutter|lib/prefab_flutter.dart': r'''
 export 'src/annotations/view.dart';
+export 'src/annotations/create.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/delete.dart';
 export 'src/annotations/field.dart';
@@ -24,6 +25,11 @@ class View {
   final String title;
   final String path;
   const View({required this.title, required this.path});
+}
+''',
+  'prefab_flutter|lib/src/annotations/create.dart': r'''
+class Create {
+  const Create();
 }
 ''',
   'prefab_flutter|lib/src/annotations/update.dart': r'''
@@ -200,6 +206,7 @@ const _productSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Product', path: 'products')
+@Create()
 @Update()
 @Delete()
 class Product {

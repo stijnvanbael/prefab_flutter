@@ -1,5 +1,6 @@
 ## Unreleased
 
+* Added `@Create`; `@Update` now only covers editing. Create and edit screens, routes, provider and API-client methods are enabled independently (PF-14). Migration: add `@Create()` next to `@Update()` to keep the previous behaviour.
 * Added `FieldWidget.timePicker` (`Duration` / `HH:mm` `String`) and `FieldWidget.dateTimePicker` (`DateTime`); picker display text now uses `MaterialLocalizations` instead of ISO-8601 (PF-17).
 * Added `@Field.views` to choose the views (`list`, `detail`) a field appears in; list tiles fill title, subtitle and trailing from the `list` view (PF-16).
 * Added `searchable` and `sortable` to `@Field` and `paged` to `@View` (PF-13).

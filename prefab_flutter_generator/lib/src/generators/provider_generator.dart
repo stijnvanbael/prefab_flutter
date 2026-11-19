@@ -245,11 +245,13 @@ class ProviderGenerator extends Generator {
       buffer.writeln('    return _load();');
       buffer.writeln('  }');
     }
-    buffer.writeln();
-    buffer.writeln('  Future<void> create($entity $entityLower) async {');
-    buffer.writeln('    await _client.create($entityLower$clientTrailing);');
-    buffer.writeln('    await _load();');
-    buffer.writeln('  }');
+    if (manifest.hasCreate) {
+      buffer.writeln();
+      buffer.writeln('  Future<void> create($entity $entityLower) async {');
+      buffer.writeln('    await _client.create($entityLower$clientTrailing);');
+      buffer.writeln('    await _load();');
+      buffer.writeln('  }');
+    }
     if (manifest.hasUpdate) {
       buffer.writeln();
       buffer.writeln(
