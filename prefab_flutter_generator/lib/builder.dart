@@ -5,6 +5,7 @@ import 'src/generators/api_client_generator.dart';
 import 'src/generators/detail_screen_generator.dart';
 import 'src/generators/form_screen_generator.dart';
 import 'src/generators/list_screen_generator.dart';
+import 'src/generators/prefab_generator.dart';
 import 'src/generators/provider_generator.dart';
 import 'src/generators/routes_generator.dart';
 
@@ -49,4 +50,14 @@ Builder routesBuilder(BuilderOptions options) =>
     LibraryBuilder(
       RoutesGenerator(),
       generatedExtension: '.routes.dart',
+    );
+
+/// Generates all code for an annotated source file into one `.prefab.dart`
+/// library: detail, list and form screens, providers, API client and routes.
+///
+/// This is the only builder registered in `build.yaml`; the builders above
+/// are kept for testing the individual generators.
+Builder prefabBuilder(BuilderOptions options) => LibraryBuilder(
+      PrefabGenerator(),
+      generatedExtension: '.prefab.dart',
     );

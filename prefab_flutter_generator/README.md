@@ -1,16 +1,11 @@
 # prefab_flutter_generator
 
 Code generator for [`prefab_flutter`](https://pub.dev/packages/prefab_flutter). Reads
-`@View`-annotated Dart classes and emits six categories of source files:
+`@View`-annotated Dart classes and emits **one** library per source file:
 
-| Builder factory       | Output extension      | Description                                         |
-|-----------------------|-----------------------|-----------------------------------------------------|
-| `detailScreenBuilder` | `.detail_screen.dart` | Read-only `{Entity}DetailScreen` ConsumerWidget     |
-| `listScreenBuilder`   | `.list_screen.dart`   | `{Entity}ListScreen` with search, sort & pagination |
-| `formScreenBuilder`   | `.form_screen.dart`   | Create & edit form screens                          |
-| `providerBuilder`     | `.provider.dart`      | Riverpod providers (detail + list AsyncNotifier)   |
-| `apiClientBuilder`    | `.api_client.dart`    | Dio-backed API client                               |
-| `routesBuilder`       | `.routes.dart`        | GoRouter TypedGoRoute declarations                  |
+| Builder factory | Output extension | Description |
+|-----------------|------------------|-------------|
+| `prefabBuilder` | `.prefab.dart`   | Detail, list and form screens, Riverpod providers, Dio API client and GoRouter routes for every `@View` class in the file |
 
 ## Usage
 
@@ -52,8 +47,7 @@ Run the generator:
 dart run build_runner build
 ```
 
-This produces `product.detail_screen.dart` (and the other output files)
-alongside `product.dart`.
+This produces `product.prefab.dart` alongside `product.dart`.
 
 ## Running tests
 
