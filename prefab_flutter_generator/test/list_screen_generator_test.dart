@@ -264,7 +264,7 @@ void main() {
 
     // PF-26 — create entry point
 
-    const _editableProduct = r'''
+    const editableProduct = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Product', path: 'products')
@@ -283,7 +283,7 @@ class Product {
         () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _editableProduct),
+        _assets('a', 'lib/product.dart', editableProduct),
         outputs: {
           'a|lib/product.list_screen.dart': decodedMatches(allOf(
             contains('FloatingActionButton('),
