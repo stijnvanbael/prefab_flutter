@@ -10,6 +10,10 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 /// Generates GoRouter [GoRoute] declarations for every class annotated with
 /// [@View] in a source library.
 ///
+/// Entities nested with [@Parent] (to any depth) are emitted inside their
+/// parent's detail route, each level with its own path parameter
+/// (`:orderId`, `:orderLineId`, ...).
+///
 /// For each entity the following route tree is emitted:
 /// ```
 /// GoRoute(
@@ -145,12 +149,13 @@ class RoutesGenerator extends Generator {
       } else if (!manifest.parentInSameLibrary) {
         _writeNestedEntityRoute(
           manifest,
-          parentIdParam: manifest.parentParamName!,
           childrenByParent: childrenByParent,
           buffer: buffer,
           level: 1,
-          absolutePrefix:
-              '/${manifest.parentPath}/:${manifest.parentParamName}/',
+          absolutePrefix: [
+            for (final a in manifest.ancestors) '/${a.path}/:${a.routeParam}',
+            '/',
+          ].join(),
         );
       }
     }
@@ -211,7 +216,6 @@ class RoutesGenerator extends Generator {
       for (final child in children) {
         _writeNestedEntityRoute(
           child,
-          parentIdParam: idParam,
           childrenByParent: childrenByParent,
           buffer: buffer,
           level: level + 4,
@@ -229,7 +233,6 @@ class RoutesGenerator extends Generator {
   // Writes a nested entity route (entity has @Parent).
   void _writeNestedEntityRoute(
     EntityManifest manifest, {
-    required String parentIdParam,
     required Map<String, List<EntityManifest>> childrenByParent,
     required StringBuffer buffer,
     required int level,
@@ -238,7 +241,12 @@ class RoutesGenerator extends Generator {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
     final path = '$absolutePrefix${manifest.path}';
-    final parentParamName = manifest.parentParamName!;
+    // Every ancestor id comes from the path parameters of the enclosing
+    // routes (named after the ancestor, so they are unique per level).
+    final ancestorArgs = manifest.ancestors
+        .map((a) =>
+            "${a.paramName}: ${a.parse("state.pathParameters['${a.routeParam}']!")}")
+        .join(', ');
 
     final children = childrenByParent[entityLower] ?? [];
     final idParam = children.isNotEmpty ? '${entityLower}Id' : 'id';
@@ -248,7 +256,7 @@ class RoutesGenerator extends Generator {
     buffer.writeln('${i}GoRoute(');
     buffer.writeln("$i  path: '$path',");
     buffer.writeln(
-        "$i  builder: (context, state) => ${entity}ListScreen($parentParamName: ${manifest.parseParentId("state.pathParameters['$parentIdParam']!")}),");
+        "$i  builder: (context, state) => ${entity}ListScreen($ancestorArgs),");
     buffer.writeln('$i  routes: [');
 
     // The create route (only with @Create) must precede ':id' so '/create' is
@@ -257,7 +265,7 @@ class RoutesGenerator extends Generator {
       buffer.writeln('$i    GoRoute(');
       buffer.writeln("$i      path: 'create',");
       buffer.writeln(
-          "$i      builder: (context, state) => ${entity}CreateScreen($parentParamName: ${manifest.parseParentId("state.pathParameters['$parentIdParam']!")}),");
+          "$i      builder: (context, state) => ${entity}CreateScreen($ancestorArgs),");
       buffer.writeln('$i    ),');
     }
 
@@ -265,7 +273,7 @@ class RoutesGenerator extends Generator {
     buffer.writeln('$i    GoRoute(');
     buffer.writeln("$i      path: ':$idParam',");
     buffer.writeln(
-        "        builder: (context, state) => ${entity}DetailScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}, $parentParamName: ${manifest.parseParentId("state.pathParameters['$parentIdParam']!")}),");
+        "        builder: (context, state) => ${entity}DetailScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}, $ancestorArgs),");
 
     final hasSubRoutes = manifest.hasUpdate || children.isNotEmpty;
     if (hasSubRoutes) {
@@ -274,13 +282,12 @@ class RoutesGenerator extends Generator {
         buffer.writeln('$i        GoRoute(');
         buffer.writeln("$i          path: 'edit',");
         buffer.writeln(
-            "          builder: (context, state) => ${entity}EditScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}, $parentParamName: ${manifest.parseParentId("state.pathParameters['$parentIdParam']!")}),");
+            "          builder: (context, state) => ${entity}EditScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}, $ancestorArgs),");
         buffer.writeln('$i        ),');
       }
       for (final child in children) {
         _writeNestedEntityRoute(
           child,
-          parentIdParam: idParam,
           childrenByParent: childrenByParent,
           buffer: buffer,
           level: level + 4,

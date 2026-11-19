@@ -5,6 +5,7 @@ import 'package:source_gen/source_gen.dart';
 
 import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
+import 'breadcrumbs.dart';
 
 const _viewChecker = TypeChecker.fromRuntime(View);
 
@@ -35,7 +36,7 @@ class ListScreenGenerator extends Generator {
 
     final buffer = StringBuffer();
     _writeHeader(buffer);
-    _writeImports(sourceFileName, buffer);
+    _writeImports(manifests, sourceFileName, buffer);
     buffer.writeln();
 
     for (final manifest in manifests) {
@@ -65,7 +66,11 @@ class ListScreenGenerator extends Generator {
   // Imports
   // ---------------------------------------------------------------------------
 
-  void _writeImports(String sourceFileName, StringBuffer buffer) {
+  void _writeImports(
+    List<EntityManifest> manifests,
+    String sourceFileName,
+    StringBuffer buffer,
+  ) {
     buffer.writeln("import 'package:material_ui/material_ui.dart';");
     buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
     buffer.writeln("import 'package:go_router/go_router.dart';");
@@ -75,6 +80,9 @@ class ListScreenGenerator extends Generator {
     final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
     buffer.writeln("import '$base.dart';");
     buffer.writeln("import '$base.provider.dart';");
+    for (final uri in ancestorImports(manifests)) {
+      buffer.writeln("import '$uri';");
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -89,23 +97,25 @@ class ListScreenGenerator extends Generator {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
     final hasParent = manifest.hasParent;
-    final parentParamName = manifest.parentParamName;
-    final parentParamType = hasParent ? manifest.parentField!.dartType : null;
+    final parentKey =
+        hasParent ? manifest.parentKeyExpr((a) => a.paramName) : '';
 
     final itemPath =
         paths.itemPath(manifest, '\${$entityLower.${manifest.idFieldName}}');
 
     final createPath = paths.createPath(manifest);
     final providerRef = hasParent
-        ? '${entityLower}sProvider($parentParamName)'
+        ? '${entityLower}sProvider($parentKey)'
         : '${entityLower}sProvider';
 
     buffer.writeln('class ${entity}ListScreen extends ConsumerWidget {');
     if (hasParent) {
-      buffer.writeln('  final $parentParamType $parentParamName;');
+      for (final a in manifest.ancestors) {
+        buffer.writeln('  final ${a.idType} ${a.paramName};');
+      }
       buffer.writeln();
       buffer.writeln(
-          '  const ${entity}ListScreen({super.key, required this.$parentParamName});');
+          '  const ${entity}ListScreen({super.key, ${manifest.ancestors.map((a) => 'required this.${a.paramName}').join(', ')}});');
     } else {
       buffer.writeln('  const ${entity}ListScreen({super.key});');
     }
@@ -116,7 +126,7 @@ class ListScreenGenerator extends Generator {
     // Watch the correct provider variant.
     if (hasParent) {
       buffer.writeln(
-          '    final ${entityLower}sAsync = ref.watch(${entityLower}sProvider($parentParamName));');
+          '    final ${entityLower}sAsync = ref.watch(${entityLower}sProvider($parentKey));');
     } else {
       buffer.writeln(
           '    final ${entityLower}sAsync = ref.watch(${entityLower}sProvider);');
@@ -128,6 +138,9 @@ class ListScreenGenerator extends Generator {
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
+    if (manifest.hasBreadcrumbs) {
+      buffer.writeln(breadcrumbBottom(manifest, '        '));
+    }
     if (manifest.hasSort) {
       buffer.writeln('        actions: [');
       buffer.writeln('          PrefabSortMenu<$entity>(');

@@ -142,6 +142,11 @@ class FormScreenGenerator extends Generator {
   // Create screen
   // ---------------------------------------------------------------------------
 
+  /// `required this.orderId, required this.orderLineId`.
+  static String _requiredThis(EntityManifest manifest) => manifest.ancestors
+      .map((a) => 'required this.${a.paramName}')
+      .join(', ');
+
   void _writeCreateScreen(EntityManifest manifest, StringBuffer buffer) {
     final entity = manifest.entityName;
 
@@ -149,12 +154,12 @@ class FormScreenGenerator extends Generator {
       'class ${entity}CreateScreen extends ConsumerStatefulWidget {',
     );
     if (manifest.hasParent) {
-      buffer.writeln(
-        '  final ${manifest.parentField!.dartType} ${manifest.parentParamName};',
-      );
+      for (final a in manifest.ancestors) {
+        buffer.writeln('  final ${a.idType} ${a.paramName};');
+      }
       buffer.writeln();
       buffer.writeln(
-        '  const ${entity}CreateScreen({super.key, required this.${manifest.parentParamName}});',
+        '  const ${entity}CreateScreen({super.key, ${_requiredThis(manifest)}});',
       );
     } else {
       buffer.writeln('  const ${entity}CreateScreen({super.key});');
@@ -190,12 +195,12 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('  final ${manifest.idType} id;');
     buffer.writeln();
     if (manifest.hasParent) {
-      buffer.writeln(
-        '  final ${manifest.parentField!.dartType} ${manifest.parentParamName};',
-      );
+      for (final a in manifest.ancestors) {
+        buffer.writeln('  final ${a.idType} ${a.paramName};');
+      }
       buffer.writeln();
       buffer.writeln(
-        '  const ${entity}EditScreen({super.key, required this.id, required this.${manifest.parentParamName}});',
+        '  const ${entity}EditScreen({super.key, required this.id, ${_requiredThis(manifest)}});',
       );
     } else {
       buffer.writeln(
@@ -345,7 +350,7 @@ class FormScreenGenerator extends Generator {
     final entityLower = manifest.entityNameLower;
 
     final detailArg = manifest.hasParent
-        ? '((widget.id, widget.${manifest.parentParamName}))'
+        ? '(${manifest.detailKeyExpr('widget.id', (a) => 'widget.${a.paramName}')})'
         : '(widget.id)';
     buffer.writeln(
       '    final asyncItem = ref.watch(${entityLower}DetailProvider$detailArg);',
@@ -404,8 +409,9 @@ class FormScreenGenerator extends Generator {
   void _writeSaveMethod(
       EntityManifest manifest, bool isEdit, StringBuffer buffer) {
     final entity = manifest.entityName;
-    final providerArgs =
-        manifest.hasParent ? '(widget.${manifest.parentParamName})' : '';
+    final providerArgs = manifest.hasParent
+        ? '(${manifest.parentKeyExpr((a) => 'widget.${a.paramName}')})'
+        : '';
     final provider = '${manifest.entityNameLower}sProvider$providerArgs';
     final mutation = isEdit ? 'updateEntity' : 'create';
 

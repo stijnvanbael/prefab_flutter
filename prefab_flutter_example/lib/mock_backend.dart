@@ -5,12 +5,19 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
 /// An in-memory REST backend that implements the contract expected by the
-/// generated API clients (`/products` and `/products/{productId}/reviews`).
+/// generated API clients (`/products`, `/products/{productId}/reviews` and
+/// `/products/{productId}/reviews/{reviewId}/replies`).
 class MockBackendAdapter implements HttpClientAdapter {
   final Map<String, List<Map<String, dynamic>>> _tables = {
     'products': [
       {'id': 1, 'name': 'Keyboard', 'price': 49.9, 'inStock': true},
       {'id': 2, 'name': 'Monitor', 'price': 199.0, 'inStock': false},
+    ],
+    'products/2/reviews': [
+      {'id': 10, 'productId': 2, 'comment': 'Sharp picture'},
+    ],
+    'products/2/reviews/10/replies': [
+      {'id': 20, 'reviewId': 10, 'text': 'Agreed'},
     ],
   };
   int _nextId = 100;
@@ -26,18 +33,19 @@ class MockBackendAdapter implements HttpClientAdapter {
     Object? body = options.data;
     if (body is String) body = jsonDecode(body);
 
-    // Resolve to a table key and optional id.
-    String table;
-    String? id;
-    if (parts.length >= 3 && parts[0] == 'products' && parts[2] == 'reviews') {
-      table = 'products/${parts[1]}/reviews';
-      id = parts.length > 3 ? parts[3] : null;
-    } else if (parts.isNotEmpty && parts[0] == 'products') {
-      table = 'products';
-      id = parts.length > 1 ? parts[1] : null;
-    } else {
+    // Resolve to a table key and optional id. Paths alternate collection and
+    // id segments: /products/1/reviews/2/replies/3.
+    const collections = {'products', 'reviews', 'replies'};
+    if (parts.isEmpty ||
+        [for (var i = 0; i < parts.length; i += 2) parts[i]]
+            .any((c) => !collections.contains(c)) ||
+        parts[0] != 'products') {
       return _json(404, {'error': 'not found'});
     }
+    final isItem = parts.length.isEven;
+    final id = isItem ? parts.last : null;
+    final table = (isItem ? parts.sublist(0, parts.length - 1) : parts)
+        .join('/');
     final rows = _tables.putIfAbsent(table, () => []);
 
     switch (options.method) {
@@ -47,7 +55,13 @@ class MockBackendAdapter implements HttpClientAdapter {
         return row == null ? _json(404, {}) : _json(200, row);
       case 'POST':
         final row = Map<String, dynamic>.from(body as Map)..['id'] = _nextId++;
-        if (parts.length >= 3) row['productId'] = int.parse(parts[1]);
+        // The parent id field of the created row, named after the parent.
+        if (parts.length >= 3) {
+          final parentField = parts[parts.length - 3] == 'products'
+              ? 'productId'
+              : 'reviewId';
+          row[parentField] = int.parse(parts[parts.length - 2]);
+        }
         rows.add(row);
         return _json(201, row);
       case 'PUT':

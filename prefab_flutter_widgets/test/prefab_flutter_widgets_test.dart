@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
 
 void main() {
+  breadcrumbTests();
   group('PrefabPage', () {
     test('totalPages rounds up', () {
       const page = PrefabPage<int>(
@@ -201,6 +202,30 @@ void main() {
       );
       expect(tester.takeException(), isNull);
       expect(find.byTooltip('Sort: Name desc'), findsOneWidget);
+    });
+  });
+}
+
+void breadcrumbTests() {
+  group('PrefabBreadcrumbBar', () {
+    testWidgets('shows all steps and taps ancestors', (tester) async {
+      var tapped = '';
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          appBar: AppBar(
+            title: const Text('t'),
+            bottom: PrefabBreadcrumbBar(items: [
+              PrefabBreadcrumb(label: 'Order 1', onTap: () => tapped = 'o'),
+              PrefabBreadcrumb(label: 'Line A', onTap: () => tapped = 'l'),
+              const PrefabBreadcrumb(label: 'Notes'),
+            ]),
+          ),
+        ),
+      ));
+      expect(find.text('Order 1'), findsOneWidget);
+      expect(find.text('Notes'), findsOneWidget);
+      await tester.tap(find.text('Line A'));
+      expect(tapped, 'l');
     });
   });
 }

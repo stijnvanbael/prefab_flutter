@@ -6,6 +6,7 @@ import 'package:source_gen/source_gen.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
 import '../manifest/field_manifest.dart';
+import 'breadcrumbs.dart';
 
 const _viewChecker = TypeChecker.fromRuntime(View);
 
@@ -77,17 +78,20 @@ class DetailScreenGenerator extends Generator {
     buffer.writeln("import 'package:material_ui/material_ui.dart';");
     buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
 
-    if (manifests.any((m) => m.hasUpdate || m.hasDelete)) {
+    if (manifests.any((m) => m.hasUpdate || m.hasDelete || m.hasBreadcrumbs)) {
       buffer.writeln("import 'package:go_router/go_router.dart';");
     }
 
-    if (manifests.any((m) => m.hasDelete)) {
+    if (manifests.any((m) => m.hasDelete || m.hasBreadcrumbs)) {
       buffer.writeln(
           "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';");
     }
 
     // Relative import for the entity file.
     buffer.writeln("import '$sourceFileName';");
+    for (final uri in ancestorImports(manifests)) {
+      buffer.writeln("import '$uri';");
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -99,18 +103,18 @@ class DetailScreenGenerator extends Generator {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
     final hasParent = manifest.hasParent;
-    final parentParamName = manifest.parentParamName;
-    final parentParamType = hasParent ? manifest.parentField!.dartType : null;
 
     buffer.writeln('class ${entity}DetailScreen extends ConsumerWidget {');
     buffer.writeln('  final ${manifest.idType} id;');
     if (hasParent) {
-      buffer.writeln('  final $parentParamType $parentParamName;');
+      for (final a in manifest.ancestors) {
+        buffer.writeln('  final ${a.idType} ${a.paramName};');
+      }
     }
     buffer.writeln();
     if (hasParent) {
       buffer.writeln(
-          '  const ${entity}DetailScreen({super.key, required this.id, required this.$parentParamName});');
+          '  const ${entity}DetailScreen({super.key, required this.id, ${manifest.ancestors.map((a) => 'required this.${a.paramName}').join(', ')}});');
     } else {
       buffer.writeln(
           '  const ${entity}DetailScreen({super.key, required this.id});');
@@ -120,7 +124,7 @@ class DetailScreenGenerator extends Generator {
     buffer.writeln('  Widget build(BuildContext context, WidgetRef ref) {');
     if (hasParent) {
       buffer.writeln(
-          '    final ${entityLower}Async = ref.watch(${entityLower}DetailProvider((id, $parentParamName)));');
+          '    final ${entityLower}Async = ref.watch(${entityLower}DetailProvider(${manifest.detailKeyExpr('id', (a) => a.paramName)}));');
     } else {
       buffer.writeln(
           '    final ${entityLower}Async = ref.watch(${entityLower}DetailProvider(id));');
@@ -128,6 +132,9 @@ class DetailScreenGenerator extends Generator {
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
+    if (manifest.hasBreadcrumbs) {
+      buffer.writeln(breadcrumbBottom(manifest, '        '));
+    }
 
     _writeAppBarActions(manifest, paths, buffer);
 
@@ -149,8 +156,9 @@ class DetailScreenGenerator extends Generator {
     if (!manifest.hasUpdate && !manifest.hasDelete) return;
 
     final entityLower = manifest.entityNameLower;
-    final listProviderArg =
-        manifest.hasParent ? '(${manifest.parentParamName})' : '';
+    final listProviderArg = manifest.hasParent
+        ? '(${manifest.parentKeyExpr((a) => a.paramName)})'
+        : '';
 
     buffer.writeln('        actions: [');
 

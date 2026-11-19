@@ -22,7 +22,7 @@ Annotate an entity class, run `build_runner`, and Prefab Flutter generates:
 | [`prefab_flutter`](prefab_flutter) | Dart | Annotations (`@View`, `@Field`, `@Create`, `@Update`, `@Delete`, `@Parent`, `@Id`) and enums |
 | [`prefab_flutter_generator`](prefab_flutter_generator) | Dart, dev dependency | `build_runner` generators |
 | [`prefab_flutter_widgets`](prefab_flutter_widgets) | Flutter | Runtime widgets used by generated code (delete dialog, search bar, sort menu, pagination bar) |
-| [`prefab_flutter_example`](prefab_flutter_example) | Flutter app | Runnable example with a `Product` and a nested `Review` entity against an in-memory mock backend |
+| [`prefab_flutter_example`](prefab_flutter_example) | Flutter app | Runnable example with a `Product`, a nested `Review` and a doubly nested `Reply` entity against an in-memory mock backend |
 
 ## Quick start
 

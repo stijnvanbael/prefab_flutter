@@ -107,4 +107,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Excellent'), findsOneWidget);
   });
+
+  testWidgets('three-level nesting shows breadcrumbs back to the ancestors',
+      (tester) async {
+    await _pumpApp(tester, location: '/products/2/reviews/10/replies');
+    expect(find.text('Agreed'), findsOneWidget);
+    expect(find.byType(PrefabBreadcrumbBar), findsOneWidget);
+    // Ancestors are labelled from their detail providers.
+    expect(find.text('Monitor'), findsOneWidget);
+    expect(find.text('Sharp picture'), findsOneWidget);
+
+    // Opening a reply keeps the breadcrumb; tapping an ancestor jumps back.
+    await tester.tap(find.text('Agreed'));
+    await tester.pumpAndSettle();
+    expect(find.byType(PrefabBreadcrumbBar), findsOneWidget);
+    await tester.tap(find.text('Sharp picture'));
+    await tester.pumpAndSettle();
+    expect(find.text('Comment'), findsOneWidget);
+    expect(find.byType(PrefabBreadcrumbBar), findsNothing);
+  });
 }
