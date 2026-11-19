@@ -75,15 +75,15 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 @Delete()
 class Product {
-  final int id;
+  final int? id;
 
   @FormField(label: 'Name')
   final String name;
 
-  Product({required this.id, required this.name});
+  Product({this.id, required this.name});
 
   factory Product.fromJson(Map<String, dynamic> json) =>
-      Product(id: json['id'] as int, name: json['name'] as String);
+      Product(id: json['id'] as int?, name: json['name'] as String);
 
   Map<String, dynamic> toJson() => {'id': id, 'name': name};
 }
