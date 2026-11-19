@@ -1,5 +1,7 @@
 # prefab_flutter_example
 
+See the [root README](../README.md) and the [user guide](../docs/user_guide.md).
+
 A runnable example for [prefab_flutter](../README.md). It has two annotated
 entities and an in-memory mock backend, so no server is needed.
 

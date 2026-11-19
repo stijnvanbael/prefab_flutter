@@ -140,6 +140,8 @@ to set the base URL, authentication and interceptors; see
 
 - [User guide](docs/user_guide.md): every annotation, field widget and
   validator, the generated files and routes, and the current limitations.
+- [Developer guide](docs/developer_guide.md): package layout, adding a
+  generator, running tests and the publishing checklist.
 - [Backlog](backlog/tasks): planned and in-progress work.
 
 ## Development

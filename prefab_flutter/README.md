@@ -1,5 +1,8 @@
 # prefab_flutter
 
+> Part of [Prefab Flutter](https://github.com/stijnvanbael/prefab_flutter/blob/main/README.md). See the [user guide](https://github.com/stijnvanbael/prefab_flutter/blob/main/docs/user_guide.md) for the full reference.
+> pub.dev badge: added once the package is published (not yet on pub.dev).
+
 Annotations for the `prefab_flutter` code generator.
 
 Apply these annotations to your Dart entity classes and run `build_runner` to generate list screens, detail screens, form screens, Riverpod providers, Dio API clients, and GoRouter routes.
