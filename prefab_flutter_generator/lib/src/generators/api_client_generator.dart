@@ -12,8 +12,9 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 ///
 /// Each API client exposes methods for: list, getById and delete, plus create (only with [@Create])
 /// and update (only with [@Update]).  When the entity carries a [@Parent]-annotated field, every method
-/// accepts a named `{parentFieldName}` parameter and the URL is prefixed with
-/// the parent resource path so that the resource is correctly scoped:
+/// accepts a named id parameter for each ancestor (the whole chain, outermost
+/// first) and the URL is prefixed with the ancestor resource paths so that the
+/// resource is correctly scoped:
 ///
 /// ```
 /// GET  /{parentPath}/{parentId}/{path}
@@ -114,16 +115,17 @@ class ApiClientGenerator extends Generator {
 
     // Determine whether this entity is nested under a parent.
     final hasParent = manifest.hasParent;
-    final parentParamName = manifest.parentParamName; // e.g. 'postId'
-    final parentParamType = hasParent ? manifest.parentField!.dartType : null;
+    // The URL base path: '/orders/$orderId/lines/$orderLineId/notes' or
+    // '/path'; every ancestor contributes its path and id.
+    final urlBase = [
+      for (final a in manifest.ancestors) '/${a.path}/\$${a.paramName}',
+      '/$path',
+    ].join();
 
-    // The URL base path: '/parentPath/$parentParam/path' or '/path'.
-    final parentPath = manifest.parentPath;
-    final urlBase =
-        hasParent ? '/$parentPath/\$$parentParamName/$path' : '/$path';
-
-    final parentParamTrailing =
-        hasParent ? ', {required $parentParamType $parentParamName}' : '';
+    final requiredAncestors = [
+      for (final a in manifest.ancestors) 'required ${a.idType} ${a.paramName}',
+    ].join(', ');
+    final parentParamTrailing = hasParent ? ', {$requiredAncestors}' : '';
 
     buffer.writeln('class ${entity}ApiClient {');
     buffer.writeln('  final Dio _dio;');
@@ -136,7 +138,7 @@ class ApiClientGenerator extends Generator {
     // list: search, sort and pagination go to the server as query parameters
     // (names and response shape come from the PrefabListAdapter).
     final listParams = [
-      if (hasParent) 'required $parentParamType $parentParamName',
+      if (hasParent) requiredAncestors,
       'String? search',
       'String? sort',
       'bool descending = false',

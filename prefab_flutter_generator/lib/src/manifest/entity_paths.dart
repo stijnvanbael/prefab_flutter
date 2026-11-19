@@ -29,12 +29,21 @@ class EntityPaths {
     return EntityPaths(manifests);
   }
 
-  /// Collection path, e.g. `/products` or `/posts/$postId/comments`.
+  /// Collection path, e.g. `/products`, `/posts/$postId/comments` or
+  /// `/orders/$orderId/lines/$orderLineId/notes`.
   String collectionPath(EntityManifest manifest) {
-    final parentPath = manifest.parentPath;
-    if (parentPath == null) return '/${manifest.path}';
-    return '/$parentPath/\$${manifest.parentParamName}/${manifest.path}';
+    return [
+      for (final a in manifest.ancestors) '/${a.path}/\$${a.paramName}',
+      '/${manifest.path}',
+    ].join();
   }
+
+  /// Item path of the ancestor at [index] of [manifest]'s chain, e.g.
+  /// `/orders/$orderId/lines/$orderLineId`.
+  static String ancestorPath(EntityManifest manifest, int index) => [
+        for (final a in manifest.ancestors.take(index + 1))
+          '/${a.path}/\$${a.paramName}',
+      ].join();
 
   /// Item path for the id expression [idExpr] (e.g. `$id` or `${c.id}`).
   String itemPath(EntityManifest manifest, String idExpr) =>

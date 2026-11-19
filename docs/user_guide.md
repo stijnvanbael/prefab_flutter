@@ -396,7 +396,10 @@ Rules:
   instead of being nested inside the parent's route. Register both getters.
 - The type of the `@Parent` field must equal the type of the parent's `id`
   field, otherwise the build fails.
-- Only one level of nesting is supported (PF-19 plans deeper chains).
+- Chains can be arbitrarily deep (`Order` -> `OrderLine` -> `OrderLineNote`):
+  every entity has one `@Parent`, and the whole ancestor chain is resolved from
+  the `@Parent(Type)` references, across files. A circular chain fails the
+  build.
 - The parent field is not shown in forms or the detail screen.
 
 Effects:
@@ -413,6 +416,32 @@ Effects:
   its Delete action uses `commentsProvider(postId).notifier`.
 - List and detail navigation paths are built by one shared helper, so they
   always match the routes.
+
+### Deeper chains and breadcrumbs
+
+For an entity nested more than one level deep, every ancestor id is threaded
+through the generated code. With `OrderLineNote` (`@Parent(OrderLine)`),
+`OrderLine` (`@Parent(Order)`, field `orderId`) and `Order`:
+
+- Routes: `/orders/:orderId/lines/:orderLineId/notes[/:id]`. Each level has a
+  unique path parameter named `<entity>Id`.
+- The API client calls `/orders/{orderId}/lines/{orderLineId}/notes[/{id}]`;
+  every method takes named `orderId` and `orderLineId` arguments. The direct
+  parent's argument is named after the `@Parent` field, the other ancestors'
+  after their entity (`<entity>Id`); these names must not clash.
+- `orderLineNotesProvider` is a family keyed on the positional record
+  `(orderId, orderLineId)` (outermost ancestor first; a single id when there
+  is one ancestor); `orderLineNoteDetailProvider` is keyed on
+  `(id, orderId, orderLineId)`.
+- Screens take all ancestor ids as required constructor arguments.
+- When an entity has **two or more ancestors**, its list and detail screens
+  show a breadcrumb row in the AppBar (`PrefabBreadcrumbBar`): one tappable
+  step per ancestor, labelled with the ancestor's first visible `@Field` value
+  (from the ancestor's detail provider, `…` while loading), followed by the
+  entity's own title. Tapping a step navigates to that ancestor's detail
+  screen. Ancestors declared in another file need that file's `.prefab.dart`
+  to be importable from the entity's generated file (it is imported
+  automatically).
 
 ## Configuring the HTTP client
 
@@ -512,6 +541,7 @@ anything the constructor parameters cannot express.
 | `showPrefabDeleteDialog` / `PrefabDeleteDialog<T>` | yes (detail screen) | Delete confirmation; returns `true` when the item was deleted |
 | `PrefabSearchBar` | yes (list screen) | Search text field with an `onChanged` callback |
 | `PrefabSortMenu<T>` / `PrefabSortOption<T>` | yes (list screen) | Popup menu to choose a sort option |
+| `PrefabBreadcrumbBar` / `PrefabBreadcrumb` | yes (list and detail screens of entities with two or more ancestors) | Single-line breadcrumb row for `AppBar.bottom` with tappable ancestor steps |
 | `PrefabPaginationBar` / `PrefabPageNotifier` | yes (list screen, via `PrefabPaginationBar.controlled`) | First/previous/next/last page controls |
 | `PrefabPage<T>` | yes (API client, notifier, list screen) | A page of items with total count and page metadata |
 | `PrefabListAdapter` / `prefabListAdapterProvider` | yes (API client) | Query parameter names and response shape of list requests |
@@ -524,5 +554,5 @@ These are known gaps in the current pre-release. Each has a backlog task.
 
 | Limitation | Workaround | Task |
 |---|---|---|
-| Detail screens do not link to the lists of nested child entities; reach them by URL (`/products/1/reviews`) or add your own link | Navigate with `context.push` | PF-19 |
+| Detail screens do not link to the lists of nested child entities; reach them by URL (`/products/1/reviews`) or add your own link | Navigate with `context.push` | none yet |
 | Sort and search use the Dart field name / free text; a `json_serializable` `fieldRename` is not applied to the `sort` value | Map names in a custom `PrefabListAdapter.queryParameters` | PF-13 |

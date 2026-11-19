@@ -16,9 +16,12 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 ///   create / update / delete mutations.
 ///
 /// When the entity carries a [@Parent]-annotated field, every provider accepts
-/// the parent ID and threads it through to the API client:
-/// - `{entity}DetailProvider` becomes a `family` keyed on `(idType id, parentType parentId)`.
-/// - `{entity}sProvider` becomes a `family` (`AutoDisposeFamilyAsyncNotifier`) keyed on the `parentType parentId`.
+/// the ids of its whole ancestor chain (outermost first) and threads them
+/// through to the API client:
+/// - `{entity}DetailProvider` becomes a `family` keyed on `(id, ancestor ids...)`.
+/// - `{entity}sProvider` becomes a `family` (`AutoDisposeFamilyAsyncNotifier`)
+///   keyed on the parent id, or on a record of the ancestor ids when the
+///   entity is nested more than one level deep.
 class ProviderGenerator extends Generator {
   @override
   String generate(LibraryReader library, BuildStep buildStep) {
@@ -86,16 +89,19 @@ class ProviderGenerator extends Generator {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
     final hasParent = manifest.hasParent;
-    final parentParamName = manifest.parentParamName;
-    final parentParamType = hasParent ? manifest.parentField!.dartType : null;
+    final parentParamType = hasParent ? manifest.parentKeyType : null;
 
     if (hasParent) {
-      // Detail provider keyed on (idType id, parentType parentId).
+      // Detail provider keyed on (id, ancestor ids...), outermost first.
+      final named = [
+        for (var i = 0; i < manifest.ancestors.length; i++)
+          '${manifest.ancestors[i].paramName}: args.\$${i + 2}',
+      ].join(', ');
       buffer.writeln(
           'final ${entityLower}DetailProvider = FutureProvider.autoDispose'
-          '.family<$entity, (${manifest.idType}, $parentParamType)>((ref, args) =>');
+          '.family<$entity, ${manifest.detailKeyType}>((ref, args) =>');
       buffer.writeln(
-          '    ref.watch(${entityLower}ApiClientProvider).getById(args.\$1, $parentParamName: args.\$2));');
+          '    ref.watch(${entityLower}ApiClientProvider).getById(args.\$1, $named));');
       buffer.writeln();
 
       // List provider keyed on parentType parentId.
@@ -108,11 +114,15 @@ class ProviderGenerator extends Generator {
       // Family notifier; the family argument is the parent id.
       buffer.writeln(
           'class ${entity}sNotifier extends AutoDisposeFamilyAsyncNotifier<PrefabPage<$entity>, $parentParamType> {');
-      buffer.writeln('  $parentParamType get $parentParamName => arg;');
+      for (var i = 0; i < manifest.ancestors.length; i++) {
+        final a = manifest.ancestors[i];
+        final access = manifest.depth == 1 ? 'arg' : 'arg.\$${i + 1}';
+        buffer.writeln('  ${a.idType} get ${a.paramName} => $access;');
+      }
       buffer.writeln();
       _writeNotifierBody(manifest, buffer,
           buildSignature: '$parentParamType arg',
-          parentArg: '$parentParamName: $parentParamName');
+          parentArg: manifest.ancestorNamedArgs());
       buffer.writeln('}');
     } else {
       // Detail provider keyed on the typed id.
@@ -159,7 +169,6 @@ class ProviderGenerator extends Generator {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
     final hasParent = manifest.hasParent;
-    final parentParamName = manifest.parentParamName;
     final listArgs = [
       if (hasParent) parentArg,
       'search: _search',
@@ -168,9 +177,9 @@ class ProviderGenerator extends Generator {
       if (manifest.paged) ...['page: _page', 'pageSize: _pageSize'],
     ].join(', ');
     final clientTrailing = hasParent ? ', $parentArg' : '';
-    final detailKeyArgs = hasParent
-        ? '($entityLower.${manifest.idFieldName}${manifest.idBang}, $parentParamName)'
-        : '$entityLower.${manifest.idFieldName}${manifest.idBang}';
+    final detailKeyArgs = manifest.detailKeyExpr(
+        '$entityLower.${manifest.idFieldName}${manifest.idBang}',
+        (a) => a.paramName);
 
     buffer.writeln(
         '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');

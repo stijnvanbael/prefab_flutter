@@ -45,6 +45,65 @@ class ConstructorParam {
   bool get isOptional => !isRequired;
 }
 
+/// One entity in the `@Parent` chain above an entity (see
+/// [EntityManifest.ancestors]).
+class AncestorManifest {
+  /// Class name, e.g. `Order`.
+  final String entityName;
+
+  /// Lower-camel-case class name, e.g. `order`.
+  final String entityNameLower;
+
+  /// URL path from the ancestor's `@View.path`.
+  final String path;
+
+  /// Title from the ancestor's `@View.title`.
+  final String title;
+
+  /// Dart type of the ancestor's id (`'int'` or `'String'`).
+  final String idType;
+
+  /// Name of the ancestor's id field.
+  final String idFieldName;
+
+  /// Name of the field used as the ancestor's label in breadcrumbs.
+  final String labelFieldName;
+
+  /// Whether [labelFieldName] is nullable.
+  final bool labelIsNullable;
+
+  /// Dart parameter name carrying this ancestor's id in the entity's screens,
+  /// providers and API client: the `@Parent` field name for the direct parent,
+  /// `<entity>Id` for the others.
+  final String paramName;
+
+  /// Import URI of the library declaring the ancestor.
+  final String libraryUri;
+
+  /// Whether the ancestor is declared in the same library as the entity.
+  final bool inSameLibrary;
+
+  const AncestorManifest({
+    required this.entityName,
+    required this.entityNameLower,
+    required this.path,
+    required this.title,
+    required this.idType,
+    required this.idFieldName,
+    required this.labelFieldName,
+    required this.labelIsNullable,
+    required this.paramName,
+    required this.libraryUri,
+    required this.inSameLibrary,
+  });
+
+  /// GoRouter path parameter name for this ancestor's id (`orderId`).
+  String get routeParam => '${entityNameLower}Id';
+
+  /// Dart expression converting the string [expr] to the id type.
+  String parse(String expr) => idType == 'int' ? 'int.parse($expr)' : expr;
+}
+
 /// Summarises everything the generators need to know about a single
 /// [@View]-annotated entity class.
 class EntityManifest {
@@ -121,6 +180,7 @@ class EntityManifest {
     this.parentTitle,
     this.parentIdType,
     this.parentInSameLibrary = true,
+    this.ancestors = const [],
     this.constructorParams,
     this.paged = true,
   }) : entityNameLower = _toLowerCamel(entityName);
@@ -178,6 +238,47 @@ class EntityManifest {
 
   /// Whether this entity has a parent reference.
   bool get hasParent => parentField != null;
+
+  /// The `@Parent` chain above this entity, outermost first; the last element
+  /// is the direct parent. Empty for root entities.
+  final List<AncestorManifest> ancestors;
+
+  /// Number of ancestors (0 for a root entity).
+  int get depth => ancestors.length;
+
+  /// Whether list and detail screens show a breadcrumb row (two or more
+  /// ancestors).
+  bool get hasBreadcrumbs => depth >= 2;
+
+  /// Type of the key of the list provider family: the parent id type for one
+  /// ancestor, a positional record of all ancestor id types otherwise.
+  String get parentKeyType => depth == 1
+      ? ancestors.first.idType
+      : '(${ancestors.map((a) => a.idType).join(', ')})';
+
+  /// Expression building the list provider key from [value] of each ancestor.
+  String parentKeyExpr(String Function(AncestorManifest a) value) => depth == 1
+      ? value(ancestors.first)
+      : '(${ancestors.map(value).join(', ')})';
+
+  /// Type of the detail provider key: `(idType, ancestor id types...)`.
+  String get detailKeyType =>
+      '($idType, ${ancestors.map((a) => a.idType).join(', ')})';
+
+  /// Expression building the detail provider key from [idExpr] and [value] of
+  /// each ancestor (just [idExpr] for a root entity).
+  String detailKeyExpr(String idExpr, String Function(AncestorManifest a) value) =>
+      hasParent ? '($idExpr, ${ancestors.map(value).join(', ')})' : idExpr;
+
+  /// Declarations of the ancestor id parameters, e.g.
+  /// `int orderId, int orderLineId`.
+  String get ancestorParamDecls =>
+      ancestors.map((a) => '${a.idType} ${a.paramName}').join(', ');
+
+  /// Named arguments passing every ancestor id, e.g.
+  /// `orderId: orderId, orderLineId: orderLineId`.
+  String ancestorNamedArgs([String prefix = '']) =>
+      ancestors.map((a) => '${a.paramName}: $prefix${a.paramName}').join(', ');
 
   /// Lower-camel-case name of the parent entity named in `@Parent(Type)`.
   ///
@@ -240,7 +341,7 @@ class EntityManifest {
 
     final fields = <FieldManifest>[];
     ClassElement? parentElement;
-    String? parentPath, parentTitle, parentIdType;
+    String? parentPath, parentTitle, parentIdType, parentParamName;
     for (final field in instanceFields) {
       if (field == idField) continue;
 
@@ -271,7 +372,7 @@ class EntityManifest {
         if (parentElement != null) {
           throw InvalidGenerationSourceError(
             'Entity "${element.name}" has more than one @Parent field; '
-            'only one level of nesting is supported.',
+            'an entity can only have one parent.',
             element: field,
           );
         }
@@ -309,6 +410,7 @@ class EntityManifest {
           );
         }
         parentElement = parentTypeElement;
+        parentParamName = field.name;
       }
 
       final validators = formReader
@@ -363,6 +465,9 @@ class EntityManifest {
       parentIdType: parentIdType,
       parentInSameLibrary:
           parentElement == null || parentElement.library == element.library,
+      ancestors: parentElement == null
+          ? const []
+          : _resolveAncestors(element, parentElement, parentParamName!),
       constructorParams: element.unnamedConstructor?.parameters
           .map((p) => ConstructorParam(
                 name: p.name,
@@ -386,6 +491,111 @@ class EntityManifest {
     final annotated = fields.where(_idChecker.hasAnnotationOf);
     if (annotated.isNotEmpty) return annotated.first;
     return fields.where((f) => f.name == 'id').firstOrNull;
+  }
+
+  /// Walks the `@Parent` chain upwards from [parent] and returns it outermost
+  /// first. [directParamName] is the `@Parent` field name of [element].
+  static List<AncestorManifest> _resolveAncestors(
+    ClassElement element,
+    ClassElement parent,
+    String directParamName,
+  ) {
+    final chain = <ClassElement>[parent];
+    var current = parent;
+    while (true) {
+      final parentField = current.fields
+          .where((f) => !f.isStatic && !f.isSynthetic)
+          .where(_parentChecker.hasAnnotationOf)
+          .firstOrNull;
+      if (parentField == null) break;
+      final type = _parentChecker
+          .firstAnnotationOf(parentField)
+          ?.getField('type')
+          ?.toTypeValue()
+          ?.element;
+      if (type is! ClassElement) {
+        throw InvalidGenerationSourceError(
+          '@Parent on "${parentField.name}" must reference an entity class, '
+          'e.g. @Parent(Post).',
+          element: parentField,
+        );
+      }
+      if (type == element || chain.contains(type)) {
+        throw InvalidGenerationSourceError(
+          'Circular @Parent chain: ${[
+            element.name,
+            ...chain.map((c) => c.name),
+            type.name,
+          ].join(' -> ')}.',
+          element: element,
+        );
+      }
+      if (_viewChecker.firstAnnotationOf(type) == null) {
+        throw InvalidGenerationSourceError(
+          '@Parent(${type.name}) on "${parentField.name}" references a class '
+          'without a @View annotation. Annotate "${type.name}" with @View.',
+          element: parentField,
+        );
+      }
+      chain.add(type);
+      current = type;
+    }
+
+    final result = <AncestorManifest>[];
+    for (var i = chain.length - 1; i >= 0; i--) {
+      final cls = chain[i];
+      final view = ConstantReader(_viewChecker.firstAnnotationOf(cls)!);
+      final idField = _findIdField(cls);
+      final label = cls.fields
+          .where((f) => !f.isStatic && !f.isSynthetic && f != idField)
+          .where((f) => !_parentChecker.hasAnnotationOf(f))
+          .where((f) {
+        final a = _fieldChecker.firstAnnotationOf(f) ??
+            _formFieldChecker.firstAnnotationOf(f);
+        return a != null && !ConstantReader(a).read('hidden').boolValue;
+      }).firstOrNull;
+      final labelField = label ?? idField;
+      final lower = _toLowerCamel(cls.name);
+      result.add(AncestorManifest(
+        entityName: cls.name,
+        entityNameLower: lower,
+        path: view.read('path').stringValue,
+        title: view.read('title').stringValue,
+        idType: idField?.type.getDisplayString(withNullability: false) ??
+            'String',
+        idFieldName: idField?.name ?? 'id',
+        labelFieldName: labelField?.name ?? 'id',
+        labelIsNullable:
+            labelField?.type.nullabilitySuffix == NullabilitySuffix.question,
+        paramName: '${lower}Id',
+        libraryUri: cls.library.source.uri.toString(),
+        inSameLibrary: cls.library == element.library,
+      ));
+    }
+    // The direct parent (last) is named after the @Parent field.
+    final direct = result.removeLast();
+    result.add(AncestorManifest(
+      entityName: direct.entityName,
+      entityNameLower: direct.entityNameLower,
+      path: direct.path,
+      title: direct.title,
+      idType: direct.idType,
+      idFieldName: direct.idFieldName,
+      labelFieldName: direct.labelFieldName,
+      labelIsNullable: direct.labelIsNullable,
+      paramName: directParamName,
+      libraryUri: direct.libraryUri,
+      inSameLibrary: direct.inSameLibrary,
+    ));
+    final names = result.map((a) => a.paramName).toList();
+    if (names.toSet().length != names.length) {
+      throw InvalidGenerationSourceError(
+        'Ancestor id parameters of "${element.name}" clash: '
+        '${names.join(', ')}. Rename the @Parent field.',
+        element: element,
+      );
+    }
+    return result;
   }
 
   static String _toLowerCamel(String name) {

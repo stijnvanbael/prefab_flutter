@@ -1,5 +1,7 @@
 ## Unreleased
 
+* Support `@Parent` chains of any depth (`Order` -> `OrderLine` -> `OrderLineNote`): nested routes with a path parameter per level, API clients, providers, screens and forms thread every ancestor id, list and detail screens with two or more ancestors show an AppBar breadcrumb row, and circular chains fail the build. For one ancestor the generated output is unchanged except that the path parameter of a parent in another file is now named `<entity>Id` (PF-19).
+
 * **Breaking:** generated list screens, notifiers and API clients are search, sort and pagination aware: `ApiClient.list(...)` returns a `PrefabPage<Entity>`, `EntitysNotifier` is an `AutoDisposeAsyncNotifier<PrefabPage<Entity>>` with `setSearch`, `setSort`, `goToPage` and `setPageSize`, and list screens get a search bar, sort menu and pagination bar. The server must answer `{ items, total }` (a bare array still works); override `prefabListAdapterProvider` to adapt other backends (PF-13).
 
 * **Breaking:** the generated form screens now save: they build the entity through its unnamed constructor and call the provider's `create()`/`update()`. The id (and any field not on the form) must be nullable, optional or have a default, otherwise the build fails naming the parameter (PF-11).
