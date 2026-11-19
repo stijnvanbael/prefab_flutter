@@ -139,6 +139,8 @@ to set the base URL, authentication and interceptors; see
 
 ## Documentation
 
+- [Vision, principles and roadmap](docs/vision.md): where the project is
+  going and the principles behind design decisions.
 - [User guide](docs/user_guide.md): every annotation, field widget and
   validator, the generated files and routes, and the current limitations.
 - [Developer guide](docs/developer_guide.md): package layout, adding a
