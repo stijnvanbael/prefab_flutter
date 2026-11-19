@@ -179,7 +179,7 @@ class ProviderGenerator extends Generator {
     buffer.writeln('  String? _sort;');
     buffer.writeln('  bool _descending = false;');
     buffer.writeln('  int _page = 0;');
-    buffer.writeln('  int? _pageSize;');
+    if (manifest.paged) buffer.writeln('  int? _pageSize;');
     buffer.writeln('  Timer? _searchDebounce;');
     buffer.writeln();
     buffer.writeln('  /// The search text currently applied to the list.');
