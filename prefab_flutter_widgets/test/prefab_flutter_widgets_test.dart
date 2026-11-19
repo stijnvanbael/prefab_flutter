@@ -179,4 +179,28 @@ void main() {
       expect(target, 0);
     });
   });
+
+  group('PrefabSortMenu', () {
+    testWidgets('builds with a selected option inside an AppBar', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            appBar: AppBar(
+              actions: const [
+                PrefabSortMenu<String>(
+                  options: [
+                    PrefabSortOption(id: 'name', label: 'Name'),
+                    PrefabSortOption(id: '-name', label: 'Name desc'),
+                  ],
+                  selectedId: '-name',
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.byTooltip('Sort: Name desc'), findsOneWidget);
+    });
+  });
 }

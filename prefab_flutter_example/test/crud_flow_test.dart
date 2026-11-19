@@ -23,6 +23,31 @@ void main() {
     expect(find.text('Monitor'), findsOneWidget);
   });
 
+  testWidgets('searches and sorts the products list', (tester) async {
+    await _pumpApp(tester);
+    expect(find.byType(PrefabSearchBar), findsOneWidget);
+    expect(find.byType(PrefabPaginationBar), findsOneWidget);
+
+    // Search is sent to the server (debounced) and filters the list.
+    await tester.enterText(find.byType(TextField), 'mon');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(find.text('Monitor'), findsOneWidget);
+    expect(find.text('Keyboard'), findsNothing);
+
+    // Clearing the search brings everything back; sort descending by name.
+    await tester.enterText(find.byType(TextField), '');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Sort'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Name \u2193'));
+    await tester.pumpAndSettle();
+    final monitor = tester.getTopLeft(find.text('Monitor')).dy;
+    final keyboard = tester.getTopLeft(find.text('Keyboard')).dy;
+    expect(monitor, lessThan(keyboard));
+  });
+
   testWidgets('create, edit and delete a product', (tester) async {
     await _pumpApp(tester);
 
