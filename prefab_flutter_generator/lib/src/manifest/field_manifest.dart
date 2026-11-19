@@ -26,6 +26,9 @@ class FieldManifest {
   /// When `true` the Dart type of the field is an enum.
   final bool isEnum;
 
+  /// When `true` the Dart type of the field is nullable (e.g. `String?`).
+  final bool isNullable;
+
   const FieldManifest({
     required this.name,
     required this.label,
@@ -35,5 +38,10 @@ class FieldManifest {
     this.validators = const [],
     this.fieldWidget = FieldWidget.auto,
     this.isEnum = false,
+    this.isNullable = false,
   });
+
+  /// Whether the form must reject an empty value: non-nullable fields are
+  /// required by default, nullable fields only with [Validator.required].
+  bool get isRequired => !isNullable || validators.contains(Validator.required);
 }

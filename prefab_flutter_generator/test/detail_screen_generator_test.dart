@@ -127,6 +127,22 @@ class Order {
 }
 ''';
 
+/// Entity with nullable and non-nullable fields.
+const _nullableSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Item', path: 'items')
+class Item {
+  late final int id;
+  @FormField(label: 'Name')
+  final String name;
+  @FormField(label: 'Note')
+  final String? note;
+
+  Item({required this.name, this.note});
+}
+''';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -288,6 +304,19 @@ void main() {
         outputs: {
           'a|lib/tag.detail_screen.dart': decodedMatches(
               isNot(contains("import 'package:go_router/go_router.dart'"))),
+        },
+      );
+    });
+
+    test('PF-15 — nullable fields show an em dash instead of null', () async {
+      await testBuilder(
+        detailScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/item.dart', _nullableSource),
+        outputs: {
+          'a|lib/item.detail_screen.dart': decodedMatches(allOf(
+            contains("Text(item.note?.toString() ?? '\u2014')"),
+            contains('Text(item.name.toString())'),
+          )),
         },
       );
     });

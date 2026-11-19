@@ -224,8 +224,10 @@ class DetailScreenGenerator extends Generator {
   ) {
     buffer.writeln('            ListTile(');
     buffer.writeln("              title: const Text('${field.label}'),");
-    buffer.writeln(
-        '              subtitle: Text($entityLower.${field.name}.toString()),');
+    final value = field.isNullable
+        ? "$entityLower.${field.name}?.toString() ?? '\u2014'"
+        : '$entityLower.${field.name}.toString()';
+    buffer.writeln('              subtitle: Text($value),');
     buffer.writeln('            ),');
   }
 }
