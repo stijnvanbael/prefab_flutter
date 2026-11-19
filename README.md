@@ -37,6 +37,7 @@ dependencies:
   dio: ^5.4.0
   flutter_riverpod: ^2.5.0 # supported range: >=2.5.0 <3.0.0
   go_router: ^14.0.0
+  json_annotation: ^4.9.0
   material_ui: ^1.11.1
   prefab_flutter:
     git:
@@ -49,6 +50,7 @@ dependencies:
 
 dev_dependencies:
   build_runner: ^2.4.0
+  json_serializable: ^6.8.0
   prefab_flutter_generator:
     git:
       url: https://github.com/stijnvanbael/prefab_flutter
@@ -59,8 +61,12 @@ dev_dependencies:
 
 ```dart
 // lib/product.dart
+import 'package:json_annotation/json_annotation.dart';
 import 'package:prefab_flutter/prefab_flutter.dart';
 
+part 'product.g.dart';
+
+@JsonSerializable()
 @View(title: 'Product', path: 'products')
 @Update()
 @Delete()
@@ -82,6 +88,11 @@ class Product {
     required this.price,
     required this.inStock,
   });
+
+  // Required by the generated API client (see the user guide).
+  factory Product.fromJson(Map<String, dynamic> json) =>
+      _$ProductFromJson(json);
+  Map<String, dynamic> toJson() => _$ProductToJson(this);
 }
 ```
 

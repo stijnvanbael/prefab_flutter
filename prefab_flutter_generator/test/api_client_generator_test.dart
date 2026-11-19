@@ -82,6 +82,8 @@ class Product {
   final String name;
 
   Product({required this.id, required this.name});
+  factory Product.fromJson(Map<String, dynamic> json) => throw 0;
+  Map<String, dynamic> toJson() => {};
 }
 ''';
 
@@ -99,6 +101,8 @@ class Post {
   final String title;
 
   Post({required this.id, required this.title});
+  factory Post.fromJson(Map<String, dynamic> json) => throw 0;
+  Map<String, dynamic> toJson() => {};
 }
 
 @View(title: 'Comment', path: 'comments')
@@ -115,6 +119,8 @@ class Comment {
   final String content;
 
   Comment({required this.id, required this.postId, required this.content});
+  factory Comment.fromJson(Map<String, dynamic> json) => throw 0;
+  Map<String, dynamic> toJson() => {};
 }
 ''';
 
@@ -128,6 +134,8 @@ class Post {
   @FormField(label: 'Title')
   final String title;
   Post({required this.id, required this.title});
+  factory Post.fromJson(Map<String, dynamic> json) => throw 0;
+  Map<String, dynamic> toJson() => {};
 }
 ''';
 
@@ -145,6 +153,8 @@ class Comment {
   @FormField(label: 'Content')
   final String content;
   Comment({required this.id, required this.postId, required this.content});
+  factory Comment.fromJson(Map<String, dynamic> json) => throw 0;
+  Map<String, dynamic> toJson() => {};
 }
 ''';
 
@@ -373,6 +383,67 @@ void main() {
         await _buildError(_crossFile(source)),
         contains('Type mismatch'),
       );
+    });
+
+    // PF-12 — JSON (de)serialization
+
+    test('PF-12 list deserializes with fromJson', () async {
+      await testBuilder(
+        apiClientBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.api_client.dart': decodedMatches(allOf(
+            contains('(response.data as List)'),
+            contains('.map((e) => Product.fromJson(e as Map<String, dynamic>))'),
+          )),
+        },
+      );
+    });
+
+    test('PF-12 getById/create/update deserialize a single object', () async {
+      await testBuilder(
+        apiClientBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.api_client.dart': decodedMatches(allOf(
+            contains(
+                'return Product.fromJson(response.data as Map<String, dynamic>);'),
+            isNot(contains('response.data as Product')),
+          )),
+        },
+      );
+    });
+
+    test('PF-12 create and update send toJson() as the body', () async {
+      await testBuilder(
+        apiClientBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _productSource),
+        outputs: {
+          'a|lib/product.api_client.dart': decodedMatches(allOf(
+            contains("_dio.post('/products', data: product.toJson())"),
+            contains('data: product.toJson())'),
+            isNot(contains('data: product)')),
+          )),
+        },
+      );
+    });
+
+    test('PF-12 missing fromJson names the entity', () async {
+      final source = _productSource.replaceFirst(
+          '  factory Product.fromJson(Map<String, dynamic> json) => throw 0;\n',
+          '');
+      final error = await _buildError(_assets('a', 'lib/product.dart', source));
+      expect(error, contains('Product'));
+      expect(error, contains('fromJson'));
+      expect(error, isNot(contains('toJson()" method')));
+    });
+
+    test('PF-12 missing toJson names the entity', () async {
+      final source = _productSource.replaceFirst(
+          '  Map<String, dynamic> toJson() => {};\n', '');
+      final error = await _buildError(_assets('a', 'lib/product.dart', source));
+      expect(error, contains('Product'));
+      expect(error, contains('toJson()'));
     });
   });
 }

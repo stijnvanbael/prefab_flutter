@@ -7,6 +7,7 @@ created_date: '2026-05-02 06:06'
 labels: []
 dependencies:
   - PF-22
+  - PF-12
 ---
 
 ## Description
@@ -23,4 +24,5 @@ The prefab_flutter_example cannot compile or run because the runtime widgets lib
 - [ ] #4 README documents how to run the example
 - [ ] #5 CI runs build_runner on the example app and `flutter analyze --fatal-infos` on the result, so generated code that does not compile fails the build
 - [ ] #6 The example covers at least one top-level entity and one nested (@Parent) entity
+- [ ] #7 The example entity uses json_serializable (`fromJson`/`toJson`) and the generated client deserializes responses correctly (moved from PF-12 AC #6)
 <!-- AC:END -->
