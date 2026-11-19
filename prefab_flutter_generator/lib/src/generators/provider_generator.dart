@@ -254,8 +254,8 @@ class ProviderGenerator extends Generator {
     }
     if (manifest.hasUpdate) {
       buffer.writeln();
-      buffer.writeln(
-          '  Future<void> updateEntity($entity $entityLower) async {');
+      buffer
+          .writeln('  Future<void> updateEntity($entity $entityLower) async {');
       buffer.writeln('    await _client.update($entityLower$clientTrailing);');
       buffer.writeln(
           '    ref.invalidate(${entityLower}DetailProvider($detailKeyArgs));');

@@ -251,7 +251,7 @@ void main() {
       await testBuilder(providerBuilder(BuilderOptions.empty), assets, outputs: {
         'a|lib/log.provider.dart': decodedMatches(allOf(
             contains('Future<void> create('),
-            isNot(contains('Future<void> update(')))),
+            isNot(contains('Future<void> updateEntity(')))),
       });
       await testBuilder(apiClientBuilder(BuilderOptions.empty), assets, outputs: {
         'a|lib/log.api_client.dart': decodedMatches(allOf(
@@ -282,7 +282,7 @@ void main() {
           });
       await testBuilder(providerBuilder(BuilderOptions.empty), assets, outputs: {
         'a|lib/log.provider.dart': decodedMatches(allOf(
-            contains('Future<void> update('),
+            contains('Future<void> updateEntity('),
             isNot(contains('Future<void> create(')))),
       });
       await testBuilder(apiClientBuilder(BuilderOptions.empty), assets, outputs: {

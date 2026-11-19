@@ -182,7 +182,8 @@ class ApiClientGenerator extends Generator {
           '  Future<$entity> create($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
       buffer.writeln(
           "    final response = await _dio.post('$urlBase', data: ${manifest.entityNameLower}.toJson());");
-      buffer.writeln('    return $entity.fromJson(response.data as Map<String, dynamic>);');
+      buffer.writeln(
+          '    return $entity.fromJson(response.data as Map<String, dynamic>);');
       buffer.writeln('  }');
       buffer.writeln();
     }
@@ -193,7 +194,8 @@ class ApiClientGenerator extends Generator {
           '  Future<$entity> update($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
       buffer.writeln(
           "    final response = await _dio.put('$urlBase/\${${manifest.entityNameLower}.${manifest.idFieldName}}', data: ${manifest.entityNameLower}.toJson());");
-      buffer.writeln('    return $entity.fromJson(response.data as Map<String, dynamic>);');
+      buffer.writeln(
+          '    return $entity.fromJson(response.data as Map<String, dynamic>);');
       buffer.writeln('  }');
       buffer.writeln();
     }
