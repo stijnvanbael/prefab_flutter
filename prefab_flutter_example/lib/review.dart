@@ -7,6 +7,7 @@ part 'review.g.dart';
 
 @JsonSerializable()
 @View(title: 'Review', path: 'reviews')
+@Create()
 @Update()
 @Delete()
 class Review {

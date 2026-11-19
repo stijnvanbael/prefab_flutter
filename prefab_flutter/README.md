@@ -12,7 +12,8 @@ Apply these annotations to your Dart entity classes and run `build_runner` to ge
 | Annotation | Description |
 |---|---|
 | `@View` | Marks a class as a prefab entity and drives all code generation |
-| `@Update` | Adds an **Edit** action to the generated detail screen |
+| `@Create` | Generates the create screen, route, list-screen create button and `create()` methods |
+| `@Update` | Generates the edit screen and route, an **Edit** action on the detail screen and `update()` methods |
 | `@Delete` | Adds a **Delete** action backed by a confirmation dialog |
 | `@Field` | Marks a field for inclusion in generated form and detail screens |
 | `@Parent(Type)` | Marks a field as a reference to the parent entity `Type` (nested resource) |
@@ -44,6 +45,7 @@ Annotate your entity class:
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Product', path: 'products')
+@Create()
 @Update()
 @Delete()
 class Product {

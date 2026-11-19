@@ -10,8 +10,8 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 /// Generates a Dio-backed `{Entity}ApiClient` class for every class annotated
 /// with [@View].
 ///
-/// Each API client exposes methods for: list, getById, create, update and
-/// delete.  When the entity carries a [@Parent]-annotated field, every method
+/// Each API client exposes methods for: list, getById and delete, plus create (only with [@Create])
+/// and update (only with [@Update]).  When the entity carries a [@Parent]-annotated field, every method
 /// accepts a named `{parentFieldName}` parameter and the URL is prefixed with
 /// the parent resource path so that the resource is correctly scoped:
 ///
@@ -176,25 +176,29 @@ class ApiClientGenerator extends Generator {
     buffer.writeln('  }');
     buffer.writeln();
 
-    // create
-    buffer.writeln(
-        '  Future<$entity> create($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
-    buffer.writeln(
-        "    final response = await _dio.post('$urlBase', data: ${manifest.entityNameLower}.toJson());");
-    buffer.writeln(
-        '    return $entity.fromJson(response.data as Map<String, dynamic>);');
-    buffer.writeln('  }');
-    buffer.writeln();
+    if (manifest.hasCreate) {
+      // create
+      buffer.writeln(
+          '  Future<$entity> create($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
+      buffer.writeln(
+          "    final response = await _dio.post('$urlBase', data: ${manifest.entityNameLower}.toJson());");
+      buffer.writeln(
+          '    return $entity.fromJson(response.data as Map<String, dynamic>);');
+      buffer.writeln('  }');
+      buffer.writeln();
+    }
 
-    // update
-    buffer.writeln(
-        '  Future<$entity> update($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
-    buffer.writeln(
-        "    final response = await _dio.put('$urlBase/\${${manifest.entityNameLower}.${manifest.idFieldName}}', data: ${manifest.entityNameLower}.toJson());");
-    buffer.writeln(
-        '    return $entity.fromJson(response.data as Map<String, dynamic>);');
-    buffer.writeln('  }');
-    buffer.writeln();
+    if (manifest.hasUpdate) {
+      // update
+      buffer.writeln(
+          '  Future<$entity> update($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
+      buffer.writeln(
+          "    final response = await _dio.put('$urlBase/\${${manifest.entityNameLower}.${manifest.idFieldName}}', data: ${manifest.entityNameLower}.toJson());");
+      buffer.writeln(
+          '    return $entity.fromJson(response.data as Map<String, dynamic>);');
+      buffer.writeln('  }');
+      buffer.writeln();
+    }
 
     // delete
     buffer.writeln(

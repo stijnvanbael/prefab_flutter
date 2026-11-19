@@ -29,6 +29,7 @@ Annotate your entity:
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Product', path: 'products')
+@Create()
 @Update()
 @Delete()
 class Product {

@@ -19,7 +19,7 @@ Annotate an entity class, run `build_runner`, and Prefab Flutter generates:
 
 | Package | Kind | Role |
 |---|---|---|
-| [`prefab_flutter`](prefab_flutter) | Dart | Annotations (`@View`, `@Field`, `@Update`, `@Delete`, `@Parent`, `@Id`) and enums |
+| [`prefab_flutter`](prefab_flutter) | Dart | Annotations (`@View`, `@Field`, `@Create`, `@Update`, `@Delete`, `@Parent`, `@Id`) and enums |
 | [`prefab_flutter_generator`](prefab_flutter_generator) | Dart, dev dependency | `build_runner` generators |
 | [`prefab_flutter_widgets`](prefab_flutter_widgets) | Flutter | Runtime widgets used by generated code (delete dialog, search bar, sort menu, pagination bar) |
 | [`prefab_flutter_example`](prefab_flutter_example) | Flutter app | Runnable example with a `Product` and a nested `Review` entity against an in-memory mock backend |
@@ -70,6 +70,7 @@ part 'product.g.dart';
 
 @JsonSerializable()
 @View(title: 'Product', path: 'products')
+@Create()
 @Update()
 @Delete()
 class Product {

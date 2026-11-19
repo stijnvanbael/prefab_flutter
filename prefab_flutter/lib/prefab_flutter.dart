@@ -4,6 +4,7 @@
 /// screens, detail screens, form screens, providers, API clients and routes.
 library prefab_flutter;
 
+export 'src/annotations/create.dart';
 export 'src/annotations/delete.dart';
 export 'src/annotations/field.dart';
 export 'src/annotations/id.dart';
