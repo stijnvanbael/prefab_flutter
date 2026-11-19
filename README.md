@@ -76,7 +76,7 @@ class Product {
   @Field(form: FormOptions(validators: [Validator.required]))
   final String name;
 
-  @Field(label: 'Price (EUR)', form: FormOptions(validators: [Validator.positiveNumber]))
+  @Field(label: 'Price (EUR)', form: FormOptions(validators: [Validator.positive]))
   final double price;
 
   @Field()

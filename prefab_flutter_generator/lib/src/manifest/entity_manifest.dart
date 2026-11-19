@@ -1,3 +1,4 @@
+import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:prefab_flutter/prefab_flutter.dart';
@@ -72,6 +73,7 @@ class EntityManifest {
 
   /// Dart type of the identifier field (e.g. `'String'` or `'int'`).
   final String idType;
+
   /// Class name of the parent entity named in `@Parent(Type)`, or `null`.
   final String? parentEntityName;
 
@@ -134,8 +136,7 @@ class EntityManifest {
       parentField?.dartType == 'int' ? 'int.parse($expr)' : expr;
 
   /// The first field annotated with [@Parent], if any.
-  FieldManifest? get parentField =>
-      fields.where((f) => f.isParent).firstOrNull;
+  FieldManifest? get parentField => fields.where((f) => f.isParent).firstOrNull;
 
   /// Whether this entity has a parent reference.
   bool get hasParent => parentField != null;
@@ -170,8 +171,7 @@ class EntityManifest {
     // Resolve the identifier field: @Id, otherwise a field named `id`.
     final instanceFields =
         element.fields.where((f) => !f.isStatic && !f.isSynthetic).toList();
-    final idFields =
-        instanceFields.where(_idChecker.hasAnnotationOf).toList();
+    final idFields = instanceFields.where(_idChecker.hasAnnotationOf).toList();
     if (idFields.length > 1) {
       throw InvalidGenerationSourceError(
         'Entity "${element.name}" has more than one @Id field.',
@@ -252,8 +252,9 @@ class EntityManifest {
         parentPath = parentViewReader.read('path').stringValue;
         parentTitle = parentViewReader.read('title').stringValue;
         final parentIdField = _findIdField(parentTypeElement);
-        parentIdType =
-            parentIdField?.type.getDisplayString(withNullability: false);
+        parentIdType = parentIdField?.type.getDisplayString(
+          withNullability: false,
+        );
         final fieldType = field.type.getDisplayString(withNullability: false);
         if (parentIdType != null && parentIdType != fieldType) {
           throw InvalidGenerationSourceError(
@@ -265,18 +266,10 @@ class EntityManifest {
         parentElement = parentTypeElement;
       }
 
-      final validatorsObjList = formReader.read('validators').listValue;
-      final validators = validatorsObjList
-          .map((obj) {
-            final name = obj.variable?.name;
-            if (name == null) return null;
-            try {
-              return Validator.values.byName(name);
-            } catch (_) {
-              return null;
-            }
-          })
-          .whereType<Validator>()
+      final validators = formReader
+          .read('validators')
+          .listValue
+          .map((obj) => _readValidator(obj, field))
           .toList();
 
       final widgetName = formReader.read('widget').objectValue.variable?.name;
@@ -286,17 +279,20 @@ class EntityManifest {
 
       final isEnum = field.type.element is EnumElement;
 
-      fields.add(FieldManifest(
-        name: field.name,
-        label: label,
-        hidden: hidden,
-        isParent: isParent,
-        dartType: field.type.getDisplayString(withNullability: false),
-        validators: validators,
-        fieldWidget: fieldWidget,
-        isEnum: isEnum,
-        isNullable: field.type.nullabilitySuffix == NullabilitySuffix.question,
-      ));
+      fields.add(
+        FieldManifest(
+          name: field.name,
+          label: label,
+          hidden: hidden,
+          isParent: isParent,
+          dartType: field.type.getDisplayString(withNullability: false),
+          validators: validators,
+          fieldWidget: fieldWidget,
+          isEnum: isEnum,
+          isNullable:
+              field.type.nullabilitySuffix == NullabilitySuffix.question,
+        ),
+      );
     }
 
     return EntityManifest(
@@ -359,4 +355,51 @@ class EntityManifest {
       return word[0].toUpperCase() + word.substring(1);
     }).join(' ');
   }
+}
+
+/// Rebuilds a [Validator] from the annotation constant, reading its
+/// parameters (and custom message) by field name.
+Validator _readValidator(DartObject obj, FieldElement field) {
+  final type = obj.type?.element?.name;
+  final message =
+      (obj.getField('message') ?? obj.getField('(super)')?.getField('message'))
+          ?.toStringValue();
+  num number() => (obj.getField('value')?.toIntValue() ??
+      obj.getField('value')?.toDoubleValue())!;
+  switch (type) {
+    case 'RequiredValidator':
+      return RequiredValidator(message: message);
+    case 'EmailValidator':
+      return EmailValidator(message: message);
+    case 'UrlValidator':
+      return UrlValidator(message: message);
+    case 'PositiveValidator':
+      return PositiveValidator(message: message);
+    case 'NonNegativeValidator':
+      return NonNegativeValidator(message: message);
+    case 'MinValidator':
+      return MinValidator(number(), message: message);
+    case 'MaxValidator':
+      return MaxValidator(number(), message: message);
+    case 'MinLengthValidator':
+      return MinLengthValidator(
+        obj.getField('length')!.toIntValue()!,
+        message: message,
+      );
+    case 'MaxLengthValidator':
+      return MaxLengthValidator(
+        obj.getField('length')!.toIntValue()!,
+        message: message,
+      );
+    case 'PatternValidator':
+      return PatternValidator(
+        obj.getField('regex')!.toStringValue()!,
+        message: message,
+      );
+  }
+  throw InvalidGenerationSourceError(
+    'Unsupported validator on "${field.name}". Use the Validator constants '
+    'and factories, e.g. Validator.required or Validator.min(0).',
+    element: field,
+  );
 }

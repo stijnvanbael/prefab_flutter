@@ -19,7 +19,7 @@ Apply these annotations to your Dart entity classes and run `build_runner` to ge
 
 | Enum | Values |
 |---|---|
-| `Validator` | `required`, `email`, `positiveNumber`, `url` |
+| `Validator` | `required`, `email`, `url`, `positive`, `nonNegative`, `min(n)`, `max(n)`, `minLength(n)`, `maxLength(n)`, `pattern(regex)` |
 | `FieldWidget` | `auto`, `multilineText`, `password`, `datePicker`, `dropdown`, `toggle` |
 
 ## Usage
@@ -49,7 +49,7 @@ class Product {
   @Field(label: 'Name', form: FormOptions(validators: [Validator.required]))
   final String name;
 
-  @Field(label: 'Price', form: FormOptions(validators: [Validator.positiveNumber]))
+  @Field(label: 'Price', form: FormOptions(validators: [Validator.positive]))
   final double price;
 
   Product({this.id, required this.name, required this.price});

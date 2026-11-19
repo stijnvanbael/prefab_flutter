@@ -1,6 +1,7 @@
 ## Unreleased
 
 * The generated form screens now save: they build the entity from the form and call the provider's `create()`/`update()` (PF-11). The id must be nullable or have a default.
+* `Validator` is now a sealed class with parameterised validators: `positive`, `nonNegative`, `min`, `max`, `minLength`, `maxLength`, `pattern`, each with an optional custom message; `required`, `email`, `url` and `positiveNumber` remain as constants (PF-31).
 * Added `@Id` annotation; ids are typed (`String`/`int`) instead of `Object` (PF-23).
 * `@Parent` now takes the parent entity type: `@Parent(Post)`; the parent may live in another source file.
 * Added `@Field` (label, hidden, `form: FormOptions(widget:, validators:)`) replacing `@FormField`, which is now deprecated and kept for one release (PF-30).

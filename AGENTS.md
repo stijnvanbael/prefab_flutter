@@ -51,5 +51,6 @@ Always open a pull request into `main` once your work is committed and pushed â€
 - Open it as a **draft** while the work is still in progress.
 - Mark it **ready for review** only when the work is complete (including the documentation and backlog updates above) **and** CI is green. If CI fails, fix it and wait for a green run first.
 - The description summarises the changes, lists the backlog tasks affected, and notes anything that was not verified.
+- **Follow CI on every push.** After opening the pull request and after each push, check the CI runs (not only the local tests) until they finish. If a job fails, read its logs, fix the cause (also when the failure already exists on `main`, since the pull request needs a green run) and push again. Report any failure you could not fix.
 - After opening the pull request, **watch it**: subscribe to its activity so CI results, reviews and comments are handled as they arrive.
 - **Keep the branch up to date with `main`.** Before pushing, and whenever the pull request is reported as out of date or conflicting, fetch `origin/main` and rebase the branch onto it. Resolve any merge conflicts yourself (keeping both sides' intent, including documentation and backlog changes), re-run the affected tests, and push with `git push --force-with-lease`. Never force-push a branch you did not create.
