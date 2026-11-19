@@ -174,7 +174,7 @@ For a source file `product.dart` the generator writes:
 | `product.list_screen.dart` | `ProductListScreen`: a `ListView` of items (or a "No items found" message when empty); tapping one opens its detail screen. With `@Update`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
 | `product.detail_screen.dart` | `ProductDetailScreen(id:)`: one `ListTile` per visible field, plus Edit/Delete actions |
 | `product.form_screen.dart` | `ProductCreateScreen` and `ProductEditScreen(id:)` (only with `@Update`) |
-| `product.provider.dart` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`StateNotifierProvider`) with `ProductsNotifier`, and `productApiClientProvider` |
+| `product.provider.dart` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`StateNotifierProvider`) with `ProductsNotifier` (`update` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
 | `product.api_client.dart` | `ProductApiClient` with `list`, `getById`, `create`, `update` and `delete` |
 | `product.routes.dart` | `$productRoutes` (named after the source file), a `List<RouteBase>` with the routes of every entity in the file |
 
@@ -330,7 +330,6 @@ These are known gaps in the current pre-release. Each has a backlog task.
 |---|---|---|
 | Responses are cast (`as Product`) instead of deserialized, so every request fails at runtime | None yet | PF-12 |
 | The Save button validates and closes the form but does not save | None yet | PF-11 |
-| The detail screen shows stale data after an edit | Invalidate `{entity}DetailProvider` yourself | PF-28 |
 | Nullable fields are not handled (`null` shows as the text "null"; prefill may not compile) | Use non-nullable fields | PF-15 |
 | `Validator.required` on an enum dropdown emits `value.isEmpty` and does not compile | Leave validators off dropdown fields | PF-31 |
 | `@FormField` clashes with Flutter's `FormField` | `hide FormField` on one import | PF-30 |

@@ -103,17 +103,18 @@ class ProviderGenerator extends Generator {
           'final ${entityLower}sProvider = StateNotifierProvider.autoDispose'
           '.family<${entity}sNotifier, AsyncValue<List<$entity>>, $parentParamType>(');
       buffer.writeln(
-          '  (ref, $parentParamName) => ${entity}sNotifier(ref.watch(${entityLower}ApiClientProvider), $parentParamName));');
+          '  (ref, $parentParamName) => ${entity}sNotifier(ref, ref.watch(${entityLower}ApiClientProvider), $parentParamName));');
       buffer.writeln();
 
       // StateNotifier with parentId threaded through.
       buffer.writeln(
           'class ${entity}sNotifier extends StateNotifier<AsyncValue<List<$entity>>> {');
+      buffer.writeln('  final Ref _ref;');
       buffer.writeln('  final ${entity}ApiClient _client;');
       buffer.writeln('  final $parentParamType $parentParamName;');
       buffer.writeln();
       buffer.writeln(
-          '  ${entity}sNotifier(this._client, this.$parentParamName)');
+          '  ${entity}sNotifier(this._ref, this._client, this.$parentParamName)');
       buffer.writeln('      : super(const AsyncValue.loading()) {');
       buffer.writeln('    _load();');
       buffer.writeln('  }');
@@ -134,6 +135,8 @@ class ProviderGenerator extends Generator {
         buffer.writeln('  Future<void> update($entity $entityLower) async {');
         buffer.writeln(
             '    await _client.update($entityLower, $parentParamName: $parentParamName);');
+        buffer.writeln(
+            '    _ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}, $parentParamName)));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
@@ -142,6 +145,8 @@ class ProviderGenerator extends Generator {
         buffer.writeln('  Future<void> delete($entity $entityLower) async {');
         buffer.writeln(
             '    await _client.delete($entityLower, $parentParamName: $parentParamName);');
+        buffer.writeln(
+            '    _ref.invalidate(${entityLower}DetailProvider(($entityLower.${manifest.idFieldName}, $parentParamName)));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
@@ -160,16 +165,17 @@ class ProviderGenerator extends Generator {
           'final ${entityLower}sProvider = StateNotifierProvider.autoDispose'
           '<${entity}sNotifier, AsyncValue<List<$entity>>>(');
       buffer.writeln(
-          '  (ref) => ${entity}sNotifier(ref.watch(${entityLower}ApiClientProvider)));');
+          '  (ref) => ${entity}sNotifier(ref, ref.watch(${entityLower}ApiClientProvider)));');
       buffer.writeln();
 
       // StateNotifier.
       buffer.writeln(
           'class ${entity}sNotifier extends StateNotifier<AsyncValue<List<$entity>>> {');
+      buffer.writeln('  final Ref _ref;');
       buffer.writeln('  final ${entity}ApiClient _client;');
       buffer.writeln();
       buffer.writeln(
-          '  ${entity}sNotifier(this._client) : super(const AsyncValue.loading()) {');
+          '  ${entity}sNotifier(this._ref, this._client) : super(const AsyncValue.loading()) {');
       buffer.writeln('    _load();');
       buffer.writeln('  }');
       buffer.writeln();
@@ -187,6 +193,8 @@ class ProviderGenerator extends Generator {
         buffer.writeln();
         buffer.writeln('  Future<void> update($entity $entityLower) async {');
         buffer.writeln('    await _client.update($entityLower);');
+        buffer.writeln(
+            '    _ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
@@ -194,6 +202,8 @@ class ProviderGenerator extends Generator {
         buffer.writeln();
         buffer.writeln('  Future<void> delete($entity $entityLower) async {');
         buffer.writeln('    await _client.delete($entityLower);');
+        buffer.writeln(
+            '    _ref.invalidate(${entityLower}DetailProvider($entityLower.${manifest.idFieldName}));');
         buffer.writeln('    await _load();');
         buffer.writeln('  }');
       }
