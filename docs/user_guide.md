@@ -243,8 +243,8 @@ Rules:
   build fails.
 - The parent may be declared in the same file or in **another source file**.
   A child whose parent lives in another file is registered as a top-level route
-  (`/posts/:postId/comments`) in its own `$prefabRoutes` instead of being
-  nested inside the parent's route.
+  (`/posts/:postId/comments`) in its own routes getter (e.g. `$commentRoutes`)
+  instead of being nested inside the parent's route. Register both getters.
 - The type of the `@Parent` field must equal the type of the parent's `id`
   field, otherwise the build fails.
 - Only one level of nesting is supported (PF-19 plans deeper chains).
