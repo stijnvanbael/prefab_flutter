@@ -11,7 +11,7 @@ dependencies: []
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-The three packages (prefab_flutter_annotations, prefab_flutter, and the runtime widgets package) need to be published to pub.dev so they can be consumed without path dependencies.
+The three library packages (prefab_flutter, prefab_flutter_generator and prefab_flutter_widgets) need to be published to pub.dev so they can be consumed without path dependencies.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
@@ -24,5 +24,5 @@ The three packages (prefab_flutter_annotations, prefab_flutter, and the runtime 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-Packages are prepared (metadata, CHANGELOGs, READMEs) but not published: prefab_flutter_generator still uses a dependency_overrides path dependency. Publishing should wait until generated code compiles end-to-end (PF-9, PF-22, PF-25), otherwise 0.1.0 would ship code that cannot build.
+Packages are prepared (metadata, CHANGELOGs, READMEs) but not published: prefab_flutter_generator still uses a dependency_overrides path dependency. Publishing waited until generated code compiled end-to-end (PF-9, PF-22, PF-25); those are done, so this task is no longer blocked.
 <!-- SECTION:NOTES:END -->

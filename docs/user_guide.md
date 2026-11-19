@@ -24,8 +24,9 @@ For installation and a minimal example, see the [README](../README.md#quick-star
 
 1. You annotate a plain Dart class with `@View` and its fields with
    `@Field`.
-2. `build_runner` runs six generators over every library that contains a
-   `@View` class. Each generator writes one file next to the source file.
+2. `build_runner` runs the Prefab builder over every library that contains a
+   `@View` class and writes one `.prefab.dart` file next to the source file
+   (see [Generated files](#generated-files)).
 3. You register the generated routes with GoRouter and wrap the app in a
    Riverpod `ProviderScope`.
 
@@ -554,5 +555,5 @@ These are known gaps in the current pre-release. Each has a backlog task.
 
 | Limitation | Workaround | Task |
 |---|---|---|
-| Detail screens do not link to the lists of nested child entities; reach them by URL (`/products/1/reviews`) or add your own link | Navigate with `context.push` | none yet |
-| Sort and search use the Dart field name / free text; a `json_serializable` `fieldRename` is not applied to the `sort` value | Map names in a custom `PrefabListAdapter.queryParameters` | PF-13 |
+| Detail screens do not link to the lists of nested child entities; reach them by URL (`/products/1/reviews`) or add your own link | Navigate with `context.push` | PF-35 |
+| Sort and search use the Dart field name / free text; a `json_serializable` `fieldRename` is not applied to the `sort` value | Map names in a custom `PrefabListAdapter.queryParameters` | PF-34 |
