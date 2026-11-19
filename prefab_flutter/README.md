@@ -20,7 +20,7 @@ Apply these annotations to your Dart entity classes and run `build_runner` to ge
 | Enum | Values |
 |---|---|
 | `Validator` | `required`, `email`, `url`, `positive`, `nonNegative`, `min(n)`, `max(n)`, `minLength(n)`, `maxLength(n)`, `pattern(regex)` |
-| `FieldWidget` | `auto`, `multilineText`, `password`, `datePicker`, `dropdown`, `toggle` |
+| `FieldWidget` | `auto`, `multilineText`, `password`, `datePicker`, `timePicker`, `dateTimePicker`, `dropdown`, `toggle` |
 
 ## Usage
 

@@ -75,7 +75,7 @@ class Parent {
 }
 ''',
   'prefab_flutter|lib/src/enums/field_widget.dart': r'''
-enum FieldWidget { auto, multilineText, password, datePicker, dropdown, toggle }
+enum FieldWidget { auto, multilineText, password, datePicker, timePicker, dateTimePicker, dropdown, toggle }
 ''',
   'prefab_flutter|lib/src/enums/validator.dart': r'''
 /// Validation rules that the form-screen generator wires into form fields.
@@ -486,7 +486,8 @@ void main() {
         _assets('a', 'lib/product.dart', _requiredSource),
         outputs: {
           'a|lib/product.form_screen.dart': decodedMatches(allOf(
-            contains('class ProductCreateScreen extends ConsumerStatefulWidget'),
+            contains(
+                'class ProductCreateScreen extends ConsumerStatefulWidget'),
             contains('class ProductEditScreen extends ConsumerStatefulWidget'),
           )),
         },
@@ -520,8 +521,7 @@ void main() {
         outputs: {
           'a|lib/product.form_screen.dart': decodedMatches(allOf(
             contains("import 'package:material_ui/material_ui.dart'"),
-            contains(
-                "import 'package:flutter_riverpod/flutter_riverpod.dart'"),
+            contains("import 'package:flutter_riverpod/flutter_riverpod.dart'"),
           )),
         },
       );
@@ -809,7 +809,9 @@ void main() {
         outputs: {
           'a|lib/item.form_screen.dart': decodedMatches(allOf(
             contains('_dueDateValue = item.dueDate'),
-            contains('_dueDateController.text = item.dueDate.toIso8601String()'),
+            contains(
+                '_dueDateController.text = MaterialLocalizations.of(context)\n'),
+            contains('.formatCompactDate(_dueDateValue!)'),
           )),
         },
       );
@@ -827,7 +829,8 @@ void main() {
       );
     });
 
-    test('PF-8 — EditScreen state contains _prefilled flag and _prefillControllers method',
+    test(
+        'PF-8 — EditScreen state contains _prefilled flag and _prefillControllers method',
         () async {
       await testBuilder(
         formScreenBuilder(BuilderOptions.empty),
@@ -841,31 +844,34 @@ void main() {
       );
     });
 
-    test('PF-15 — nullable fields: null-safe prefill, optional, required default',
+    test(
+        'PF-15 — nullable fields: null-safe prefill, optional, required default',
         () async {
       await testBuilder(
         formScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/item.dart', _nullableSource),
         outputs: {
           'a|lib/item.form_screen.dart': decodedMatches(allOf(
-            allOf(
-            // non-nullable text is required without Validator.required
-            contains("if (value == null || value.isEmpty) return 'Required';"),
-            contains('_nameController.text = item.name;'),
-            contains("_nicknameController.text = item.nickname ?? '';"),
-            contains("_ageController.text = item.age?.toString() ?? '';"),
-            contains("item.born?.toIso8601String() ?? ''"),
-          ),
-          allOf(
-            // optional validated field skips empty values
-            contains('if (value == null || value.isEmpty) return null;'),
-            // nullable bool / enum start as null with an empty option
-            contains('bool? _activeValue;'),
-            contains('DropdownButtonFormField<bool>'),
-            contains('bool _doneValue = false;'),
-            contains('Color? _colorValue;'),
-            contains("DropdownMenuItem<Color>(value: null, child: Text(''))"),
-          ))),
+              allOf(
+                // non-nullable text is required without Validator.required
+                contains(
+                    "if (value == null || value.isEmpty) return 'Required';"),
+                contains('_nameController.text = item.name;'),
+                contains("_nicknameController.text = item.nickname ?? '';"),
+                contains("_ageController.text = item.age?.toString() ?? '';"),
+                contains('_bornValue == null'),
+              ),
+              allOf(
+                // optional validated field skips empty values
+                contains('if (value == null || value.isEmpty) return null;'),
+                // nullable bool / enum start as null with an empty option
+                contains('bool? _activeValue;'),
+                contains('DropdownButtonFormField<bool>'),
+                contains('bool _doneValue = false;'),
+                contains('Color? _colorValue;'),
+                contains(
+                    "DropdownMenuItem<Color>(value: null, child: Text(''))"),
+              ))),
         },
       );
     });

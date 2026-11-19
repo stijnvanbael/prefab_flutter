@@ -79,7 +79,7 @@ class Parent {
 }
 ''',
   'prefab_flutter|lib/src/enums/field_widget.dart': r'''
-enum FieldWidget { auto, multilineText, password, datePicker, dropdown, toggle }
+enum FieldWidget { auto, multilineText, password, datePicker, timePicker, dateTimePicker, dropdown, toggle }
 ''',
   'prefab_flutter|lib/src/enums/validator.dart': r'''
 /// Validation rules that the form-screen generator wires into form fields.
@@ -333,8 +333,8 @@ void main() {
         _assets(_itemSource),
         outputs: {
           'a|lib/item.form_screen.dart': decodedMatches(predicate<String>((s) {
-            final edit = _flat(
-                s.substring(s.indexOf('class _ItemEditScreenState')));
+            final edit =
+                _flat(s.substring(s.indexOf('class _ItemEditScreenState')));
             return edit.contains(_flat('Item? _item;')) &&
                 edit.contains(_flat('_item = item;')) &&
                 edit.contains(_flat('id: widget.id,')) &&
