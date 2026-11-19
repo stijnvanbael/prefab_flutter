@@ -404,7 +404,7 @@ class FormScreenGenerator extends Generator {
             'Cannot build ${manifest.entityName} in the create form: the '
             'constructor parameter "${param.name}" is required but has no '
             'value source. Make it nullable or give it a default value, or '
-            'expose it with @FormField.',
+            'expose it with @Field.',
           );
         }
         if (!param.isNamed) {
