@@ -14,7 +14,7 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 ///
 /// The generated screen:
 /// - watches `{entity}DetailProvider(id)` from Riverpod,
-/// - shows all non-hidden [@FormField] fields as labelled [ListTile]s,
+/// - shows all non-hidden [@Field] fields as labelled [ListTile]s,
 /// - sets the AppBar title from [@View.title],
 /// - adds an **Edit** AppBar action when [@Update] is present,
 /// - adds a **Delete** AppBar action (with confirmation dialog) when

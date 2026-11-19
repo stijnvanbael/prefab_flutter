@@ -14,7 +14,7 @@ const _prefabSources = {
 export 'src/annotations/view.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/delete.dart';
-export 'src/annotations/form_field.dart';
+export 'src/annotations/field.dart';
 export 'src/annotations/parent.dart';
 export 'src/enums/field_widget.dart';
 export 'src/enums/validator.dart';
@@ -36,9 +36,27 @@ class Delete {
   const Delete();
 }
 ''',
-  'prefab_flutter|lib/src/annotations/form_field.dart': r'''
+  'prefab_flutter|lib/src/annotations/field.dart': r'''
 import 'package:prefab_flutter/src/enums/field_widget.dart';
 import 'package:prefab_flutter/src/enums/validator.dart';
+class FormOptions {
+  final FieldWidget widget;
+  final List<Validator> validators;
+  const FormOptions({
+    this.widget = FieldWidget.auto,
+    this.validators = const [],
+  });
+}
+class Field {
+  final String? label;
+  final bool hidden;
+  final FormOptions form;
+  const Field({
+    this.label,
+    this.hidden = false,
+    this.form = const FormOptions(),
+  });
+}
 class FormField {
   final String? label;
   final FieldWidget widget;
@@ -80,13 +98,13 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 class Product {
   final int id;
 
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
 
-  @FormField(label: 'Price')
+  @Field(label: 'Price')
   final double price;
 
-  @FormField(hidden: true)
+  @Field(hidden: true)
   final String internalCode;
 
   Product({
@@ -105,7 +123,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Tag', path: 'tags')
 class Tag {
   late final int id;
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
 
   Tag({required this.name});
@@ -120,7 +138,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Order', path: 'orders')
 class Order {
   late final int id;
-  @FormField()
+  @Field()
   final String customerName;
 
   Order({required this.customerName});
@@ -134,9 +152,9 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Item', path: 'items')
 class Item {
   late final int id;
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
-  @FormField(label: 'Note')
+  @Field(label: 'Note')
   final String? note;
 
   Item({required this.name, this.note});

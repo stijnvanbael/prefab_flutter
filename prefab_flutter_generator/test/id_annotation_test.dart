@@ -8,7 +8,7 @@ const _prefabSources = {
 export 'src/annotations/view.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/delete.dart';
-export 'src/annotations/form_field.dart';
+export 'src/annotations/field.dart';
 export 'src/annotations/parent.dart';
 export 'src/annotations/id.dart';
 export 'src/enums/field_widget.dart';
@@ -31,9 +31,27 @@ class Delete {
   const Delete();
 }
 ''',
-  'prefab_flutter|lib/src/annotations/form_field.dart': r'''
+  'prefab_flutter|lib/src/annotations/field.dart': r'''
 import 'package:prefab_flutter/src/enums/field_widget.dart';
 import 'package:prefab_flutter/src/enums/validator.dart';
+class FormOptions {
+  final FieldWidget widget;
+  final List<Validator> validators;
+  const FormOptions({
+    this.widget = FieldWidget.auto,
+    this.validators = const [],
+  });
+}
+class Field {
+  final String? label;
+  final bool hidden;
+  final FormOptions form;
+  const Field({
+    this.label,
+    this.hidden = false,
+    this.form = const FormOptions(),
+  });
+}
 class FormField {
   final String? label;
   final FieldWidget widget;
@@ -74,7 +92,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 class Item {
   @Id()
   final String? sku;
-  @FormField()
+  @Field()
   final String name;
   Item({this.sku, required this.name});
   factory Item.fromJson(Map<String, dynamic> json) => throw 0;
@@ -88,7 +106,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 @View(title: 'Item', path: 'items')
 class Item {
-  @FormField()
+  @Field()
   final String name;
   Item({required this.name});
   factory Item.fromJson(Map<String, dynamic> json) => throw 0;
@@ -104,7 +122,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Item {
   final int? id;
-  @FormField()
+  @Field()
   final String name;
   Item({this.id, required this.name});
   factory Item.fromJson(Map<String, dynamic> json) => throw 0;

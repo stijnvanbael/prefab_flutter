@@ -23,7 +23,7 @@ For installation and a minimal example, see the [README](../README.md#quick-star
 ## How it works
 
 1. You annotate a plain Dart class with `@View` and its fields with
-   `@FormField`.
+   `@Field`.
 2. `build_runner` runs six generators over every library that contains a
    `@View` class. Each generator writes one file next to the source file.
 3. You register the generated routes with GoRouter and wrap the app in a
@@ -35,12 +35,6 @@ The generated code depends on `flutter_riverpod`, `go_router`, `dio`, `material_
 ## Annotations
 
 All annotations come from `package:prefab_flutter/prefab_flutter.dart`.
-
-> `@FormField` has the same name as Flutter's `FormField` widget. In a file
-> that imports both `package:material_ui/material_ui.dart` and `prefab_flutter`,
-> hide one of them, e.g.
-> `import 'package:material_ui/material_ui.dart' hide FormField;`. Keeping entity
-> classes in files without Flutter imports avoids the problem.
 
 ### `@View` (class)
 
@@ -99,25 +93,39 @@ confirmation dialog (`showPrefabDeleteDialog`), calls the notifier's
 `delete()` and pops back to the list. It also adds `delete()` to the list
 notifier.
 
-### `@FormField` (field)
+### `@Field` (field)
 
-Includes a field in the generated screens. Fields without `@FormField` are
-ignored by every generator.
+Includes a field in the generated screens. Fields without `@Field` are
+ignored by every generator. Display and listing settings sit directly on
+`@Field`; form-only settings go in its `form:` parameter
+(`FormOptions`).
 
 | Parameter | Type | Default | Meaning |
 |---|---|---|---|
 | `label` | `String?` | field name in title case (`firstName` → `First Name`) | Label in forms and the detail screen |
+| `hidden` | `bool` | `false` | Exclude the field from forms and the detail screen |
+| `form` | `FormOptions` | `FormOptions()` | Form-only settings, below |
+
+`FormOptions` parameters:
+
+| Parameter | Type | Default | Meaning |
+|---|---|---|---|
 | `widget` | `FieldWidget` | `FieldWidget.auto` | Which input widget the form uses (see [Field widgets](#field-widgets)) |
 | `validators` | `List<Validator>` | `[]` | Checks run when the form is submitted (see [Validators](#validators)) |
-| `hidden` | `bool` | `false` | Exclude the field from forms and the detail screen |
 
-The **first** visible `@FormField` in source order is used as the item title in
+The **first** visible `@Field` in source order is used as the item title in
 the list screen and as the item name in the delete dialog.
 
 ```dart
-@FormField(label: 'Description', widget: FieldWidget.multilineText)
+@Field(label: 'Description', form: FormOptions(widget: FieldWidget.multilineText))
 final String description;
 ```
+
+> **Deprecated:** `@FormField(label:, widget:, validators:, hidden:)` is kept
+> as a deprecated alias for one release and behaves like the equivalent
+> `@Field`. It is replaced because its name clashes with Flutter's `FormField`
+> widget. Migrate by renaming it and moving `widget` and `validators` into
+> `form: FormOptions(...)`.
 
 ### `@Parent` (field)
 
@@ -126,7 +134,7 @@ nested resource. The required argument is the parent entity class. See
 [Nested resources](#nested-resources).
 
 ```dart
-@FormField()
+@Field()
 @Parent(Post)
 final int postId;
 ```
@@ -150,7 +158,7 @@ time and date-time pickers in PF-17.
 
 ## Validators
 
-`Validator` values are combined in the field's `validators` list and checked in
+`Validator` values are combined in the field's `form: FormOptions(validators: [...])` list and checked in
 order; the first failing check shows its message.
 
 | Value | Check | Message |
@@ -189,7 +197,7 @@ entity's **unnamed constructor**. Each constructor parameter gets its value from
 |---|---|---|
 | the id (`@Id` / `id`) | omitted | `widget.id` |
 | the `@Parent` field | `widget.<parentId>` | `widget.<parentId>` |
-| a visible `@FormField` | typed form state | typed form state |
+| a visible `@Field` | typed form state | typed form state |
 | a hidden or un-annotated field | omitted | copied from the loaded item |
 
 Form values are converted by type: `int` / `double` / `num` are parsed from the
@@ -288,15 +296,15 @@ An entity with a `@Parent` field is shown under its parent:
 @View(title: 'Post', path: 'posts')
 class Post {
   final int? id;
-  @FormField() final String title;
+  @Field() final String title;
   Post({this.id, required this.title});
 }
 
 @View(title: 'Comment', path: 'comments')
 class Comment {
   final int? id;
-  @FormField() @Parent(Post) final int postId;
-  @FormField() final String body;
+  @Field() @Parent(Post) final int postId;
+  @Field() final String body;
   Comment({this.id, required this.postId, required this.body});
 }
 ```
@@ -397,5 +405,4 @@ These are known gaps in the current pre-release. Each has a backlog task.
 | Limitation | Workaround | Task |
 |---|---|---|
 | The save round-trip is covered by generator tests only; it is not yet exercised end-to-end in a running example app | — | PF-9 |
-| `@FormField` clashes with Flutter's `FormField` | `hide FormField` on one import | PF-30 |
 | Search, sort and pagination are not generated | — | PF-13 |

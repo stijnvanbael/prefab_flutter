@@ -12,7 +12,7 @@ const _prefabSources = {
 export 'src/annotations/view.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/delete.dart';
-export 'src/annotations/form_field.dart';
+export 'src/annotations/field.dart';
 export 'src/annotations/parent.dart';
 export 'src/enums/field_widget.dart';
 export 'src/enums/validator.dart';
@@ -34,9 +34,27 @@ class Delete {
   const Delete();
 }
 ''',
-  'prefab_flutter|lib/src/annotations/form_field.dart': r'''
+  'prefab_flutter|lib/src/annotations/field.dart': r'''
 import 'package:prefab_flutter/src/enums/field_widget.dart';
 import 'package:prefab_flutter/src/enums/validator.dart';
+class FormOptions {
+  final FieldWidget widget;
+  final List<Validator> validators;
+  const FormOptions({
+    this.widget = FieldWidget.auto,
+    this.validators = const [],
+  });
+}
+class Field {
+  final String? label;
+  final bool hidden;
+  final FormOptions form;
+  const Field({
+    this.label,
+    this.hidden = false,
+    this.form = const FormOptions(),
+  });
+}
 class FormField {
   final String? label;
   final FieldWidget widget;
@@ -76,7 +94,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Product {
   late final int id;
-  @FormField(label: 'Name', validators: [Validator.required])
+  @Field(label: 'Name', form: FormOptions(validators: [Validator.required]))
   final String name;
 
   Product({required this.name});
@@ -91,7 +109,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class User {
   late final int id;
-  @FormField(label: 'Email', validators: [Validator.email])
+  @Field(label: 'Email', form: FormOptions(validators: [Validator.email]))
   final String email;
 
   User({required this.email});
@@ -106,7 +124,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Product {
   late final int id;
-  @FormField(label: 'Price', validators: [Validator.positiveNumber])
+  @Field(label: 'Price', form: FormOptions(validators: [Validator.positiveNumber]))
   final double price;
 
   Product({required this.price});
@@ -121,7 +139,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Resource {
   late final int id;
-  @FormField(label: 'URL', validators: [Validator.url])
+  @Field(label: 'URL', form: FormOptions(validators: [Validator.url]))
   final String url;
 
   Resource({required this.url});
@@ -135,7 +153,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @View(title: 'Tag', path: 'tags')
 class Tag {
   late final int id;
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
 
   Tag({required this.name});
@@ -150,7 +168,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Contact {
   late final int id;
-  @FormField(label: 'Email', validators: [Validator.required, Validator.email])
+  @Field(label: 'Email', form: FormOptions(validators: [Validator.required, Validator.email]))
   final String email;
 
   Contact({required this.email});
@@ -165,7 +183,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Setting {
   late final int id;
-  @FormField(label: 'Is Active')
+  @Field(label: 'Is Active')
   final bool isActive;
 
   Setting({required this.isActive});
@@ -180,7 +198,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Event {
   late final int id;
-  @FormField(label: 'Start Date')
+  @Field(label: 'Start Date')
   final DateTime startDate;
 
   Event({required this.startDate});
@@ -195,7 +213,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Article {
   late final int id;
-  @FormField(label: 'Body', widget: FieldWidget.multilineText)
+  @Field(label: 'Body', form: FormOptions(widget: FieldWidget.multilineText))
   final String body;
 
   Article({required this.body});
@@ -210,7 +228,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Account {
   late final int id;
-  @FormField(label: 'Password', widget: FieldWidget.password)
+  @Field(label: 'Password', form: FormOptions(widget: FieldWidget.password))
   final String password;
 
   Account({required this.password});
@@ -227,7 +245,7 @@ enum Status { active, inactive }
 @Update()
 class Task {
   late final int id;
-  @FormField(label: 'Status')
+  @Field(label: 'Status')
   final Status status;
 
   Task({required this.status});
@@ -242,7 +260,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Flag {
   late final int id;
-  @FormField(label: 'Enabled', widget: FieldWidget.toggle)
+  @Field(label: 'Enabled', form: FormOptions(widget: FieldWidget.toggle))
   final String enabled;
 
   Flag({required this.enabled});
@@ -259,22 +277,22 @@ enum Priority { low, medium, high }
 @Update()
 class Item {
   late final int id;
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
 
-  @FormField(label: 'Count')
+  @Field(label: 'Count')
   final int count;
 
-  @FormField(label: 'Price')
+  @Field(label: 'Price')
   final double price;
 
-  @FormField(label: 'Active')
+  @Field(label: 'Active')
   final bool active;
 
-  @FormField(label: 'Due Date')
+  @Field(label: 'Due Date')
   final DateTime dueDate;
 
-  @FormField(label: 'Priority')
+  @Field(label: 'Priority')
   final Priority priority;
 
   Item({
@@ -307,23 +325,23 @@ enum Color { red, green }
 @Update()
 class Item {
   late final int id;
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
-  @FormField(label: 'Nickname')
+  @Field(label: 'Nickname')
   final String? nickname;
-  @FormField(label: 'Email', validators: [Validator.email])
+  @Field(label: 'Email', form: FormOptions(validators: [Validator.email]))
   final String? email;
-  @FormField(label: 'Code', validators: [Validator.required])
+  @Field(label: 'Code', form: FormOptions(validators: [Validator.required]))
   final String? code;
-  @FormField(label: 'Age')
+  @Field(label: 'Age')
   final int? age;
-  @FormField(label: 'Born')
+  @Field(label: 'Born')
   final DateTime? born;
-  @FormField(label: 'Active')
+  @Field(label: 'Active')
   final bool? active;
-  @FormField(label: 'Done')
+  @Field(label: 'Done')
   final bool done;
-  @FormField(label: 'Color')
+  @Field(label: 'Color')
   final Color? color;
 
   Item({required this.name, this.nickname, this.email, this.code, this.age,
@@ -334,6 +352,23 @@ class Item {
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
+
+/// Entity still using the deprecated @FormField annotation.
+const _legacySource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Product', path: 'products')
+@Update()
+class Product {
+  late final int id;
+  @FormField(label: 'Name', validators: [Validator.required])
+  final String name;
+  @FormField(label: 'Notes', widget: FieldWidget.multilineText)
+  final String notes;
+
+  Product({required this.name, required this.notes});
+}
+''';
 
 void main() {
   group('FormScreenGenerator', () {
@@ -726,6 +761,20 @@ void main() {
             contains('Color? _colorValue;'),
             contains("DropdownMenuItem<Color>(value: null, child: Text(''))"),
           ))),
+        },
+      );
+    });
+
+    test('deprecated @FormField is still honoured', () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets('a', 'lib/product.dart', _legacySource),
+        outputs: {
+          'a|lib/product.form_screen.dart': decodedMatches(allOf(
+            contains("labelText: 'Name'"),
+            contains('maxLines: null'),
+            contains("return 'Required'"),
+          )),
         },
       );
     });

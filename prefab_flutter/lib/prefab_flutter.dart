@@ -5,7 +5,7 @@
 library prefab_flutter;
 
 export 'src/annotations/delete.dart';
-export 'src/annotations/form_field.dart';
+export 'src/annotations/field.dart';
 export 'src/annotations/id.dart';
 export 'src/annotations/parent.dart';
 export 'src/annotations/update.dart';

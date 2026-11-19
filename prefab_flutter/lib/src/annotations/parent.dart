@@ -4,7 +4,7 @@
 /// may be declared in another source file:
 ///
 /// ```dart
-/// @FormField() @Parent(Post) final int postId;
+/// @Field() @Parent(Post) final int postId;
 /// ```
 ///
 /// List and detail screens are scoped under the parent entity's route and the

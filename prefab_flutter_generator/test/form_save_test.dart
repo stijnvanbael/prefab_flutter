@@ -10,7 +10,7 @@ const _prefabSources = {
 export 'src/annotations/view.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/delete.dart';
-export 'src/annotations/form_field.dart';
+export 'src/annotations/field.dart';
 export 'src/annotations/parent.dart';
 export 'src/annotations/id.dart';
 export 'src/enums/field_widget.dart';
@@ -33,9 +33,27 @@ class Delete {
   const Delete();
 }
 ''',
-  'prefab_flutter|lib/src/annotations/form_field.dart': r'''
+  'prefab_flutter|lib/src/annotations/field.dart': r'''
 import 'package:prefab_flutter/src/enums/field_widget.dart';
 import 'package:prefab_flutter/src/enums/validator.dart';
+class FormOptions {
+  final FieldWidget widget;
+  final List<Validator> validators;
+  const FormOptions({
+    this.widget = FieldWidget.auto,
+    this.validators = const [],
+  });
+}
+class Field {
+  final String? label;
+  final bool hidden;
+  final FormOptions form;
+  const Field({
+    this.label,
+    this.hidden = false,
+    this.form = const FormOptions(),
+  });
+}
 class FormField {
   final String? label;
   final FieldWidget widget;
@@ -77,23 +95,23 @@ enum Color { red, green }
 @Update()
 class Item {
   final int? id;
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
-  @FormField(label: 'Nickname')
+  @Field(label: 'Nickname')
   final String? nickname;
-  @FormField(label: 'Count')
+  @Field(label: 'Count')
   final int count;
-  @FormField(label: 'Age')
+  @Field(label: 'Age')
   final int? age;
-  @FormField(label: 'Price')
+  @Field(label: 'Price')
   final double price;
-  @FormField(label: 'Active')
+  @Field(label: 'Active')
   final bool active;
-  @FormField(label: 'Born')
+  @Field(label: 'Born')
   final DateTime born;
-  @FormField(label: 'Color')
+  @Field(label: 'Color')
   final Color color;
-  @FormField(label: 'Secret', hidden: true)
+  @Field(label: 'Secret', hidden: true)
   final String? secret;
   final String? untracked;
 
@@ -120,7 +138,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Post {
   final int? id;
-  @FormField(label: 'Title')
+  @Field(label: 'Title')
   final String title;
   Post({this.id, required this.title});
 }
@@ -130,9 +148,9 @@ class Post {
 class Comment {
   final int? id;
   @Parent(Post)
-  @FormField(hidden: true)
+  @Field(hidden: true)
   final int postId;
-  @FormField(label: 'Content')
+  @Field(label: 'Content')
   final String content;
   Comment({this.id, required this.postId, required this.content});
 }
@@ -145,7 +163,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 @Update()
 class Item {
   final int id;
-  @FormField(label: 'Name')
+  @Field(label: 'Name')
   final String name;
   $fields
   $ctor
@@ -300,7 +318,7 @@ void main() {
     test('unsupported field type is an error naming the field', () async {
       final message = await failure(_bad(
               'Item({this.id, required this.name, required this.tags});',
-              "@FormField(label: 'Tags') final List<String> tags;")
+              "@Field(label: 'Tags') final List<String> tags;")
           .replaceAll('final int id;', 'final int? id;'));
       expect(message, contains('"tags"'));
     });
