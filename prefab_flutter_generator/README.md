@@ -1,5 +1,8 @@
 # prefab_flutter_generator
 
+> Part of [Prefab Flutter](https://github.com/stijnvanbael/prefab_flutter/blob/main/README.md). See the [user guide](https://github.com/stijnvanbael/prefab_flutter/blob/main/docs/user_guide.md) for the full reference and the [developer guide](https://github.com/stijnvanbael/prefab_flutter/blob/main/docs/developer_guide.md) for contributing.
+> pub.dev badge: added once the package is published (not yet on pub.dev).
+
 Code generator for [`prefab_flutter`](https://pub.dev/packages/prefab_flutter). Reads
 `@View`-annotated Dart classes and emits **one** library per source file:
 
