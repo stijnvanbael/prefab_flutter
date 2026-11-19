@@ -35,7 +35,7 @@ dependencies:
   flutter:
     sdk: flutter
   dio: ^5.4.0
-  flutter_riverpod: ^2.5.0
+  flutter_riverpod: ^2.5.0 # supported range: >=2.5.0 <3.0.0
   go_router: ^14.0.0
   material_ui: ^1.11.1
   prefab_flutter:

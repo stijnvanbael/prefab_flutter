@@ -174,7 +174,7 @@ For a source file `product.dart` the generator writes:
 | `product.list_screen.dart` | `ProductListScreen`: a `ListView` of items (or a "No items found" message when empty); tapping one opens its detail screen. With `@Update`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
 | `product.detail_screen.dart` | `ProductDetailScreen(id:)`: one `ListTile` per visible field, plus Edit/Delete actions |
 | `product.form_screen.dart` | `ProductCreateScreen` and `ProductEditScreen(id:)` (only with `@Update`) |
-| `product.provider.dart` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`StateNotifierProvider`) with `ProductsNotifier` (`update` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
+| `product.provider.dart` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `create`, `update` and `delete` (`update` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
 | `product.api_client.dart` | `ProductApiClient` with `list`, `getById`, `create`, `update` and `delete` |
 | `product.routes.dart` | `$productRoutes` (named after the source file), a `List<RouteBase>` with the routes of every entity in the file |
 
@@ -292,7 +292,10 @@ void main() => runApp(
 ```
 
 `prefab_flutter_widgets` depends on `dio` (`>=5.4.0 <6.0.0`) and
-`flutter_riverpod` (`>=2.5.0 <3.0.0`).
+`flutter_riverpod` (`>=2.5.0 <3.0.0`). The generated providers use the
+`AsyncNotifier` API of Riverpod 2.x and no longer depend on the legacy
+`StateNotifier`. Riverpod 3 is not supported yet because it removes the
+`AutoDispose*` notifier base classes.
 
 ## REST contract
 

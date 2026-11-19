@@ -8,7 +8,7 @@ Code generator for [`prefab_flutter`](https://pub.dev/packages/prefab_flutter). 
 | `detailScreenBuilder` | `.detail_screen.dart` | Read-only `{Entity}DetailScreen` ConsumerWidget     |
 | `listScreenBuilder`   | `.list_screen.dart`   | `{Entity}ListScreen` with search, sort & pagination |
 | `formScreenBuilder`   | `.form_screen.dart`   | Create & edit form screens                          |
-| `providerBuilder`     | `.provider.dart`      | Riverpod providers (detail + list notifier)         |
+| `providerBuilder`     | `.provider.dart`      | Riverpod providers (detail + list AsyncNotifier)   |
 | `apiClientBuilder`    | `.api_client.dart`    | Dio-backed API client                               |
 | `routesBuilder`       | `.routes.dart`        | GoRouter TypedGoRoute declarations                  |
 

@@ -145,13 +145,17 @@ void main() {
       );
     });
 
-    test('generates a list StateNotifier for an entity', () async {
+    test('generates a list AsyncNotifier for an entity', () async {
       await testBuilder(
         providerBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
           'a|lib/product.provider.dart': decodedMatches(
-            contains('class ProductsNotifier'),
+            allOf(
+              contains('class ProductsNotifier extends AutoDisposeAsyncNotifier<List<Product>>'),
+              contains('AsyncNotifierProvider.autoDispose'),
+              isNot(contains('StateNotifier')),
+            ),
           ),
         },
       );
@@ -238,14 +242,17 @@ void main() {
         _assets('a', 'lib/post.dart', _parentChildSource),
         outputs: {
           'a|lib/post.provider.dart': decodedMatches(
-            contains('.family<CommentsNotifier, AsyncValue<List<Comment>>, int>'),
+            allOf(
+              contains('AsyncNotifierProvider.autoDispose'),
+              contains('.family<CommentsNotifier, List<Comment>, int>'),
+            ),
           ),
         },
       );
     });
 
     test(
-        'AC#3 @Parent — StateNotifier accepts and stores the parent ID',
+        'AC#3 @Parent — family notifier exposes the parent ID',
         () async {
       await testBuilder(
         providerBuilder(BuilderOptions.empty),
@@ -253,14 +260,15 @@ void main() {
         outputs: {
           'a|lib/post.provider.dart': decodedMatches(allOf(
             contains('class CommentsNotifier'),
-            contains('final int postId'),
+            contains('AutoDisposeFamilyAsyncNotifier<List<Comment>, int>'),
+            contains('int get postId => arg'),
           )),
         },
       );
     });
 
     test(
-        'AC#3 @Parent — StateNotifier _load passes parentId to API client',
+        'AC#3 @Parent — family notifier _load passes parentId to API client',
         () async {
       await testBuilder(
         providerBuilder(BuilderOptions.empty),
@@ -334,13 +342,12 @@ void main() {
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
           'a|lib/product.provider.dart': decodedMatches(allOf(
-            contains('ProductsNotifier(this._ref, this._client)'),
             matches(RegExp(
                 r'update\(Product product\) async \{\n[^}]*'
-                r'_ref\.invalidate\(productDetailProvider\(product\.id\)\);')),
+                r'ref\.invalidate\(productDetailProvider\(product\.id\)\);')),
             matches(RegExp(
                 r'delete\(Product product\) async \{\n[^}]*'
-                r'_ref\.invalidate\(productDetailProvider\(product\.id\)\);')),
+                r'ref\.invalidate\(productDetailProvider\(product\.id\)\);')),
           )),
         },
       );
@@ -354,7 +361,7 @@ void main() {
         outputs: {
           'a|lib/post.provider.dart': decodedMatches(
             contains(
-                '_ref.invalidate(commentDetailProvider((comment.id, postId)));'),
+                'ref.invalidate(commentDetailProvider((comment.id, postId)));'),
           ),
         },
       );
