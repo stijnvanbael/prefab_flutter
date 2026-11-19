@@ -92,6 +92,21 @@ class Comment {
 }
 ''';
 
+const _orphanSource = r'''
+import 'package:prefab_flutter/prefab_flutter.dart';
+
+@View(title: 'Comment', path: 'comments')
+class Comment {
+  final int id;
+
+  @Parent()
+  @FormField(hidden: true)
+  final int postId;
+
+  Comment({required this.id, required this.postId});
+}
+''';
+
 Map<String, Object> _assets() => {
       ...Map<String, Object>.from(_prefabSources),
       'a|lib/post.dart': _nestedSource,
@@ -154,6 +169,26 @@ void main() {
     test('list screen navigates to the nested item path', () async {
       await _expect(listScreenBuilder(BuilderOptions.empty), 'list_screen',
           [r"context.push('/posts/$postId/comments/${comment.id}')"]);
+    });
+
+    test('routes generation fails when the parent entity is missing', () async {
+      final logs = <String>[];
+      Object? error;
+      try {
+        await testBuilder(
+          routesBuilder(BuilderOptions.empty),
+          {
+            ...Map<String, Object>.from(_prefabSources),
+            'a|lib/post.dart': _orphanSource,
+          },
+          outputs: {},
+          onLog: (r) => logs.add(r.message),
+        );
+      } catch (e) {
+        error = e;
+      }
+      expect(
+          '$error\n${logs.join('\n')}', contains('no @View-annotated class'));
     });
   });
 }

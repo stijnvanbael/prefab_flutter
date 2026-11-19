@@ -4,6 +4,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 import 'package:source_gen/source_gen.dart';
 
 import '../manifest/entity_manifest.dart';
+import '../manifest/entity_paths.dart';
 
 const _viewChecker = TypeChecker.fromRuntime(View);
 
@@ -53,6 +54,12 @@ class RoutesGenerator extends Generator {
         );
       }
       manifests.add(EntityManifest.from(element, a.annotation));
+    }
+
+    // Fail on a missing parent instead of silently dropping nested routes.
+    final paths = EntityPaths(manifests);
+    for (final m in manifests) {
+      paths.parentOf(m);
     }
 
     final sourceFileName = buildStep.inputId.path.split('/').last;
