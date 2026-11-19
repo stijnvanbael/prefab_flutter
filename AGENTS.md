@@ -28,6 +28,13 @@ You MUST read the overview resource to understand the complete workflow. The inf
 
 <!-- BACKLOG.MD MCP GUIDELINES END -->
 
+## VISION AND PRINCIPLES
+
+`docs/vision.md` holds the project's vision, guiding principles and roadmap.
+When a task leaves a design choice open, choose what the principles favour
+and name the principle in the pull request. If a task conflicts with a
+principle, say so in the pull request instead of silently picking one.
+
 ## WORKING WITH THE BACKLOG FILES
 
 The block above is maintained by Backlog.md; do not edit it. If the Backlog MCP
