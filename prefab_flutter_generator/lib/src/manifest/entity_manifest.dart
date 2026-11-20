@@ -1,25 +1,33 @@
+// isSynthetic is deprecated from analyzer 9; the supported range is analyzer 8.
+// ignore_for_file: deprecated_member_use
+
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:prefab_flutter/prefab_flutter.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'field_manifest.dart';
 
-const _createChecker = TypeChecker.fromRuntime(Create);
-const _updateChecker = TypeChecker.fromRuntime(Update);
-const _deleteChecker = TypeChecker.fromRuntime(Delete);
-const _fieldChecker = TypeChecker.fromRuntime(Field);
+final _createChecker = TypeChecker.typeNamed(Create, inPackage: 'prefab_flutter');
+final _updateChecker = TypeChecker.typeNamed(Update, inPackage: 'prefab_flutter');
+final _deleteChecker = TypeChecker.typeNamed(Delete, inPackage: 'prefab_flutter');
+final _fieldChecker = TypeChecker.typeNamed(Field, inPackage: 'prefab_flutter');
 // ignore: deprecated_member_use
-const _formFieldChecker = TypeChecker.fromRuntime(FormField);
-const _idChecker = TypeChecker.fromRuntime(Id);
-const _viewChecker = TypeChecker.fromRuntime(View);
-const _parentChecker = TypeChecker.fromRuntime(Parent);
+final _formFieldChecker = TypeChecker.typeNamed(FormField, inPackage: 'prefab_flutter');
+final _idChecker = TypeChecker.typeNamed(Id, inPackage: 'prefab_flutter');
+final _viewChecker = TypeChecker.typeNamed(View, inPackage: 'prefab_flutter');
+final _parentChecker = TypeChecker.typeNamed(Parent, inPackage: 'prefab_flutter');
 
 /// Reads the `fieldRename` of the class's `@JsonSerializable` (by name, so the
 /// generator needs no dependency on `json_annotation`), or `none`.
+/// The display string of [type] without nullability markers (`int?` -> `int`).
+String? _plainType(DartType? type) =>
+    type?.getDisplayString().replaceAll('?', '');
+
 String _readFieldRename(ClassElement element) {
-  for (final meta in element.metadata) {
+  for (final meta in element.metadata.annotations) {
     final value = meta.computeConstantValue();
     if (value?.type?.element?.name != 'JsonSerializable') continue;
     final rename = value!.getField('fieldRename');
@@ -35,13 +43,13 @@ String _readFieldRename(ClassElement element) {
 /// The JSON name of [field]: `@JsonKey(name:)`, else [fieldRename] applied to
 /// the Dart name.
 String _readJsonName(FieldElement field, String fieldRename) {
-  for (final meta in field.metadata) {
+  for (final meta in field.metadata.annotations) {
     final value = meta.computeConstantValue();
     if (value?.type?.element?.name != 'JsonKey') continue;
     final name = value!.getField('name')?.toStringValue();
     if (name != null) return name;
   }
-  final words = field.name
+  final words = field.name!
       .replaceAllMapped(RegExp('(?<=[a-z0-9])([A-Z])'), (m) => '_${m[1]}')
       .toLowerCase()
       .split('_');
@@ -55,7 +63,7 @@ String _readJsonName(FieldElement field, String fieldRename) {
     case 'screamingSnake':
       return words.join('_').toUpperCase();
     default:
-      return field.name;
+      return field.name!;
   }
 }
 
@@ -330,8 +338,8 @@ class EntityManifest {
     ClassElement element,
     ConstantReader viewAnnotation,
   ) {
-    final title = viewTitle(viewAnnotation, element.name);
-    final path = viewPath(viewAnnotation, element.name);
+    final title = viewTitle(viewAnnotation, element.name!);
+    final path = viewPath(viewAnnotation, element.name!);
 
     final paged = viewAnnotation.peek('paged')?.boolValue ?? true;
 
@@ -359,7 +367,7 @@ class EntityManifest {
         element: element,
       );
     }
-    final idType = idField.type.getDisplayString(withNullability: false);
+    final idType = _plainType(idField.type)!;
     if (idType != 'String' && idType != 'int') {
       throw InvalidGenerationSourceError(
         'The id field "${idField.name}" of "${element.name}" must be of type '
@@ -388,7 +396,7 @@ class EntityManifest {
 
       final labelReader = reader.read('label');
       final label = labelReader.isNull
-          ? _fieldNameToLabel(field.name)
+          ? _fieldNameToLabel(field.name!)
           : labelReader.stringValue;
 
       final hidden = reader.read('hidden').boolValue;
@@ -425,13 +433,11 @@ class EntityManifest {
           );
         }
         final parentViewReader = ConstantReader(parentView);
-        parentPath = viewPath(parentViewReader, parentTypeElement.name);
-        parentTitle = viewTitle(parentViewReader, parentTypeElement.name);
+        parentPath = viewPath(parentViewReader, parentTypeElement.name!);
+        parentTitle = viewTitle(parentViewReader, parentTypeElement.name!);
         final parentIdField = _findIdField(parentTypeElement);
-        parentIdType = parentIdField?.type.getDisplayString(
-          withNullability: false,
-        );
-        final fieldType = field.type.getDisplayString(withNullability: false);
+        parentIdType = _plainType(parentIdField?.type);
+        final fieldType = _plainType(field.type)!;
         if (parentIdType != null && parentIdType != fieldType) {
           throw InvalidGenerationSourceError(
             'Type mismatch: "${field.name}" is "$fieldType" but '
@@ -458,11 +464,11 @@ class EntityManifest {
 
       fields.add(
         FieldManifest(
-          name: field.name,
+          name: field.name!,
           label: label,
           hidden: hidden,
           isParent: isParent,
-          dartType: field.type.getDisplayString(withNullability: false),
+          dartType: _plainType(field.type)!,
           validators: validators,
           fieldWidget: fieldWidget,
           isEnum: isEnum,
@@ -478,14 +484,14 @@ class EntityManifest {
     }
 
     return EntityManifest(
-      entityName: element.name,
+      entityName: element.name!,
       title: title,
       path: path,
       hasCreate: hasCreate,
       hasUpdate: hasUpdate,
       hasDelete: hasDelete,
       fields: fields,
-      idFieldName: idField.name,
+      idFieldName: idField.name!,
       idType: idType,
       idIsNullable:
           idField.type.nullabilitySuffix == NullabilitySuffix.question,
@@ -499,9 +505,9 @@ class EntityManifest {
       ancestors: parentElement == null
           ? const []
           : _resolveAncestors(element, parentElement, parentParamName!),
-      constructorParams: element.unnamedConstructor?.parameters
+      constructorParams: element.unnamedConstructor?.formalParameters
           .map((p) => ConstructorParam(
-                name: p.name,
+                name: p.name!,
                 isNamed: p.isNamed,
                 isRequired: p.isRequiredNamed || p.isRequiredPositional,
                 isNullable:
@@ -586,20 +592,20 @@ class EntityManifest {
         return a != null && !ConstantReader(a).read('hidden').boolValue;
       }).firstOrNull;
       final labelField = label ?? idField;
-      final lower = _toLowerCamel(cls.name);
+      final lower = _toLowerCamel(cls.name!);
       result.add(AncestorManifest(
-        entityName: cls.name,
+        entityName: cls.name!,
         entityNameLower: lower,
-        path: viewPath(view, cls.name),
-        title: viewTitle(view, cls.name),
-        idType: idField?.type.getDisplayString(withNullability: false) ??
+        path: viewPath(view, cls.name!),
+        title: viewTitle(view, cls.name!),
+        idType: _plainType(idField?.type) ??
             'String',
         idFieldName: idField?.name ?? 'id',
         labelFieldName: labelField?.name ?? 'id',
         labelIsNullable:
             labelField?.type.nullabilitySuffix == NullabilitySuffix.question,
         paramName: '${lower}Id',
-        libraryUri: cls.library.source.uri.toString(),
+        libraryUri: cls.library.uri.toString(),
         inSameLibrary: cls.library == element.library,
       ));
     }

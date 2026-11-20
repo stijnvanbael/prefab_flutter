@@ -25,5 +25,5 @@ PF-41 formats the output with `dart_style` 2.3.6, which has no `languageVersion`
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-Upgraded `source_gen` to ^2.0.0, `analyzer` to 7.x, `build_test` to ^3.2.1 and `dart_style` to `>=3.1.1 <3.2.0`; `formatGenerated` passes a pinned `languageVersion` (3.0, classic style). Snapshots are unchanged. `build_test` 3 reports builder failures as log records, so `promoted_test.dart` now checks the logged message. The old element model is deprecated in analyzer 7; the lint is ignored until PF-66 migrates the generator. SDK minimum raised to 3.6.
+Upgraded `source_gen` to ^4.2.0, `analyzer` to 8.x, `build` to ^3, `build_runner` to ^2.7, `build_test` to ^3.3 and `dart_style` to `>=3.1.1 <3.2.0`; `formatGenerated` passes a pinned `languageVersion` (3.0, classic style). Snapshots are unchanged. analyzer 7 was not enough: it cannot parse Flutter 3.47 sources, so the example's `build_runner` failed. The generator moved to the analyzer 8 element model (`TypeChecker.typeNamed` replaces `fromRuntime`). `build_test` 3 reports builder failures as log records, so `promoted_test.dart` checks the logged message. SDK minimum raised to 3.6.
 <!-- SECTION:NOTES:END -->
