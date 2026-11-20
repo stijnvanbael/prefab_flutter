@@ -351,7 +351,7 @@ name as Prefab does, because:
   depend on every name in the package (see below), and editing an unrelated
   file does not regenerate everything.
 
-**Detection.** A second builder, `prefab_promoted`, runs on every `lib/**.dart`
+**Detection.** A second builder, `prefab_promoted` (since PF-71 the `prefab_declarations` builder, which also scans actions and screens into one `.prefab_declarations.json`), runs on every `lib/**.dart`
 before `prefab_builder` and writes a small summary to the build cache
 (`build_to: cache`), only for files that contain `@Promoted`:
 

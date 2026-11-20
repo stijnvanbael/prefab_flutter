@@ -32,24 +32,20 @@ void main() {
     final name = p.basenameWithoutExtension(file.path);
     test('snapshot of $name', () async {
       final source = file.readAsStringSync();
-      // A `<name>.prefab_promoted.json` fixture stands in for the summary of
-      // hand-written `@Promoted` declarations.
-      final summary = File(p.join(fixtures.path, '$name.prefab_promoted.json'));
-      final actions = File(p.join(fixtures.path, '$name.prefab_actions.json'));
-      // Likewise `<name>.prefab_screens.json` for `@EntityScreen` classes.
-      final screens = File(p.join(fixtures.path, '$name.prefab_screens.json'));
+      // A `<name>.prefab_declarations.json` fixture stands in for the summary
+      // of hand-written declarations (`@Promoted`, `@EntityAction`,
+      // `@EntityScreen`).
+      final declarations =
+          File(p.join(fixtures.path, '$name.prefab_declarations.json'));
       String? actual;
       await testBuilder(
         prefabBuilder(BuilderOptions.empty),
         {
           ...prefabSources,
           'a|lib/$name.dart': source,
-          if (summary.existsSync())
-            'a|lib/$name.prefab_promoted.json': summary.readAsStringSync(),
-          if (actions.existsSync())
-            'a|lib/$name.prefab_actions.json': actions.readAsStringSync(),
-          if (screens.existsSync())
-            'a|lib/$name.prefab_screens.json': screens.readAsStringSync(),
+          if (declarations.existsSync())
+            'a|lib/$name.prefab_declarations.json':
+                declarations.readAsStringSync(),
         },
         outputs: {
           'a|lib/$name.prefab.dart': decodedMatches(predicate<String>((s) {

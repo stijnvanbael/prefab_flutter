@@ -1,10 +1,7 @@
-import 'dart:convert';
-
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:build/build.dart';
-import 'package:glob/glob.dart';
 
+import '../core/declarations.dart';
 import '../core/library_emitter.dart';
 import 'promoted_shape.dart';
 
@@ -40,52 +37,30 @@ bool _isPromoted(Annotation a) {
   return id == 'Promoted' && a.constructorName == null;
 }
 
-const promotedExtension = '.prefab_promoted.json';
+/// Reads the `@Promoted` declarations (the names of hand-written artifacts).
+class PromotedScanner extends DeclarationScanner<PromotedDeclaration> {
+  const PromotedScanner();
 
-/// Writes `<file>.prefab_promoted.json` for every file with `@Promoted`
-/// declarations; files without any get no output, so editing them changes no
-/// summary.
-class PromotedBuilder implements Builder {
-  @override
-  Map<String, List<String>> get buildExtensions => const {
-        '.dart': [promotedExtension],
-      };
+  static const instance = PromotedScanner();
 
   @override
-  Future<void> build(BuildStep buildStep) async {
-    final id = buildStep.inputId;
-    if (id.path.endsWith('.prefab.dart') || id.path.endsWith('.g.dart')) {
-      return;
-    }
-    final source = await buildStep.readAsString(id);
-    if (!source.contains('Promoted')) return;
-    final found = scanPromoted(source);
-    if (found.isEmpty) return;
-    final uri = id.uri.toString();
-    await buildStep.writeAsString(
-      id.changeExtension(promotedExtension),
-      jsonEncode([
-        for (final (name, shape) in found)
-          {'name': name, 'uri': uri, 'shape': shape},
-      ]),
-    );
-  }
-}
+  String get key => 'promoted';
 
-/// Reads the summaries of all `@Promoted` declarations of the package.
-Future<List<PromotedDeclaration>> readPromoted(BuildStep buildStep) async {
-  final result = <PromotedDeclaration>[];
-  final ids = await buildStep
-      .findAssets(Glob('lib/**$promotedExtension'))
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
-  for (final id in ids) {
-    final json = jsonDecode(await buildStep.readAsString(id)) as List;
-    for (final entry in json) {
-      result.add(PromotedDeclaration(
-          entry['name'] as String, entry['uri'] as String,
-          shape: (entry['shape'] as Map?)?.cast<String, Object?>()));
-    }
-  }
-  return result;
+  @override
+  String get marker => 'Promoted';
+
+  @override
+  List<PromotedDeclaration> scan(String source, String uri) => [
+        for (final (name, shape) in scanPromoted(source))
+          PromotedDeclaration(name, uri, shape: shape),
+      ];
+
+  @override
+  Map<String, Object?> toJson(PromotedDeclaration d) =>
+      {'name': d.name, 'uri': d.libraryUri, 'shape': d.shape};
+
+  @override
+  PromotedDeclaration fromJson(Map<String, dynamic> json) =>
+      PromotedDeclaration(json['name'] as String, json['uri'] as String,
+          shape: (json['shape'] as Map?)?.cast<String, Object?>());
 }

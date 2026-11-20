@@ -1,7 +1,7 @@
 ---
 id: PF-71
 title: Merge the declaration scanners into one builder
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-11-20 12:00'
 labels: []
@@ -18,8 +18,14 @@ Merge them into one declarations builder with one summary file per source file, 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 One builder scans each file once and writes one summary file for all declaration types
-- [ ] #2 A feature module adds a declaration type without editing `build.yaml` or the builder
-- [ ] #3 Existing promoted, action and screen behaviour, errors and snapshots are unchanged
-- [ ] #4 docs/developer_guide.md ("Adding a feature") describes how to add a declaration type
+- [x] #1 One builder scans each file once and writes one summary file for all declaration types
+- [x] #2 A feature module adds a declaration type without editing `build.yaml` or the builder
+- [x] #3 Existing promoted, action and screen behaviour, errors and snapshots are unchanged
+- [x] #4 docs/developer_guide.md ("Adding a feature") describes how to add a declaration type
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+`DeclarationScanner` and `DeclarationsBuilder` live in `lib/src/core/declarations.dart`; `Feature.declarationScanners` registers them. `@Promoted` got a small `PromotedFeature` (scanner only) so every declaration type is registered the same way. The example app needs no change (internal builder wiring; its `build.yaml` use is automatic). Nothing left undone.
+<!-- SECTION:NOTES:END -->

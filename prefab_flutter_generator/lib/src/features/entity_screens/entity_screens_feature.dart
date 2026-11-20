@@ -2,6 +2,7 @@ import 'package:source_gen/source_gen.dart';
 
 import '../../core/artifact.dart';
 import '../../core/code.dart';
+import '../../core/declarations.dart';
 import '../../core/entity_context.dart';
 import '../../core/feature.dart';
 import '../../core/library_emitter.dart';
@@ -28,6 +29,10 @@ class EntityScreensFeature extends Feature {
 
   @override
   String get name => _name;
+
+  @override
+  List<DeclarationScanner<Object>> get declarationScanners =>
+      const [ChildScreensScanner.instance];
 
   @override
   List<ArtifactFactory> get artifacts => const [BreadcrumbsArtifact.create];

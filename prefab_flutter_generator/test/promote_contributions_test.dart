@@ -96,19 +96,19 @@ void main() {
         {
           ...prefabSources,
           'a|lib/alpha.dart': _entity,
-          'a|lib/alpha_actions.prefab_actions.json':
-              '[{"name":"archive","uri":"package:a/alpha_actions.dart",'
+          'a|lib/alpha_actions.prefab_declarations.json':
+              '{"actions":[{"name":"archive","uri":"package:a/alpha_actions.dart",'
               '"entity":"Alpha","label":"Archive","icon":null,'
-              '"places":["detail","item"],"order":0}]',
-          'a|lib/alpha_live.prefab_screens.json':
-              '[{"entity":"Alpha","path":"live","title":"Live",'
+              '"places":["detail","item"],"order":0}]}',
+          'a|lib/alpha_live.prefab_declarations.json':
+              '{"screens":[{"entity":"Alpha","path":"live","title":"Live",'
               '"className":"AlphaLive","uri":"package:a/alpha_live.dart",'
               '"params":[{"name":"id","named":true,"required":true,'
-              '"type":"int"}]}]',
+              '"type":"int"}]}]}',
           if (promoted)
-            'a|lib/s.prefab_promoted.json':
-                '[{"name":"AlphaDetailScreen","uri":"package:a/s.dart"},'
-                '{"name":"AlphaListScreen","uri":"package:a/s.dart"}]',
+            'a|lib/s.prefab_declarations.json':
+                '{"promoted":[{"name":"AlphaDetailScreen","uri":"package:a/s.dart"},'
+                '{"name":"AlphaListScreen","uri":"package:a/s.dart"}]}',
         },
         generateFor: {'a|lib/alpha.dart'},
         outputs: {'a|lib/alpha.prefab.dart': anything},
