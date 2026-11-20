@@ -259,15 +259,58 @@ abstract class FormScreenArtifact extends Artifact {
     buffer.writeln('    } catch (e) {');
     buffer.writeln('      if (!mounted) return;');
     buffer.writeln('      setState(() => _saving = false);');
-    final known = manifest.formFields
-        .map((f) => dartStringLiteral(f.jsonName))
-        .join(', ');
+    final conflict = isEdit && manifest.hasVersion;
+    if (conflict) {
+      buffer.writeln('      final error = ref.read(prefabBackendProvider).parseError(e);');
+      buffer.writeln('      if (error.isConflict) {');
+      buffer.writeln('        await _resolveConflict();');
+      buffer.writeln('        return;');
+      buffer.writeln('      }');
+    }
     buffer.writeln('      _formErrors.setError(');
-    buffer.writeln('        ref.read(prefabBackendProvider).parseError(e),');
-    buffer.writeln('        const {$known},');
+    buffer.writeln(conflict
+        ? '        error,'
+        : '        ref.read(prefabBackendProvider).parseError(e),');
+    buffer.writeln('        const {$_knownFields},');
     buffer.writeln('      );');
     buffer.writeln('    } finally {');
     buffer.writeln('      subscription.close();');
+    buffer.writeln('    }');
+    buffer.writeln('  }');
+    if (conflict) {
+      buffer.writeln();
+      _writeResolveConflict(manifest, buffer);
+    }
+  }
+
+  String get _knownFields => manifest.formFields
+      .map((f) => dartStringLiteral(f.jsonName))
+      .join(', ');
+
+  /// The edit conflict flow (`@Version`): the server answered 409, so ask
+  /// whether to reload the latest version. Reloading refreshes the detail
+  /// provider and refills the form (the input is discarded).
+  void _writeResolveConflict(EntityManifest manifest, StringBuffer buffer) {
+    final detailArg = manifest.hasParent
+        ? '(${manifest.detailKeyExpr('widget.id', (a) => 'widget.${a.paramName}')})'
+        : '(widget.id)';
+    buffer.writeln('  Future<void> _resolveConflict() async {');
+    buffer.writeln('    if (!await showPrefabConflictDialog(context)) return;');
+    buffer.writeln('    if (!mounted) return;');
+    buffer.writeln('    try {');
+    buffer.writeln('      final latest = await ref.refresh(');
+    buffer.writeln(
+        '        ${manifest.entityNameLower}DetailProvider$detailArg.future,');
+    buffer.writeln('      );');
+    buffer.writeln('      if (!mounted) return;');
+    buffer.writeln('      _formErrors.clear();');
+    buffer.writeln('      setState(() => _prefillControllers(latest));');
+    buffer.writeln('    } catch (e) {');
+    buffer.writeln('      if (!mounted) return;');
+    buffer.writeln('      _formErrors.setError(');
+    buffer.writeln('        ref.read(prefabBackendProvider).parseError(e),');
+    buffer.writeln('        const {$_knownFields},');
+    buffer.writeln('      );');
     buffer.writeln('    }');
     buffer.writeln('  }');
   }

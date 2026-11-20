@@ -4,6 +4,7 @@ import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
 Map<String, dynamic> _fromJson(Map<String, dynamic> j) => j;
 
 void main() {
+  versionTransportTests();
   group('PrefabBackend (Prefab preset)', () {
     const backend = PrefabBackend();
 
@@ -99,5 +100,25 @@ void main() {
       pageSize: 1,
     );
     expect(page.totalItems, 9);
+  });
+}
+
+void versionTransportTests() {
+  group('PrefabBackend version transport (PF-52)', () {
+    test('body: the body is unchanged and there are no options', () {
+      const backend = PrefabBackend();
+      final json = {'id': 1, 'version': 3};
+      expect(backend.updateBody(json, versionKey: 'version'), json);
+      expect(backend.updateOptions(3), isNull);
+    });
+
+    test('ifMatch: the version moves to the If-Match header', () {
+      const backend =
+          PrefabBackend(versionTransport: PrefabVersionTransport.ifMatch);
+      expect(backend.updateBody({'id': 1, 'version': 3}, versionKey: 'version'),
+          {'id': 1});
+      expect(backend.updateOptions(3)!.headers, {'If-Match': '"3"'});
+      expect(backend.updateOptions(null), isNull);
+    });
   });
 }

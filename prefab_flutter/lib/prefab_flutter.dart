@@ -14,6 +14,7 @@ export 'src/annotations/id.dart';
 export 'src/annotations/parent.dart';
 export 'src/annotations/promoted.dart';
 export 'src/annotations/update.dart';
+export 'src/annotations/version.dart';
 export 'src/enums/field_widget.dart';
 export 'src/enums/form_mode.dart';
 export 'src/enums/place.dart';

@@ -13,6 +13,16 @@ enum PrefabSortFormat {
   commaDirection,
 }
 
+/// How an update carries the version of an optimistically locked entity
+/// (`@Version`).
+enum PrefabVersionTransport {
+  /// As the version field of the JSON body (the entity's own `toJson`).
+  body,
+
+  /// As the `If-Match` header; the version field is left out of the body.
+  ifMatch,
+}
+
 /// Maps the requests of generated API clients onto a REST backend and the
 /// backend's responses back onto Prefab types: the list query parameters, the
 /// page response shape, the sort encoding and the id encoding in URLs.
@@ -34,6 +44,10 @@ enum PrefabSortFormat {
 /// `{ "detail": "...", "errors": [{ "field": "price", "message": "..." }] }`,
 /// the Simple preset `{ "message": "...", "errors": { "price": "..." } }`;
 /// both accept both shapes of `errors`.
+///
+/// Updates of an entity with a `@Version` send the version in the body (the
+/// Prefab preset, [PrefabVersionTransport.body]) or in the `If-Match` header
+/// ([versionTransport]); a stale version is answered with `409 Conflict`.
 ///
 /// Both accept a bare JSON array as a single page. Pass other names to the
 /// constructor, or subclass and override [queryParameters], [parsePage],
@@ -83,8 +97,12 @@ class PrefabBackend {
   /// Key of the text in an entry of the [errorsKey] list.
   final String errorFieldMessageKey;
 
+  /// Where updates carry the version of a `@Version` entity.
+  final PrefabVersionTransport versionTransport;
+
   /// The Prefab preset (see the class documentation).
   const PrefabBackend({
+    this.versionTransport = PrefabVersionTransport.body,
     this.searchParam = 'q',
     this.sortParam = 'sort',
     this.sortFormat = PrefabSortFormat.commaDirection,
@@ -102,6 +120,7 @@ class PrefabBackend {
 
   /// The Simple preset: `sort=-field` and `{ "items": [...], "total": n }`.
   const PrefabBackend.simple({
+    this.versionTransport = PrefabVersionTransport.body,
     this.searchParam = 'q',
     this.sortParam = 'sort',
     this.sortFormat = PrefabSortFormat.minusPrefix,
@@ -144,6 +163,28 @@ class PrefabBackend {
       case PrefabSortFormat.commaDirection:
         return '$field,${descending ? 'desc' : 'asc'}';
     }
+  }
+
+  /// The body of an update: [json] as it is, or without [versionKey] when the
+  /// version travels in a header.
+  Map<String, dynamic> updateBody(
+    Map<String, dynamic> json, {
+    String? versionKey,
+  }) {
+    if (versionKey == null ||
+        versionTransport != PrefabVersionTransport.ifMatch) {
+      return json;
+    }
+    return {...json}..remove(versionKey);
+  }
+
+  /// The request options of an update: the `If-Match` header carrying
+  /// [version] when the version travels in a header, otherwise `null`.
+  Options? updateOptions(Object? version) {
+    if (version == null || versionTransport != PrefabVersionTransport.ifMatch) {
+      return null;
+    }
+    return Options(headers: {'If-Match': '"$version"'});
   }
 
   /// Encodes an entity id as one URL path segment.

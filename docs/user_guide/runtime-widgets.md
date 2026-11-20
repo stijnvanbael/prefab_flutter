@@ -7,6 +7,7 @@
 | Widget / class | Used by generated code | Purpose |
 |---|---|---|
 | `showPrefabDeleteDialog` / `PrefabDeleteDialog<T>` | yes (detail screen) | Delete confirmation; returns `true` when the item was deleted |
+| `showPrefabConflictDialog` / `PrefabConflictDialog` | yes (edit screen of a `@Version` entity) | "Changed by someone else" dialog after a 409; returns `true` to reload the latest version |
 | `PrefabSearchBar` | yes (list screen) | Search text field with an `onChanged` callback |
 | `PrefabSortMenu<T>` / `PrefabSortOption<T>` | yes (list screen) | Popup menu to choose a sort option |
 | `PrefabBreadcrumbBar` / `PrefabBreadcrumb` | yes (list and detail screens of entities with two or more ancestors) | Single-line breadcrumb row for `AppBar.bottom` with tappable ancestor steps |

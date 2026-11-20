@@ -15,6 +15,8 @@ final _updateChecker = TypeChecker.typeNamed(Update, inPackage: 'prefab_flutter'
 final _deleteChecker = TypeChecker.typeNamed(Delete, inPackage: 'prefab_flutter');
 final _fieldChecker = TypeChecker.typeNamed(Field, inPackage: 'prefab_flutter');
 final _idChecker = TypeChecker.typeNamed(Id, inPackage: 'prefab_flutter');
+final _versionChecker =
+    TypeChecker.typeNamed(Version, inPackage: 'prefab_flutter');
 final _entityChecker = TypeChecker.typeNamed(Entity, inPackage: 'prefab_flutter');
 final _parentChecker = TypeChecker.typeNamed(Parent, inPackage: 'prefab_flutter');
 
@@ -284,6 +286,17 @@ class EntityManifest {
   /// Whether the identifier field is nullable (e.g. `int? id`).
   final bool idIsNullable;
 
+  /// Name of the version field for optimistic locking (the [@Version] field,
+  /// or `version`), or `null` when the entity has none.
+  final String? versionFieldName;
+
+  /// The name the server knows the version field by (see
+  /// [FieldManifest.jsonName]).
+  final String? versionJsonName;
+
+  /// Whether the entity is optimistically locked.
+  bool get hasVersion => versionFieldName != null;
+
   /// Dart expression suffix that makes an id access non-null (`!` or empty).
   String get idBang => idIsNullable ? '!' : '';
 
@@ -319,6 +332,8 @@ class EntityManifest {
     this.idFieldName = 'id',
     this.idType = 'String',
     this.idIsNullable = false,
+    this.versionFieldName,
+    this.versionJsonName,
     this.parentEntityName,
     this.parentPath,
     this.parentTitle,
@@ -484,12 +499,31 @@ class EntityManifest {
       );
     }
 
+    final versionFields =
+        instanceFields.where(_versionChecker.hasAnnotationOf).toList();
+    if (versionFields.length > 1) {
+      throw InvalidGenerationSourceError(
+        'Entity "${element.name}" has more than one @Version field.',
+        element: element,
+      );
+    }
+    final versionField = versionFields.isNotEmpty
+        ? versionFields.first
+        : instanceFields.where((f) => f.name == 'version').firstOrNull;
+    if (versionField != null && versionField == idField) {
+      throw InvalidGenerationSourceError(
+        'The field "${versionField.name}" of "${element.name}" cannot be both '
+        '@Id and @Version.',
+        element: versionField,
+      );
+    }
+
     final fieldRename = _readFieldRename(element);
     final fields = <FieldManifest>[];
     ClassElement? parentElement;
     String? parentPath, parentTitle, parentIdType, parentParamName;
     for (final field in instanceFields) {
-      if (field == idField) continue;
+      if (field == idField || field == versionField) continue;
 
       final annotation = _fieldChecker.firstAnnotationOf(field);
       if (annotation == null) continue;
@@ -613,6 +647,9 @@ class EntityManifest {
       idType: idType,
       idIsNullable:
           idField.type.nullabilitySuffix == NullabilitySuffix.question,
+      versionFieldName: versionField?.name,
+      versionJsonName:
+          versionField == null ? null : _readJsonName(versionField, fieldRename),
       paged: paged,
       parentEntityName: parentElement?.name,
       parentPath: parentPath,
