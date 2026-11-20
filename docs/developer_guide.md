@@ -36,6 +36,7 @@ prefab_flutter_generator/
     extension_point.dart            #   ExtensionPoint (ordered, optionally single-valued)
     feature.dart                    #   Feature (feature module contract)
     library_emitter.dart            #   LibraryEmitter: assembles a .prefab.dart
+    format.dart                     #   formatGenerated: dart_style step
     artifact_generator.dart         #   ArtifactGenerator: source_gen wrapper
     field_registries.dart           #   FieldEmitter, ValidatorEmitter, FieldDisplay + registries
   lib/src/features/                 # feature modules, one directory each
@@ -83,6 +84,11 @@ contribute to, and an import collector. There is no `code_builder`.
    (`LibraryEmitter.promoted`); the skipped artifact is replaced by an import
    and a re-export of the hand-written declaration. This is not yet reachable
    from annotations (promotion is planned in PF-42).
+   `ArtifactGenerator` then formats the assembled library with `dart_style`
+   (`lib/src/core/format.dart`), so fragments need not be indented exactly; the
+   builders in `lib/builder.dart` switch `source_gen`'s own formatting off so
+   there is one formatter. A fragment that is not valid Dart fails the build
+   with the source file name and the unformatted output.
 5. **Extension points.** An `ExtensionPoint` collects `Code` contributions from
    features, rendered by `order`, then feature name, so the registration
    order of features never matters. A single-valued point

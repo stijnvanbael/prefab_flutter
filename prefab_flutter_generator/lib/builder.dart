@@ -9,10 +9,15 @@ import 'src/generators/prefab_generator.dart';
 import 'src/generators/provider_generator.dart';
 import 'src/generators/routes_generator.dart';
 
+/// The generators format their own output (`ArtifactGenerator`, with a pinned
+/// `dart_style`), so the builder must not format it a second time.
+String _alreadyFormatted(String code) => code;
+
 /// Generates a read-only `{Entity}DetailScreen` [ConsumerWidget].
 Builder detailScreenBuilder(BuilderOptions options) => LibraryBuilder(
       DetailScreenGenerator(),
       generatedExtension: '.detail_screen.dart',
+      formatOutput: _alreadyFormatted,
     );
 
 /// Generates a `{Entity}ListScreen` [ConsumerWidget] with search, sort and
@@ -20,30 +25,35 @@ Builder detailScreenBuilder(BuilderOptions options) => LibraryBuilder(
 Builder listScreenBuilder(BuilderOptions options) => LibraryBuilder(
       ListScreenGenerator(),
       generatedExtension: '.list_screen.dart',
+      formatOutput: _alreadyFormatted,
     );
 
 /// Generates `{Entity}CreateScreen` and `{Entity}EditScreen` [ConsumerWidget]s.
 Builder formScreenBuilder(BuilderOptions options) => LibraryBuilder(
       FormScreenGenerator(),
       generatedExtension: '.form_screen.dart',
+      formatOutput: _alreadyFormatted,
     );
 
 /// Generates Riverpod providers (detail + list notifier) for an entity.
 Builder providerBuilder(BuilderOptions options) => LibraryBuilder(
       ProviderGenerator(),
       generatedExtension: '.provider.dart',
+      formatOutput: _alreadyFormatted,
     );
 
 /// Generates a Dio-backed API client for an entity.
 Builder apiClientBuilder(BuilderOptions options) => LibraryBuilder(
       ApiClientGenerator(),
       generatedExtension: '.api_client.dart',
+      formatOutput: _alreadyFormatted,
     );
 
 /// Generates GoRouter `TypedGoRoute` declarations and the per-file `$<file>Routes` list.
 Builder routesBuilder(BuilderOptions options) => LibraryBuilder(
       RoutesGenerator(),
       generatedExtension: '.routes.dart',
+      formatOutput: _alreadyFormatted,
     );
 
 /// Generates all code for an annotated source file into one `.prefab.dart`
@@ -54,4 +64,5 @@ Builder routesBuilder(BuilderOptions options) => LibraryBuilder(
 Builder prefabBuilder(BuilderOptions options) => LibraryBuilder(
       PrefabGenerator(),
       generatedExtension: '.prefab.dart',
+      formatOutput: _alreadyFormatted,
     );

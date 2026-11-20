@@ -3,6 +3,7 @@ import 'package:source_gen/source_gen.dart';
 
 import 'entity_context.dart';
 import 'feature.dart';
+import 'format.dart';
 import 'library_emitter.dart';
 
 /// A `source_gen` [Generator] that renders the artifacts of [artifactFactories]
@@ -27,10 +28,11 @@ class ArtifactGenerator extends Generator {
     final sourceFileName = buildStep.inputId.path.split('/').last;
     final entities = EntityContext.readAll(library, sourceFileName);
     if (entities.isEmpty) return '';
-    return LibraryEmitter(
+    final source = LibraryEmitter(
       artifactFactories: artifactFactories,
       features: features,
     ).emit(entities, header: banner(name));
+    return formatGenerated(source, sourceFileName);
   }
 
   /// The "GENERATED CODE" comment at the top of a generated file, ending in a

@@ -9,6 +9,7 @@ environment:
 dependencies:
   analyzer: '>=6.0.0 <8.0.0'
   build: ^2.4.0
+  dart_style: '>=2.3.6 <2.3.7'
   prefab_flutter: ^0.1.0
   source_gen: ^1.5.0
 
