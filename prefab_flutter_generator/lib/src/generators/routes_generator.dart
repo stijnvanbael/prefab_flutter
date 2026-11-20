@@ -2,6 +2,7 @@ import '../core/artifact.dart';
 import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
+import '../core/extension_point.dart';
 import '../manifest/entity_manifest.dart';
 
 /// Generates GoRouter [GoRoute] declarations for every class annotated with
@@ -50,6 +51,12 @@ class RoutesArtifact extends Artifact {
   /// The first entity of the library.
   final EntityContext entity;
 
+  /// Hand-written screens below the detail route of an entity (one value per
+  /// screen; the template places them by entity name). Orders in use: 10
+  /// entity screens.
+  final detailChildRoutes =
+      ValuePoint<DetailChildRoute>('routes.detailChildRoutes');
+
   static Iterable<Artifact> create(EntityContext entity) =>
       entity.manifest == entity.libraryManifests.first
           ? [RoutesArtifact(entity)]
@@ -66,7 +73,10 @@ class RoutesArtifact extends Artifact {
   Code emit() {
     final buffer = StringBuffer();
     _writeRoutesList(entity.libraryManifests, primaryName, buffer);
-    return Code(buffer.toString().trim(), imports: {Libs.goRouter});
+    return Code(buffer.toString().trim(), imports: {
+      Libs.goRouter,
+      for (final r in detailChildRoutes.values) r.libraryUri,
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -166,7 +176,9 @@ class RoutesArtifact extends Artifact {
     buffer.writeln(
         "        builder: (context, state) => ${entity}DetailScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}),");
 
-    final hasSubRoutes = manifest.hasUpdate || children.isNotEmpty;
+    final hasSubRoutes = manifest.hasUpdate ||
+        children.isNotEmpty ||
+        _childRoutes(manifest).isNotEmpty;
     if (hasSubRoutes) {
       buffer.writeln('$i      routes: [');
       if (manifest.hasUpdate) {
@@ -176,6 +188,7 @@ class RoutesArtifact extends Artifact {
             "          builder: (context, state) => ${entity}EditScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}),");
         buffer.writeln('$i        ),');
       }
+      _writeChildScreenRoutes(manifest, idParam, i, buffer);
       // Nested child entity routes
       for (final child in children) {
         _writeNestedEntityRoute(
@@ -239,7 +252,9 @@ class RoutesArtifact extends Artifact {
     buffer.writeln(
         "        builder: (context, state) => ${entity}DetailScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}, $ancestorArgs),");
 
-    final hasSubRoutes = manifest.hasUpdate || children.isNotEmpty;
+    final hasSubRoutes = manifest.hasUpdate ||
+        children.isNotEmpty ||
+        _childRoutes(manifest).isNotEmpty;
     if (hasSubRoutes) {
       buffer.writeln('$i      routes: [');
       if (manifest.hasUpdate) {
@@ -249,6 +264,7 @@ class RoutesArtifact extends Artifact {
             "          builder: (context, state) => ${entity}EditScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}, $ancestorArgs),");
         buffer.writeln('$i        ),');
       }
+      _writeChildScreenRoutes(manifest, idParam, i, buffer);
       for (final child in children) {
         _writeNestedEntityRoute(
           child,
@@ -266,5 +282,45 @@ class RoutesArtifact extends Artifact {
     buffer.writeln('$i),');
   }
 
+  /// Writes the routes of the hand-written screens of [manifest], each below
+  /// the detail route whose id parameter is [idParam].
+  void _writeChildScreenRoutes(
+      EntityManifest manifest, String idParam, String i, StringBuffer buffer) {
+    for (final r in _childRoutes(manifest)) {
+      final args = [
+        "id: ${manifest.parseId("state.pathParameters['$idParam']!")}",
+        for (final a in manifest.ancestors)
+          "${a.paramName}: ${a.parse("state.pathParameters['${a.routeParam}']!")}",
+      ].join(', ');
+      buffer.writeln('$i        GoRoute(');
+      buffer.writeln("$i          path: '${r.path}',");
+      buffer.writeln(
+          '$i          builder: (context, state) => ${r.className}($args),');
+      buffer.writeln('$i        ),');
+    }
+  }
+
+  List<DetailChildRoute> _childRoutes(EntityManifest manifest) => [
+        for (final r in detailChildRoutes.values)
+          if (r.entityName == manifest.entityName) r,
+      ];
+
   static String _i(int level) => '  ' * level;
+}
+
+/// A hand-written screen (`@EntityScreen`) below the detail route of an
+/// entity.
+class DetailChildRoute {
+  const DetailChildRoute(
+      {required this.entityName,
+      required this.path,
+      required this.className,
+      required this.libraryUri});
+
+  final String entityName;
+  final String path;
+  final String className;
+
+  /// Library the generated routes import to reach [className].
+  final String libraryUri;
 }

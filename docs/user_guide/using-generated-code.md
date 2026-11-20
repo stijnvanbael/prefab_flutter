@@ -35,6 +35,7 @@ Collection names are plural (`productsProvider`), single-entity names singular.
 | | `setPageSize` | `Future<void> setPageSize(int pageSize)` |
 | | `create`, `updateEntity`, `delete` | `Future<void> …(Product product)`; reload the list and invalidate the detail provider |
 | Screens | `ProductListScreen`, `ProductDetailScreen`, `ProductCreateScreen`, `ProductEditScreen` | `const` constructors with `{super.key}`; the detail and edit screens also take `required int id` |
+| Breadcrumbs | `productBreadcrumbs` | `PrefabBreadcrumbBar productBreadcrumbs(BuildContext, WidgetRef, {required String title, required int id})`, only for an entity with an [`@EntityScreen`](routes.md#hand-written-screens-below-an-entity); nested entities add the ancestor ids |
 | Routes | `$productRoutes` | `List<RouteBase> get $productRoutes` (`$<file>Routes`) |
 
 The id type is the entity's id type (`int` or `String`).

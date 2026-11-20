@@ -4,6 +4,7 @@ import 'package:source_gen/source_gen.dart';
 
 import '../features/actions/action_scanner.dart';
 import '../manifest/entity_manifest.dart';
+import '../features/entity_screens/child_screen.dart';
 import '../manifest/entity_paths.dart';
 import 'artifact.dart';
 
@@ -19,6 +20,7 @@ class EntityContext {
     required this.element,
     required this.libraryManifests,
     this.actions = const [],
+    this.childScreens = const [],
   });
 
   final EntityManifest manifest;
@@ -36,11 +38,15 @@ class EntityContext {
   /// The hand-written `@EntityAction` functions of this entity, in the order
   /// they were found (see the `actions` feature).
   final List<ActionDeclaration> actions;
+  /// The hand-written `@EntityScreen` classes of this entity, found anywhere
+  /// in the package.
+  final List<ChildScreen> childScreens;
 
   /// Reads every `@View` class of [library] in declaration order.
   static List<EntityContext> readAll(
       LibraryReader library, String sourceFileName,
-      {List<ActionDeclaration> actions = const []}) {
+      {List<ActionDeclaration> actions = const [],
+      List<ChildScreen> childScreens = const []}) {
     final annotated = library.annotatedWith(_viewChecker).toList();
     final classes = <(ClassElement, ConstantReader)>[];
     for (final a in annotated) {
@@ -69,6 +75,10 @@ class EntityContext {
           actions: [
             for (final a in actions)
               if (a.entity == manifests[i].entityName) a,
+          ],
+          childScreens: [
+            for (final s in childScreens)
+              if (s.entity == manifests[i].entityName) s,
           ],
         ),
     ];

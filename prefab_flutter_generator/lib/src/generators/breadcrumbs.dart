@@ -11,7 +11,21 @@ String breadcrumbBottom(EntityManifest manifest, String indent) {
   final lines = <String>[
     'bottom: PrefabBreadcrumbBar(',
     '  items: [',
+    ...ancestorBreadcrumbItems(manifest).map((l) => '  $l'),
   ];
+  lines
+    ..add("    const PrefabBreadcrumb(label: '${escapeDartString(manifest.title)}'),")
+    ..add('  ],')
+    ..add('),');
+  return lines.map((l) => '$indent$l').join('\n');
+}
+
+/// The `PrefabBreadcrumb(...)` entries for every ancestor of [manifest], one
+/// line each, outermost first. Each is labelled with the first visible field
+/// of the ancestor (read from its detail provider) and goes to its detail
+/// screen when tapped.
+List<String> ancestorBreadcrumbItems(EntityManifest manifest) {
+  final lines = <String>[];
   for (var i = 0; i < manifest.ancestors.length; i++) {
     final a = manifest.ancestors[i];
     // Detail provider key: (id, ids of the ancestors above it).
@@ -32,11 +46,7 @@ String breadcrumbBottom(EntityManifest manifest, String indent) {
       ..add("      onTap: () => context.go('${EntityPaths.ancestorPath(manifest, i)}'),")
       ..add('    ),');
   }
-  lines
-    ..add("    const PrefabBreadcrumb(label: '${_escape(manifest.title)}'),")
-    ..add('  ],')
-    ..add('),');
-  return lines.map((l) => '$indent$l').join('\n');
+  return lines;
 }
 
 /// Import URIs for the generated code of ancestors declared in other
@@ -49,7 +59,7 @@ Set<String> ancestorImports(Iterable<EntityManifest> manifests) => {
               a.libraryUri.replaceFirst(RegExp(r'\.dart$'), '.prefab.dart'),
     };
 
-String _escape(String value) => value
+String escapeDartString(String value) => value
     .replaceAll(r'\', r'\\')
     .replaceAll("'", r"\'")
     .replaceAll(r'$', r'\$');
