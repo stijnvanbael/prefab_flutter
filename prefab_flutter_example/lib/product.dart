@@ -57,6 +57,7 @@ class Product {
   @Field(
     searchable: true,
     sortable: true,
+    filterable: true,
     form: FormOptions(validators: [Validator.required]),
   )
   final String name;
@@ -68,11 +69,13 @@ class Product {
   )
   final double price;
 
-  @Field()
+  /// A bool filter: Yes / No chips above the list.
+  @Field(filterable: true)
   final bool inStock;
 
-  /// Optional enum field: dropdown with an empty option.
-  @Field(sortable: true)
+  /// Optional enum field: dropdown with an empty option in the form, choice
+  /// chips in the list filters.
+  @Field(sortable: true, filterable: true)
   final ProductCategory? category;
 
   /// Multi-line text with a length validator, shown on the detail screen and
@@ -87,7 +90,7 @@ class Product {
   final String? description;
 
   /// Optional date, edited with a date picker.
-  @Field(label: 'Released on')
+  @Field(label: 'Released on', filterable: true)
   final DateTime? releasedOn;
 
   /// Create-only (PF-53): set in the create form, absent from the edit form and

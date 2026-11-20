@@ -44,7 +44,7 @@ class FormOptions {
 /// Marks a field of an [Entity] for use in the generated list, detail and
 /// form screens.
 ///
-/// Display and listing settings (label, places, searching, sorting) live
+/// Display and listing settings (label, places, searching, sorting, filtering) live
 /// directly on [Field]; form-only settings live in [form].
 ///
 /// Example:
@@ -63,6 +63,13 @@ class Field {
 
   /// When `true` the generated list screen offers this field in its sort menu.
   final bool sortable;
+
+  /// When `true` the generated list screen shows a filter control for this
+  /// field, chosen from its type (enum: chips, `bool`: Yes / No chips,
+  /// `DateTime`: date range, anything else: a text field with suggestions when
+  /// the backend has an autocomplete endpoint). The value is sent as a query
+  /// parameter named by the field's JSON name.
+  final bool filterable;
 
   /// Form-only settings (widget and validators).
   final FormOptions form;
@@ -89,6 +96,7 @@ class Field {
     this.on,
     this.searchable = false,
     this.sortable = false,
+    this.filterable = false,
     this.form = const FormOptions(),
     this.displayBuilder,
     this.readOnly = false,

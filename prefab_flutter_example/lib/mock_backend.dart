@@ -5,10 +5,10 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
 
-/// The backend adapter the example app uses: the Prefab preset, which is also
-/// the default. Switch to `PrefabBackend.simple()` (and change [MockBackendAdapter]
+/// The backend adapter the example app uses: the Prefab preset plus an
+/// autocomplete endpoint for the text filters. Switch to `PrefabBackend.simple()` (and change [MockBackendAdapter]
 /// to answer `{items, total}` and `sort=-field`) for a plain backend.
-const exampleBackend = PrefabBackend();
+const exampleBackend = PrefabBackend(autocompletePath: 'autocomplete');
 
 /// An in-memory REST backend that implements the contract expected by the
 /// generated API clients (`/products`, `/products/{productId}/reviews` and
@@ -80,6 +80,18 @@ class MockBackendAdapter implements HttpClientAdapter {
 
     switch (options.method) {
       case 'GET':
+        if (id == 'autocomplete') {
+          // Suggestions for a text filter: the distinct values of `field`
+          // that contain `q`.
+          final field = '${options.queryParameters['field']}';
+          final q = '${options.queryParameters['q'] ?? ''}'.toLowerCase();
+          return _json(200, {
+            for (final r in rows)
+              if (r[field] is String &&
+                  (r[field] as String).toLowerCase().contains(q))
+                r[field] as String,
+          }.toList());
+        }
         if (id == null) return _json(200, _list(rows, options.queryParameters));
         final row = _find(rows, id);
         return row == null ? _json(404, {}) : _json(200, row);
@@ -217,6 +229,30 @@ class MockBackendAdapter implements HttpClientAdapter {
           .where((r) => r.values
               .any((v) => v is String && v.toLowerCase().contains(q)))
           .toList();
+    }
+    // Filters: `field=value` for text, enum and bool values, and
+    // `fieldFrom` / `fieldTo` (yyyy-MM-dd) for dates.
+    for (final entry in query.entries) {
+      final key = entry.key;
+      if (const {'q', 'sort', 'page', 'size', 'field'}.contains(key)) continue;
+      final value = '${entry.value}';
+      if (key.endsWith('From') || key.endsWith('To')) {
+        final isFrom = key.endsWith('From');
+        final field = key.substring(0, key.length - (isFrom ? 4 : 2));
+        result = result.where((r) {
+          final date = r[field] as String?;
+          if (date == null) return false;
+          final day = date.substring(0, 10);
+          return isFrom ? day.compareTo(value) >= 0 : day.compareTo(value) <= 0;
+        }).toList();
+      } else {
+        result = result.where((r) {
+          final v = r[key];
+          return v is String
+              ? v.toLowerCase().contains(value.toLowerCase())
+              : '$v' == value;
+        }).toList();
+      }
     }
     final sort = query['sort'] as String?;
     if (sort != null) {

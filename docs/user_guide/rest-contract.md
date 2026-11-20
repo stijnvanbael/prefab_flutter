@@ -113,6 +113,35 @@ when loading the item answers 404, instead of the raw error. Hand-written
 errors widgets `PrefabFormErrors`, `PrefabFieldError` and
 `PrefabFormErrorBanner` are public for hand-written forms.
 
+### Filters
+
+Fields marked `@Field(filterable: true)` get a filter control above the list,
+chosen from the field type:
+
+| Field type | Control | Query parameter(s) |
+|---|---|---|
+| enum | `PrefabEnumFilter`: choice chips, one per value (the value's `name`) | `category=office` |
+| `bool` | `PrefabBoolFilter`: Yes / No chips | `inStock=true` |
+| `DateTime` | `PrefabDateRangeFilter`: date range picker | `releasedOnFrom=2024-01-01`, `releasedOnTo=2024-12-31` (inclusive, either may be left out) |
+| anything else | `PrefabTextFilter`: text field, applied after a 300 ms pause | `name=key` |
+
+Tapping a selected chip clears the filter. The parameter name is the JSON name
+of the field (as for sorting). The list notifier keeps the values next to
+search and sort (`filters`, `setFilter(field, value)`, `clearFilters()`); a
+change returns to the first page and reloads. Prefab and Simple presets send
+the same names; `PrefabBackend(filterPrefix: 'filter.', filterFromSuffix: ...,
+filterToSuffix: ...)` renames them, and `encodeFilters` can be overridden.
+Hand-written code can set a filter through the notifier too, or pass `filters:`
+to the API client's `list`.
+
+**Autocomplete.** `String` filters offer suggestions only when the adapter
+defines the endpoint: `PrefabBackend(autocompletePath: 'autocomplete')` makes
+the client call `GET {collection}/autocomplete?field=name&q=ke` (the field
+parameter is `autocompleteFieldParam`) and read a JSON array of strings (or an
+object with the array under the items key). Without `autocompletePath`
+(the default) the text filter has no suggestions. Enum filters use the enum's
+`values` from the entity's library; `@JsonValue` names are not applied.
+
 ### Choosing a preset or writing a custom adapter
 
 Every generated API client reads `prefabBackendProvider`; it defaults to the
@@ -142,8 +171,8 @@ For anything the constructor parameters cannot express, subclass
 `PrefabBackend` and override `queryParameters` (request side), `parsePage`
 (response side) or `encodeId` (id in the URL).
 
-Filters (PF-55) will extend the adapter. Error responses are parsed by
-`parseError`, see below.
+Error responses are parsed by `parseError`, see above; filters and
+autocomplete are described under [Filters](#filters).
 
 ### Migrating from `PrefabListAdapter`
 

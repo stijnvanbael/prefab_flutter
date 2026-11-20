@@ -686,6 +686,7 @@ class EntityManifest {
         // peek: tolerate older annotation sources without these flags.
         searchable: reader.peek('searchable')?.boolValue ?? false,
         sortable: reader.peek('sortable')?.boolValue ?? false,
+        filterable: reader.peek('filterable')?.boolValue ?? false,
         jsonName: _readJsonName(field, fieldRename),
     );
   }

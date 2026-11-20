@@ -61,6 +61,9 @@ class FieldManifest {
   /// When `true` the field is offered in the list sort menu ([@Field.sortable]).
   final bool sortable;
 
+  /// When `true` the list screen shows a filter control ([@Field.filterable]).
+  final bool filterable;
+
   /// The name the server knows the field by: the `@JsonKey(name:)` value, the
   /// class's `@JsonSerializable(fieldRename:)` applied to [name], or [name].
   /// Used as the `sort` value of list requests.
@@ -89,6 +92,7 @@ class FieldManifest {
     this.formModes,
     this.searchable = false,
     this.sortable = false,
+    this.filterable = false,
     String? jsonName,
   }) : jsonName = jsonName ?? name;
 
