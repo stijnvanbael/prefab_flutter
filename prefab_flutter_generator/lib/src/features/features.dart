@@ -1,5 +1,6 @@
 import '../core/feature.dart';
 import 'list_query/list_query_feature.dart';
+import 'nullable_fields/nullable_fields_feature.dart';
 import 'validators/validators_feature.dart';
 
 /// Every feature module, alphabetical by directory name. Add one line when
@@ -7,5 +8,6 @@ import 'validators/validators_feature.dart';
 /// their `order`, then feature name).
 const registeredFeatures = <Feature>[
   ListQueryFeature(),
+  NullableFieldsFeature(),
   ValidatorsFeature(),
 ];

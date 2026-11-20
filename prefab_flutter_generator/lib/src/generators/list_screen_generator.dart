@@ -42,6 +42,10 @@ class ListScreenArtifact extends Artifact {
   /// Widgets in the body column below the list (indent 10). Orders: 10 paging.
   final belowList = ExtensionPoint('listScreen.belowList');
 
+  /// How a field value is shown in a list tile. Orders in use: 10 nullable
+  /// fields.
+  final fieldValue = ValuePoint<FieldValue>('listScreen.fieldValue');
+
   /// Dart expression reading the list provider, e.g. `postsProvider(postId)`.
   String get providerRef {
     final m = entity.manifest;
@@ -174,7 +178,7 @@ class ListScreenArtifact extends Artifact {
     const slotNames = ['title', 'subtitle', 'trailing'];
     for (var i = 0; i < slots.length; i++) {
       final f = slots[i];
-      final value = fieldDisplays.resolve(f).text(f, entityLower);
+      final value = fieldValueText(fieldValue, f, entityLower);
       buffer.writeln('              ${slotNames[i]}: Text($value),');
     }
     buffer.writeln("              onTap: () => context.push('$itemPath'),");

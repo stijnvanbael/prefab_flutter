@@ -187,12 +187,14 @@ Extension points that exist today (all contributions are at column 0):
 |---|---|---|---|
 | list screen | `buildStatements` (indent 4) | `Code` | 10 list query |
 | list screen | `appBarActions`, `aboveList`, `belowList` (indent 10) | `Code` | 10 list query |
+| list screen, detail screen | `fieldValue` | `ValuePoint<FieldValue>` | 10 nullable fields |
 | list notifier | `state`, `onBuild`, `methods` (indent 2, 4, 2) | `Code` | 10 list query |
 | list notifier | `fetchArguments` | `ValuePoint<NamedArgument>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
 | API client | `listQueryParameters` | `ValuePoint<QueryParameter>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
 
 The other points sketched in decision-1 are added by the migration tasks
-PF-59 to PF-64.
+PF-59, PF-60 and PF-62 to PF-64. The nullable handling of the create and edit
+forms stays in the form screen until PF-59 splits it per `FieldWidget`.
 
 ### Testing a generator
 
