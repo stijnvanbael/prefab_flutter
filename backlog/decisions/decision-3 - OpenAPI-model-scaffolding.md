@@ -15,7 +15,7 @@ schemas are produced by SpringDoc from the generated controllers and request
 records. **No Prefab service was run and no real document was inspected**, so
 the table below is derived from Prefab's documented REST conventions
 (`backlog/docs/feature-guides.md` 7.1, 7.17, 7.18) and must be verified against
-a real document (see PF-74).
+a real document (see PF-78).
 
 ## What can be derived
 
@@ -68,7 +68,7 @@ of `@Field()`.
 
 ## Consequences
 
-- Follow-up: PF-74 (verify against a real document), PF-75 (scaffolding
+- Follow-up: PF-78 (verify against a real document), PF-75 (scaffolding
   command), PF-76 (drift check), PF-77 (Prefab-side metadata).
 - Acceptance criterion #2 of PF-58 (prototype against a real service) is not
-  met; PF-74 covers it.
+  met; PF-78 covers it.

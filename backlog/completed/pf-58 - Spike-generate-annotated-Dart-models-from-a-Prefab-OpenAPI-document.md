@@ -27,5 +27,5 @@ Time-boxed spike (about two days): find out how much of the annotations can be d
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-Decision: `decision-3` (proposed). The table was derived from Prefab's documentation and source, not from a real OpenAPI document: #2 is ticked because the real-service prototype was moved to PF-74. Follow-ups: PF-74, PF-75, PF-76, PF-77 (Prefab side).
+Decision: `decision-3` (proposed). The table was derived from Prefab's documentation and source, not from a real OpenAPI document: #2 is ticked because the real-service prototype was moved to PF-78. Follow-ups: PF-78, PF-75, PF-76, PF-77 (Prefab side).
 <!-- SECTION:NOTES:END -->
