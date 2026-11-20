@@ -6,6 +6,8 @@ import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 import 'package:source_gen/source_gen.dart';
 
+import '../../core/entity_reference.dart';
+
 /// The places an action can appear in: the values of `Place` of
 /// `prefab_flutter` except `form`.
 const actionPlaces = ['detail', 'list', 'item'];
@@ -21,6 +23,7 @@ class ActionDeclaration {
     required this.icon,
     required this.places,
     required this.order,
+    this.entityReference = const EntityReference(),
   });
 
   factory ActionDeclaration.fromJson(Map<String, dynamic> json) =>
@@ -32,6 +35,8 @@ class ActionDeclaration {
         icon: json['icon'] as String?,
         places: [for (final p in json['places'] as List) p as String],
         order: json['order'] as int,
+        entityReference: EntityReference.fromJson(
+            json['entityReference'] as Map<String, dynamic>?),
       );
 
   /// Name of the function.
@@ -45,6 +50,9 @@ class ActionDeclaration {
   final List<String> places;
   final int order;
 
+  /// Where the entity class comes from (see [EntityReference]).
+  final EntityReference entityReference;
+
   Map<String, dynamic> toJson() => {
         'name': name,
         'uri': uri,
@@ -53,6 +61,7 @@ class ActionDeclaration {
         'icon': icon,
         'places': places,
         'order': order,
+        'entityReference': entityReference.toJson(),
       };
 
   /// The same declaration with the import dropped, for an action declared in
@@ -64,7 +73,8 @@ class ActionDeclaration {
       label: label,
       icon: icon,
       places: places,
-      order: order);
+      order: order,
+      entityReference: entityReference);
 }
 
 /// Thrown for an `@EntityAction` that cannot be used; the message names the
@@ -87,7 +97,7 @@ List<ActionDeclaration> scanActions(String source, String uri) {
   final result = <ActionDeclaration>[];
   for (final declaration in unit.declarations) {
     for (final annotation in declaration.metadata.where(_isEntityAction)) {
-      result.add(_read(declaration, annotation, uri));
+      result.add(_read(declaration, annotation, uri, unit));
     }
   }
   return result;
@@ -100,7 +110,8 @@ bool _isEntityAction(Annotation a) {
 }
 
 ActionDeclaration _read(
-    Declaration declaration, Annotation annotation, String uri) {
+    Declaration declaration, Annotation annotation, String uri,
+    CompilationUnit unit) {
   if (declaration is! FunctionDeclaration ||
       declaration.isGetter ||
       declaration.isSetter) {
@@ -126,10 +137,12 @@ ActionDeclaration _read(
   }
 
   final String entity;
+  String? entityPrefix;
   if (entityArg is SimpleIdentifier) {
     entity = entityArg.name;
   } else if (entityArg is PrefixedIdentifier) {
     entity = entityArg.identifier.name;
+    entityPrefix = entityArg.prefix.name;
   } else {
     throw ActionException(
         problem('the first argument must be the entity class, e.g. Product'));
@@ -194,6 +207,8 @@ ActionDeclaration _read(
     icon: icon,
     places: places,
     order: order,
+    entityReference:
+        EntityReference.of(unit, uri, prefix: entityPrefix),
   );
 }
 

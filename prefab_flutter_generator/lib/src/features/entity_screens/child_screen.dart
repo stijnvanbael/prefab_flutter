@@ -5,6 +5,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 
+import '../../core/entity_reference.dart';
+
 /// A parameter of the unnamed constructor of a hand-written screen.
 class ChildScreenParam {
   const ChildScreenParam(this.name, this.type,
@@ -37,6 +39,7 @@ class ChildScreen {
     required this.className,
     required this.libraryUri,
     required this.params,
+    this.entityReference = const EntityReference(),
   });
 
   /// Class name of the entity, e.g. `Site`.
@@ -49,6 +52,9 @@ class ChildScreen {
   final String libraryUri;
   final List<ChildScreenParam> params;
 
+  /// Where the entity class comes from (see [EntityReference]).
+  final EntityReference entityReference;
+
   Map<String, Object?> toJson() => {
         'entity': entity,
         'path': path,
@@ -56,6 +62,7 @@ class ChildScreen {
         'className': className,
         'uri': libraryUri,
         'params': [for (final p in params) p.toJson()],
+        'entityReference': entityReference.toJson(),
       };
 
   static ChildScreen fromJson(Map<String, dynamic> json) => ChildScreen(
@@ -68,6 +75,8 @@ class ChildScreen {
           for (final p in json['params'] as List)
             ChildScreenParam.fromJson(p as Map<String, dynamic>),
         ],
+        entityReference: EntityReference.fromJson(
+            json['entityReference'] as Map<String, dynamic>?),
       );
 }
 
@@ -110,6 +119,7 @@ List<ChildScreen> scanChildScreens(String source, String uri) {
             'first argument.');
       }
       final entity = positional.single;
+      final entityPrefix = entity is PrefixedIdentifier ? entity.prefix.name : null;
       final entityName = entity is PrefixedIdentifier
           ? entity.identifier.name
           : entity is SimpleIdentifier
@@ -142,6 +152,8 @@ List<ChildScreen> scanChildScreens(String source, String uri) {
         className: className,
         libraryUri: uri,
         params: _constructorParams(declaration),
+        entityReference:
+            EntityReference.of(unit, uri, prefix: entityPrefix),
       ));
     }
   }

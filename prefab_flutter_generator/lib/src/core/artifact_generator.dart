@@ -6,6 +6,7 @@ import '../features/actions/action_scanner.dart';
 import '../features/entity_screens/child_screen.dart';
 import 'artifact.dart';
 import 'entity_context.dart';
+import 'entity_reference.dart';
 import 'feature.dart';
 import '../promoted/promoted_scanner.dart';
 import 'format.dart';
@@ -41,9 +42,39 @@ class ArtifactGenerator extends Generator {
     final allActions = await readActions(buildStep);
     final self = buildStep.inputId.uri.toString();
     final childScreens = await readChildScreens(buildStep);
+    final own = EntityContext.entityNames(library);
+    Future<Map<String, Set<String>>>? libraries;
+    Future<Map<String, Set<String>>> entityLibraries() => libraries ??=
+        readEntityLibraries(buildStep, scanEntityNames);
+    // Only declarations that target an entity of this library; the others
+    // belong to an entity of the same name in another library.
+    final actions = <ActionDeclaration>[];
+    for (final a in allActions) {
+      if (!own.contains(a.entity) ||
+          await targetsEntity(
+              name: a.entity,
+              libraryUri: self,
+              reference: a.entityReference,
+              entityLibraries: entityLibraries,
+              describe: '@EntityAction on ${a.name} (${a.uri})')) {
+        actions.add(a);
+      }
+    }
+    final screens = <ChildScreen>[];
+    for (final s in childScreens) {
+      if (!own.contains(s.entity) ||
+          await targetsEntity(
+              name: s.entity,
+              libraryUri: self,
+              reference: s.entityReference,
+              entityLibraries: entityLibraries,
+              describe: '@EntityScreen ${s.className} (${s.libraryUri})')) {
+        screens.add(s);
+      }
+    }
     final entities = EntityContext.readAll(library, sourceFileName, actions: [
-      for (final a in allActions) a.uri == self ? a.inSameLibrary() : a,
-    ], childScreens: childScreens);
+      for (final a in actions) a.uri == self ? a.inSameLibrary() : a,
+    ], childScreens: screens);
     final promoted = await readPromoted(buildStep);
     await _checkChildScreens(entities, childScreens, buildStep);
     if (entities.isEmpty) return '';

@@ -75,7 +75,7 @@ void openProduct(BuildContext c, WidgetRef r, Product p) {}
 ''', 'package:a/actions.dart');
       expect(actions.map((a) => a.name),
           ['duplicateProduct', 'exportProducts', 'openProduct']);
-      expect(actions[0].toJson(), {
+      expect(actions[0].toJson()..remove('entityReference'), {
         'name': 'duplicateProduct',
         'uri': 'package:a/actions.dart',
         'entity': 'Product',
