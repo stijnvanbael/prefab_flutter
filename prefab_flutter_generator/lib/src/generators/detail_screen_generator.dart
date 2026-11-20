@@ -123,6 +123,8 @@ class DetailScreenArtifact extends Artifact {
     buffer.writeln('  Widget build(BuildContext context, WidgetRef ref) {');
     buffer.writeln(
         '    final ${entityLower}Async = ref.watch(${entityLower}DetailProvider(${key.detailExpr('id', (a) => a.name)}));');
+    _imports.add(Libs.widgets);
+    buffer.writeln('    final prefabTheme = PrefabTheme.of(context);');
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
@@ -160,7 +162,7 @@ class DetailScreenArtifact extends Artifact {
 
     buffer.writeln('      body: ${entityLower}Async.when(');
     buffer.writeln('        data: ($entityLower) => ListView(');
-    buffer.writeln('          padding: const EdgeInsets.all(16),');
+    buffer.writeln('          padding: prefabTheme.detailPadding,');
     buffer.writeln('          children: [');
 
     for (final field in visibleFields) {
@@ -171,9 +173,10 @@ class DetailScreenArtifact extends Artifact {
     buffer.writeln('          ],');
     buffer.writeln('        ),');
     buffer.writeln(
-        '        loading: () => const Center(child: CircularProgressIndicator()),');
+        '        loading: () => prefabTheme.loadingBuilder(context),');
     buffer.writeln(
-        "        error: (error, stackTrace) => Center(child: Text('Error: \$error')),");
+        '        error: (error, stackTrace) =>\n'
+        '            prefabTheme.errorBuilder(context, error, stackTrace),');
     buffer.writeln('      ),');
   }
 
@@ -182,11 +185,12 @@ class DetailScreenArtifact extends Artifact {
     String entityLower,
     StringBuffer buffer,
   ) {
-    buffer.writeln('            ListTile(');
-    buffer.writeln("              title: const Text('${field.label}'),");
     final value = fieldValueWidget(fieldValue, field, entityLower);
     _imports.addAll(value.imports);
-    buffer.writeln('              subtitle: ${value.text},');
+    buffer.writeln('            prefabTheme.detailFieldBuilder(');
+    buffer.writeln('              context,');
+    buffer.writeln("              '${field.label}',");
+    buffer.writeln('              ${value.text},');
     buffer.writeln('            ),');
   }
 }

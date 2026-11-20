@@ -169,6 +169,7 @@ class ListScreenArtifact extends Artifact {
           .render(4)
           .replaceAll(ListScreenArtifact.providerRef, providerRef));
     }
+    buffer.writeln('    final prefabTheme = PrefabTheme.of(context);');
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
@@ -193,8 +194,9 @@ class ListScreenArtifact extends Artifact {
     buffer.writeln('            child: ${entityLower}sAsync.when(');
     buffer.writeln('        skipLoadingOnReload: true,');
     buffer.writeln('        data: (page) => page.items.isEmpty');
-    buffer.writeln("            ? const Center(child: Text('No items found'))");
+    buffer.writeln("            ? prefabTheme.emptyBuilder(context)");
     buffer.writeln('            : ListView.builder(');
+    buffer.writeln('          padding: prefabTheme.listPadding,');
     buffer.writeln('          itemCount: page.items.length,');
     buffer.writeln('          itemBuilder: (context, index) {');
     buffer.writeln('            final $entityLower = page.items[index];');
@@ -229,9 +231,10 @@ class ListScreenArtifact extends Artifact {
     buffer.writeln('          },');
     buffer.writeln('        ),');
     buffer.writeln(
-        '        loading: () => const Center(child: CircularProgressIndicator()),');
+        '        loading: () => prefabTheme.loadingBuilder(context),');
     buffer.writeln(
-        "        error: (error, stackTrace) => Center(child: Text('Error: \$error')),");
+        '        error: (error, stackTrace) =>\n'
+        '            prefabTheme.errorBuilder(context, error, stackTrace),');
     buffer.writeln('            ),');
     buffer.writeln('          ),');
     if (!belowList.isEmpty) buffer.writeln(belowList.render(10));

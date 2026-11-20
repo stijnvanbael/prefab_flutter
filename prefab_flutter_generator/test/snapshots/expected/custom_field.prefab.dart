@@ -178,6 +178,7 @@ class AppThemeDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appThemeAsync = ref.watch(appThemeDetailProvider(id));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Theme'),
@@ -191,24 +192,28 @@ class AppThemeDetailScreen extends ConsumerWidget {
       ),
       body: appThemeAsync.when(
         data: (appTheme) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [
-            ListTile(
-              title: const Text('Name'),
-              subtitle: Text(appTheme.name.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Name',
+              Text(appTheme.name.toString()),
             ),
-            ListTile(
-              title: const Text('Accent colour'),
-              subtitle: ColorSwatch(value: appTheme.accent),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Accent colour',
+              ColorSwatch(value: appTheme.accent),
             ),
-            ListTile(
-              title: const Text('Highlight'),
-              subtitle: ColorSwatch(value: appTheme.highlight),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Highlight',
+              ColorSwatch(value: appTheme.highlight),
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -221,6 +226,7 @@ class AppThemeListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appThemesAsync = ref.watch(appThemesProvider);
     final notifier = ref.read(appThemesProvider.notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Theme'),
@@ -239,8 +245,9 @@ class AppThemeListScreen extends ConsumerWidget {
             child: appThemesAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final appTheme = page.items[index];
@@ -250,9 +257,9 @@ class AppThemeListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
           PrefabPaginationBar.controlled(
@@ -313,6 +320,7 @@ class _AppThemeCreateScreenState extends ConsumerState<AppThemeCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Theme'),
@@ -320,7 +328,7 @@ class _AppThemeCreateScreenState extends ConsumerState<AppThemeCreateScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.formPadding,
           children: [
             TextFormField(
               controller: _nameController,
@@ -341,15 +349,11 @@ class _AppThemeCreateScreenState extends ConsumerState<AppThemeCreateScreen> {
               onChanged: (value) => _highlightValue = value,
               label: 'Highlight',
             ),
-            ElevatedButton(
-              onPressed: _saving ? null : _save,
-              child: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Create'),
+            prefabTheme.saveButtonBuilder(
+              context,
+              'Create',
+              _saving ? null : _save,
+              _saving,
             ),
           ],
         ),
@@ -424,17 +428,18 @@ class _AppThemeEditScreenState extends ConsumerState<AppThemeEditScreen> {
         _prefillControllers(item);
       }
     });
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Theme'),
       ),
       body: asyncItem.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: prefabTheme.formPadding,
             children: [
               TextFormField(
                 controller: _nameController,
@@ -455,15 +460,11 @@ class _AppThemeEditScreenState extends ConsumerState<AppThemeEditScreen> {
                 onChanged: (value) => _highlightValue = value,
                 label: 'Highlight',
               ),
-              ElevatedButton(
-                onPressed: _saving ? null : _save,
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
+              prefabTheme.saveButtonBuilder(
+                context,
+                'Save',
+                _saving ? null : _save,
+                _saving,
               ),
             ],
           ),

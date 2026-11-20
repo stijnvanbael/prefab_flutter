@@ -166,22 +166,25 @@ class BetaDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final betaAsync = ref.watch(betaDetailProvider(id));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Beta'),
       ),
       body: betaAsync.when(
         data: (beta) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [
-            ListTile(
-              title: const Text('Name'),
-              subtitle: Text(beta.name.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Name',
+              Text(beta.name.toString()),
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -194,6 +197,7 @@ class BetaListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final betasAsync = ref.watch(betasProvider);
     final notifier = ref.read(betasProvider.notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Beta'),
@@ -212,8 +216,9 @@ class BetaListScreen extends ConsumerWidget {
             child: betasAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final beta = page.items[index];
@@ -223,9 +228,9 @@ class BetaListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
           PrefabPaginationBar.controlled(
@@ -281,6 +286,7 @@ class _BetaCreateScreenState extends ConsumerState<BetaCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Beta'),
@@ -288,7 +294,7 @@ class _BetaCreateScreenState extends ConsumerState<BetaCreateScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.formPadding,
           children: [
             TextFormField(
               controller: _nameController,
@@ -298,15 +304,11 @@ class _BetaCreateScreenState extends ConsumerState<BetaCreateScreen> {
                 return null;
               },
             ),
-            ElevatedButton(
-              onPressed: _saving ? null : _save,
-              child: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Create'),
+            prefabTheme.saveButtonBuilder(
+              context,
+              'Create',
+              _saving ? null : _save,
+              _saving,
             ),
           ],
         ),

@@ -10,3 +10,4 @@ export 'src/widgets/prefab_delete_dialog.dart';
 export 'src/widgets/prefab_pagination_bar.dart';
 export 'src/widgets/prefab_search_bar.dart';
 export 'src/widgets/prefab_sort_menu.dart';
+export 'src/widgets/prefab_theme.dart';

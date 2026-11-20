@@ -507,17 +507,19 @@ class OrderDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final orderAsync = ref.watch(orderDetailProvider(id));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Order'),
       ),
       body: orderAsync.when(
         data: (order) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -533,6 +535,7 @@ class OrderLineDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final orderLineAsync = ref.watch(orderLineDetailProvider((id, orderId)));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Order Line'),
@@ -566,16 +569,18 @@ class OrderLineDetailScreen extends ConsumerWidget {
       ),
       body: orderLineAsync.when(
         data: (orderLine) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [
-            ListTile(
-              title: const Text('Product'),
-              subtitle: Text(orderLine.product.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Product',
+              Text(orderLine.product.toString()),
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -596,6 +601,7 @@ class OrderLineNoteDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final orderLineNoteAsync =
         ref.watch(orderLineNoteDetailProvider((id, orderId, orderLineId)));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Note'),
@@ -654,16 +660,18 @@ class OrderLineNoteDetailScreen extends ConsumerWidget {
       ),
       body: orderLineNoteAsync.when(
         data: (orderLineNote) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [
-            ListTile(
-              title: const Text('Text'),
-              subtitle: Text(orderLineNote.text.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Text',
+              Text(orderLineNote.text.toString()),
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -676,6 +684,7 @@ class OrderListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ordersAsync = ref.watch(ordersProvider);
     final notifier = ref.read(ordersProvider.notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Order'),
@@ -686,8 +695,9 @@ class OrderListScreen extends ConsumerWidget {
             child: ordersAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final order = page.items[index];
@@ -696,9 +706,9 @@ class OrderListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
           PrefabPaginationBar.controlled(
@@ -721,6 +731,7 @@ class OrderLineListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final orderLinesAsync = ref.watch(orderLinesProvider(orderId));
     final notifier = ref.read(orderLinesProvider(orderId).notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Order Line'),
@@ -739,8 +750,9 @@ class OrderLineListScreen extends ConsumerWidget {
             child: orderLinesAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final orderLine = page.items[index];
@@ -751,9 +763,9 @@ class OrderLineListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
           PrefabPaginationBar.controlled(
@@ -780,6 +792,7 @@ class OrderLineNoteListScreen extends ConsumerWidget {
         ref.watch(orderLineNotesProvider((orderId, orderLineId)));
     final notifier =
         ref.read(orderLineNotesProvider((orderId, orderLineId)).notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Note'),
@@ -822,8 +835,9 @@ class OrderLineNoteListScreen extends ConsumerWidget {
             child: orderLineNotesAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final orderLineNote = page.items[index];
@@ -834,9 +848,9 @@ class OrderLineNoteListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
           PrefabPaginationBar.controlled(
@@ -899,6 +913,7 @@ class _OrderLineCreateScreenState extends ConsumerState<OrderLineCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Order Line'),
@@ -906,7 +921,7 @@ class _OrderLineCreateScreenState extends ConsumerState<OrderLineCreateScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.formPadding,
           children: [
             TextFormField(
               controller: _productController,
@@ -916,15 +931,11 @@ class _OrderLineCreateScreenState extends ConsumerState<OrderLineCreateScreen> {
                 return null;
               },
             ),
-            ElevatedButton(
-              onPressed: _saving ? null : _save,
-              child: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Create'),
+            prefabTheme.saveButtonBuilder(
+              context,
+              'Create',
+              _saving ? null : _save,
+              _saving,
             ),
           ],
         ),
@@ -1002,17 +1013,18 @@ class _OrderLineEditScreenState extends ConsumerState<OrderLineEditScreen> {
         _prefillControllers(item);
       }
     });
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Order Line'),
       ),
       body: asyncItem.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: prefabTheme.formPadding,
             children: [
               TextFormField(
                 controller: _productController,
@@ -1022,15 +1034,11 @@ class _OrderLineEditScreenState extends ConsumerState<OrderLineEditScreen> {
                   return null;
                 },
               ),
-              ElevatedButton(
-                onPressed: _saving ? null : _save,
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
+              prefabTheme.saveButtonBuilder(
+                context,
+                'Save',
+                _saving ? null : _save,
+                _saving,
               ),
             ],
           ),
@@ -1094,6 +1102,7 @@ class _OrderLineNoteCreateScreenState
 
   @override
   Widget build(BuildContext context) {
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Note'),
@@ -1101,7 +1110,7 @@ class _OrderLineNoteCreateScreenState
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.formPadding,
           children: [
             TextFormField(
               controller: _textController,
@@ -1111,15 +1120,11 @@ class _OrderLineNoteCreateScreenState
                 return null;
               },
             ),
-            ElevatedButton(
-              onPressed: _saving ? null : _save,
-              child: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Create'),
+            prefabTheme.saveButtonBuilder(
+              context,
+              'Create',
+              _saving ? null : _save,
+              _saving,
             ),
           ],
         ),
@@ -1204,17 +1209,18 @@ class _OrderLineNoteEditScreenState
         _prefillControllers(item);
       }
     });
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Note'),
       ),
       body: asyncItem.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: prefabTheme.formPadding,
             children: [
               TextFormField(
                 controller: _textController,
@@ -1224,15 +1230,11 @@ class _OrderLineNoteEditScreenState
                   return null;
                 },
               ),
-              ElevatedButton(
-                onPressed: _saving ? null : _save,
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
+              prefabTheme.saveButtonBuilder(
+                context,
+                'Save',
+                _saving ? null : _save,
+                _saving,
               ),
             ],
           ),

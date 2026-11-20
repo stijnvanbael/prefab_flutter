@@ -599,7 +599,7 @@ void main() {
         outputs: {
           'a|lib/product.form_screen.dart': decodedMatches(allOf(
             contains('asyncItem.when('),
-            contains('CircularProgressIndicator'),
+            contains('prefabTheme.loadingBuilder(context)'),
           )),
         },
       );

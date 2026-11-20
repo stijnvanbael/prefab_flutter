@@ -156,22 +156,25 @@ class DeltaDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final deltaAsync = ref.watch(deltaDetailProvider(id));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Delta'),
       ),
       body: deltaAsync.when(
         data: (delta) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [
-            ListTile(
-              title: const Text('Name'),
-              subtitle: Text(delta.name.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Name',
+              Text(delta.name.toString()),
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -184,6 +187,7 @@ class DeltaListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final deltasAsync = ref.watch(deltasProvider);
     final notifier = ref.read(deltasProvider.notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Delta'),
@@ -194,8 +198,9 @@ class DeltaListScreen extends ConsumerWidget {
             child: deltasAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final delta = page.items[index];
@@ -205,9 +210,9 @@ class DeltaListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
           PrefabPaginationBar.controlled(

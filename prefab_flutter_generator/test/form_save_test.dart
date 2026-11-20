@@ -176,8 +176,8 @@ void main() {
         outputs: {
           'a|lib/item.form_screen.dart': _hasAll([
             'bool _saving = false;',
-            'onPressed: _saving ? null : _save,',
-            'CircularProgressIndicator(strokeWidth: 2)',
+            '_saving ? null : _save,',
+            'prefabTheme.saveButtonBuilder(',
             'setState(() => _saving = true);',
             'setState(() => _saving = false);',
             'ScaffoldMessenger.of(context).showSnackBar(',

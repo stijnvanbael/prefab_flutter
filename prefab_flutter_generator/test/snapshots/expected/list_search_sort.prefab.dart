@@ -129,30 +129,35 @@ class BookDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bookAsync = ref.watch(bookDetailProvider(id));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Book'),
       ),
       body: bookAsync.when(
         data: (book) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [
-            ListTile(
-              title: const Text('Title'),
-              subtitle: Text(book.title.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Title',
+              Text(book.title.toString()),
             ),
-            ListTile(
-              title: const Text('Pages'),
-              subtitle: Text(book.pages.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Pages',
+              Text(book.pages.toString()),
             ),
-            ListTile(
-              title: const Text('Author'),
-              subtitle: Text(book.author?.toString() ?? '—'),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Author',
+              Text(book.author?.toString() ?? '—'),
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -165,6 +170,7 @@ class BookListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final booksAsync = ref.watch(booksProvider);
     final notifier = ref.read(booksProvider.notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Book'),
@@ -203,8 +209,9 @@ class BookListScreen extends ConsumerWidget {
             child: booksAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final book = page.items[index];
@@ -214,9 +221,9 @@ class BookListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
         ],
