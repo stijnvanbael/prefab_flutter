@@ -1,5 +1,6 @@
 import 'package:build/build.dart';
 import 'package:build_test/build_test.dart';
+import 'package:logging/logging.dart';
 import 'package:prefab_flutter_generator/builder.dart';
 import 'package:prefab_flutter_generator/src/promoted/promoted_scanner.dart';
 import 'package:test/test.dart';
@@ -20,20 +21,34 @@ class Alpha {
 }
 ''';
 
-Future<String> _generate(Map<String, String> extra) async {
+/// Messages logged at SEVERE level by the last [_generate] call (build_test 3
+/// reports a failing builder as a log record, not as a thrown error).
+final _severe = <String>[];
+
+Future<String> _generate(Map<String, String> extra,
+    {bool expectOutput = true}) async {
   String? out;
+  _severe.clear();
   await testBuilder(
     prefabBuilder(BuilderOptions.empty),
     {...prefabSources, 'a|lib/alpha.dart': _entity, ...extra},
     generateFor: {'a|lib/alpha.dart'},
-    outputs: {
-      'a|lib/alpha.prefab.dart': decodedMatches(predicate<String>((s) {
-        out = s;
-        return true;
-      }, 'captured')),
+    onLog: (r) {
+      if (r.level >= Level.SEVERE) _severe.add(r.message);
     },
+    outputs: expectOutput
+        ? {
+            'a|lib/alpha.prefab.dart': decodedMatches(predicate<String>((s) {
+              out = s;
+              return true;
+            }, 'captured')),
+            // Other entities in the build are generated too.
+            if (extra.containsKey('a|lib/beta.dart'))
+              'a|lib/beta.prefab.dart': anything,
+          }
+        : {},
   );
-  return out!;
+  return out ?? '';
 }
 
 void main() {
@@ -97,14 +112,11 @@ class AlphaDetailScreen {}
     });
 
     test('fails with the closest artifact name for an unknown name', () async {
-      await expectLater(
-        _generate({
-          'a|lib/s.prefab_promoted.json':
-              '[{"name":"AlphaDetailScren","uri":"package:a/s.dart"}]',
-        }),
-        throwsA(isA<Object>().having((e) => e.toString(), 'message',
-            contains('did you mean AlphaDetailScreen?'))),
-      );
+      await _generate({
+        'a|lib/s.prefab_promoted.json':
+            '[{"name":"AlphaDetailScren","uri":"package:a/s.dart"}]',
+      }, expectOutput: false);
+      expect(_severe.join('\n'), contains('did you mean AlphaDetailScreen?'));
     });
 
     test('accepts a promoted name generated from another file', () async {

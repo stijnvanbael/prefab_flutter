@@ -6,7 +6,7 @@ import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
 import 'artifact.dart';
 
-const _viewChecker = TypeChecker.fromRuntime(View);
+final _viewChecker = TypeChecker.typeNamed(View, inPackage: 'prefab_flutter');
 
 /// What a feature module or artifact template knows about one entity: the
 /// manifest (all annotation reading happens there) plus file-level facts.

@@ -4,7 +4,7 @@ import 'package:source_gen/source_gen.dart';
 
 import 'entity_manifest.dart';
 
-const _viewChecker = TypeChecker.fromRuntime(View);
+final _viewChecker = TypeChecker.typeNamed(View, inPackage: 'prefab_flutter');
 
 /// Builds navigation paths for entities in one place, so list, detail, form
 /// and routes generation agree on nested (`@Parent`) URLs.

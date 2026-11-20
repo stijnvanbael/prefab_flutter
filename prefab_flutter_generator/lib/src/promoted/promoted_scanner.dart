@@ -15,7 +15,9 @@ List<String> scanPromotedNames(String source) {
   final names = <String>[];
   for (final declaration in unit.declarations) {
     if (!declaration.metadata.any(_isPromoted)) continue;
+    // ignore: deprecated_member_use
     if (declaration is NamedCompilationUnitMember) {
+      // ignore: deprecated_member_use
       names.add(declaration.name.lexeme);
     } else if (declaration is TopLevelVariableDeclaration) {
       names.addAll(declaration.variables.variables.map((v) => v.name.lexeme));
