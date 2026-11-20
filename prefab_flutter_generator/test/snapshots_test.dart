@@ -32,10 +32,18 @@ void main() {
     final name = p.basenameWithoutExtension(file.path);
     test('snapshot of $name', () async {
       final source = file.readAsStringSync();
+      // A `<name>.prefab_promoted.json` fixture stands in for the summary of
+      // hand-written `@Promoted` declarations.
+      final summary = File(p.join(fixtures.path, '$name.prefab_promoted.json'));
       String? actual;
       await testBuilder(
         prefabBuilder(BuilderOptions.empty),
-        {...prefabSources, 'a|lib/$name.dart': source},
+        {
+          ...prefabSources,
+          'a|lib/$name.dart': source,
+          if (summary.existsSync())
+            'a|lib/$name.prefab_promoted.json': summary.readAsStringSync(),
+        },
         outputs: {
           'a|lib/$name.prefab.dart': decodedMatches(predicate<String>((s) {
             actual = s;

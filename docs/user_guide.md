@@ -18,4 +18,5 @@ For installation and a minimal example, see the [README](../README.md#quick-star
 8. [Configuring the HTTP client](user_guide/http-client.md)
 9. [REST contract](user_guide/rest-contract.md)
 10. [Runtime widgets](user_guide/runtime-widgets.md)
-11. [Known limitations](user_guide/known-limitations.md)
+11. [Promoting generated code](user_guide/promoting.md)
+12. [Known limitations](user_guide/known-limitations.md)

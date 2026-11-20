@@ -8,6 +8,7 @@ import 'src/generators/list_screen_generator.dart';
 import 'src/generators/prefab_generator.dart';
 import 'src/generators/provider_generator.dart';
 import 'src/generators/routes_generator.dart';
+import 'src/promoted/promoted_scanner.dart';
 
 /// The generators format their own output (`ArtifactGenerator`, with a pinned
 /// `dart_style`), so the builder must not format it a second time.
@@ -66,3 +67,6 @@ Builder prefabBuilder(BuilderOptions options) => LibraryBuilder(
       generatedExtension: '.prefab.dart',
       formatOutput: _alreadyFormatted,
     );
+
+/// Summarises the `@Promoted` declarations of a file for [prefabBuilder].
+Builder prefabPromotedBuilder(BuilderOptions options) => PromotedBuilder();

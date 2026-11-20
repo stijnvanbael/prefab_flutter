@@ -82,8 +82,11 @@ contribute to, and an import collector. There is no `code_builder`.
    features contribute, emits each artifact separately and writes banner,
    imports and bodies. The emitter can skip artifacts by name
    (`LibraryEmitter.promoted`); the skipped artifact is replaced by an import
-   and a re-export of the hand-written declaration. This is not yet reachable
-   from annotations (promotion is planned in PF-42).
+   and a re-export of the hand-written declaration. The promoted names come
+   from `@Promoted` annotations through the `prefab_promoted` builder
+   (`lib/src/promoted/`), which summarises `@Promoted` declarations of each
+   file in `.prefab_promoted.json`; `prefab_builder` reads them and checks that
+   every promoted name is a generated artifact of some file.
    `ArtifactGenerator` then formats the assembled library with `dart_style`
    (`lib/src/core/format.dart`), so fragments need not be indented exactly; the
    builders in `lib/builder.dart` switch `source_gen`'s own formatting off so
