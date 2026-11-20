@@ -6,6 +6,7 @@ library prefab_flutter;
 
 export 'src/annotations/create.dart';
 export 'src/annotations/delete.dart';
+export 'src/annotations/entity.dart';
 export 'src/annotations/entity_action.dart';
 export 'src/annotations/entity_screen.dart';
 export 'src/annotations/field.dart';
@@ -13,6 +14,6 @@ export 'src/annotations/id.dart';
 export 'src/annotations/parent.dart';
 export 'src/annotations/promoted.dart';
 export 'src/annotations/update.dart';
-export 'src/annotations/view.dart';
 export 'src/enums/field_widget.dart';
+export 'src/enums/place.dart';
 export 'src/enums/validator.dart';

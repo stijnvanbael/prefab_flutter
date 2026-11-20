@@ -7,7 +7,7 @@ import 'support/prefab_sources.dart';
 const _source = r"""
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Order', path: 'orders')
+@Entity(title: 'Order', path: 'orders')
 class Order {
   final int id;
   @Field(label: 'Number')
@@ -17,14 +17,14 @@ class Order {
   Map<String, dynamic> toJson() => {};
 }
 
-@View(title: 'Order Line', path: 'lines')
+@Entity(title: 'Order Line', path: 'lines')
 @Create()
 @Update()
 @Delete()
 class OrderLine {
   final int? id;
   @Parent(Order)
-  @Field(hidden: true)
+  @Field(on: {})
   final int orderId;
   @Field(label: 'Product')
   final String product;
@@ -34,14 +34,14 @@ class OrderLine {
   Map<String, dynamic> toJson() => {};
 }
 
-@View(title: 'Note', path: 'notes')
+@Entity(title: 'Note', path: 'notes')
 @Create()
 @Update()
 @Delete()
 class OrderLineNote {
   final int? id;
   @Parent(OrderLine)
-  @Field(hidden: true)
+  @Field(on: {})
   final int orderLineId;
   @Field(label: 'Text')
   final String text;
@@ -55,7 +55,7 @@ class OrderLineNote {
 const _cycleSource = r"""
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'A', path: 'as')
+@Entity(title: 'A', path: 'as')
 class A {
   final int id;
   @Parent(B)
@@ -64,7 +64,7 @@ class A {
   A({required this.id, required this.bId});
 }
 
-@View(title: 'B', path: 'bs')
+@Entity(title: 'B', path: 'bs')
 class B {
   final int id;
   @Parent(A)

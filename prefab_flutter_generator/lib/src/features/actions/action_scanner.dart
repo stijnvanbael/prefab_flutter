@@ -6,8 +6,8 @@ import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 import 'package:source_gen/source_gen.dart';
 
-/// The places an action can appear in; mirrors `ActionPlace` of
-/// `prefab_flutter`.
+/// The places an action can appear in: the values of `Place` of
+/// `prefab_flutter` except `form`.
 const actionPlaces = ['detail', 'list', 'item'];
 
 /// A hand-written function annotated with `@EntityAction`, as summarised by
@@ -156,8 +156,13 @@ ActionDeclaration _read(
   if (named.containsKey('on')) {
     places = _places(named['on']!) ??
         (throw ActionException(problem(
-            'on must be a set literal of ActionPlace values, e.g. '
-            '{ActionPlace.detail, ActionPlace.item}')));
+            'on must be a set literal of Place values, e.g. '
+            '{Place.detail, Place.item}')));
+    if (places.contains('form')) {
+      throw ActionException(problem(
+          'Place.form is for fields; an action can be on Place.detail, '
+          'Place.list or Place.item'));
+    }
     if (places.isEmpty) {
       throw ActionException(problem('on must name at least one place'));
     }
@@ -165,8 +170,8 @@ ActionDeclaration _read(
   final withEntity = places.where((p) => p != 'list').isNotEmpty;
   if (withEntity && places.contains('list')) {
     throw ActionException(problem(
-        'ActionPlace.list takes no entity, ActionPlace.detail and '
-        'ActionPlace.item do; declare two functions'));
+        'Place.list takes no entity, Place.detail and '
+        'Place.item do; declare two functions'));
   }
 
   var order = 0;
@@ -256,14 +261,16 @@ List<String>? _places(Expression e) {
   for (final element in e.elements) {
     String? place;
     if (element is PrefixedIdentifier &&
-        element.prefix.name == 'ActionPlace') {
+        element.prefix.name == 'Place') {
       place = element.identifier.name;
     } else if (element is PropertyAccess &&
         element.target is PrefixedIdentifier) {
-      // prefix.ActionPlace.detail
+      // prefix.Place.detail
       place = element.propertyName.name;
     }
-    if (place == null || !actionPlaces.contains(place)) return null;
+    if (place == null || !(actionPlaces.contains(place) || place == 'form')) {
+      return null;
+    }
     if (!places.contains(place)) places.add(place);
   }
   return places;

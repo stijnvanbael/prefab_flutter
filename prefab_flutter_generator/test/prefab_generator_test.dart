@@ -11,7 +11,7 @@ import 'support/prefab_sources.dart';
 const _productSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 @Delete()
@@ -83,7 +83,7 @@ void main() {
       );
     });
 
-    test('generates nothing for a file without @View', () async {
+    test('generates nothing for a file without @Entity', () async {
       await testBuilder(
         prefabBuilder(BuilderOptions.empty),
         _assets('a', 'lib/plain.dart', 'class Plain {}'),

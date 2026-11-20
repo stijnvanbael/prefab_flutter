@@ -51,7 +51,7 @@ String _entity(String fieldDecl, {String views = ''}) => '''
 import 'package:prefab_flutter/prefab_flutter.dart';
 import 'widgets.dart';
 
-@View(title: 'Thing', path: 'things'$views)
+@Entity(title: 'Thing', path: 'things'$views)
 @Create()
 @Update()
 class Thing {
@@ -106,7 +106,7 @@ void main() {
   group('PF-65 custom field widgets', () {
     test('AC#1 - form widget is prefilled, validated and saved', () async {
       final out = await _generate(
-        '@Field(form: FormOptions(custom: ColorField.new, '
+        '@Field(form: FormOptions(builder: ColorField.new, '
         'validators: [Validator.required]))\n  final int color;',
       );
       expect(out, contains("import 'package:a/widgets.dart';"));
@@ -122,7 +122,7 @@ void main() {
 
     test('AC#1 - nullable field needs no validator', () async {
       final out = await _generate(
-        '@Field(form: FormOptions(custom: NoValidator.new))\n'
+        '@Field(form: FormOptions(builder: NoValidator.new))\n'
         '  final int? color;',
       );
       expect(out, contains('NoValidator('));
@@ -133,7 +133,7 @@ void main() {
     test('AC#1 - a named constructor or static function is called by name',
         () async {
       final out = await _generate(
-        '@Field(form: FormOptions(custom: ColorField.build))\n'
+        '@Field(form: FormOptions(builder: ColorField.build))\n'
         '  final int? color;',
       );
       expect(out, contains('ColorField.build('));
@@ -141,7 +141,7 @@ void main() {
 
     test('AC#2 - display widget in detail screen and list tile', () async {
       final out = await _generate(
-        '@Field(display: Swatch.new)\n  final int? color;',
+        '@Field(displayBuilder: Swatch.new)\n  final int? color;',
       );
       expect(out, contains('Swatch(value: thing.color),'));
       expect(out, contains('prefabTheme.detailFieldBuilder('));
@@ -152,7 +152,7 @@ void main() {
     test('AC#4 - wrong signature names the field and the parameters',
         () async {
       final error = await _buildError(
-        '@Field(display: BadParams.new)\n  final int color;',
+        '@Field(displayBuilder: BadParams.new)\n  final int color;',
       );
       expect(error, contains('Field "color"'));
       expect(error, contains('Field.display'));
@@ -161,7 +161,7 @@ void main() {
 
     test('AC#4 - required field needs a validator parameter', () async {
       final error = await _buildError(
-        '@Field(form: FormOptions(custom: NoValidator.new))\n'
+        '@Field(form: FormOptions(builder: NoValidator.new))\n'
         '  final int color;',
       );
       expect(error, contains('Field "color"'));
@@ -170,7 +170,7 @@ void main() {
 
     test('AC#4 - text validators are rejected', () async {
       final error = await _buildError(
-        '@Field(form: FormOptions(custom: ColorField.new, '
+        '@Field(form: FormOptions(builder: ColorField.new, '
         'validators: [Validator.email]))\n  final int? color;',
       );
       expect(error, contains('"color"'));

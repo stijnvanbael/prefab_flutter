@@ -12,7 +12,7 @@ import 'support/prefab_sources.dart';
 const _source = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Note', path: 'notes')
+@Entity(title: 'Note', path: 'notes')
 class Note {
   final int id;
 
@@ -35,14 +35,12 @@ void main() {
           name: 'remark',
           dartType: 'String',
           label: 'Remark',
-          hidden: false,
           isParent: false,
           isNullable: true);
       final plain = FieldManifest(
           name: 'title',
           dartType: 'String',
           label: 'Title',
-          hidden: false,
           isParent: false);
       expect(fieldValueText(point, nullable, 'note'),
           "note.remark?.toString() ?? '—'");
@@ -54,7 +52,6 @@ void main() {
           name: 'remark',
           dartType: 'String',
           label: 'Remark',
-          hidden: false,
           isParent: false,
           isNullable: true);
       expect(fieldValueText(ValuePoint<FieldValue>('x'), nullable, 'note'),

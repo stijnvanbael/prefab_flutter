@@ -61,7 +61,7 @@ file, so the app compiles and behaves the same.
 - The name is the artifact's primary name (table below). An unknown name fails
   with the closest one: `ProductDetailScren is not a generated artifact; did
   you mean ProductDetailScreen?`.
-- The command reads the `@View` classes under `lib/`, not the generated file,
+- The command reads the `@Entity` classes under `lib/`, not the generated file,
   so it works before the first `build_runner build` too.
 
 ## Artifacts and the signature to keep

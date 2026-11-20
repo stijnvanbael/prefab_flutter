@@ -11,7 +11,7 @@ import 'support/prefab_sources.dart';
 const _productSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 @Delete()
@@ -28,7 +28,7 @@ class Product {
 const _parentChildSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Post', path: 'posts')
+@Entity(title: 'Post', path: 'posts')
 @Create()
 @Update()
 @Delete()
@@ -41,7 +41,7 @@ class Post {
   Post({required this.id, required this.title});
 }
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 @Create()
 @Update()
 @Delete()
@@ -49,7 +49,7 @@ class Comment {
   final int id;
 
   @Parent(Post)
-  @Field(hidden: true)
+  @Field(on: {})
   final int postId;
 
   @Field(label: 'Content')
@@ -335,7 +335,7 @@ void main() {
     const unpaged = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products', paged: false)
+@Entity(title: 'Product', path: 'products', paged: false)
 class Product {
   final int id;
   @Field()
@@ -410,7 +410,7 @@ class Product {
       );
     });
 
-    test('@View(paged: false) has no paging methods', () async {
+    test('@Entity(paged: false) has no paging methods', () async {
       await expectProvider(
         'product',
         unpaged,

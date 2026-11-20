@@ -11,7 +11,7 @@ import 'support/prefab_sources.dart';
 const _productSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 class Product {
   final int id;
 
@@ -25,7 +25,7 @@ class Product {
 const _parentChildSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Post', path: 'posts')
+@Entity(title: 'Post', path: 'posts')
 @Create()
 @Update()
 @Delete()
@@ -38,7 +38,7 @@ class Post {
   Post({required this.id, required this.title});
 }
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 @Create()
 @Update()
 @Delete()
@@ -46,7 +46,7 @@ class Comment {
   final int id;
 
   @Parent(Post)
-  @Field(hidden: true)
+  @Field(on: {})
   final int postId;
 
   @Field(label: 'Content')
@@ -59,23 +59,23 @@ class Comment {
 const _viewsSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Item', path: 'items')
+@Entity(title: 'Item', path: 'items')
 class Item {
   final int id;
 
-  @Field(views: {'detail'})
+  @Field(on: {Place.detail, Place.form})
   final String secret;
 
-  @Field(views: {'list'})
+  @Field(on: {Place.item, Place.form})
   final String name;
 
-  @Field(views: {'list', 'detail'})
+  @Field(on: {Place.item, Place.detail, Place.form})
   final String? note;
 
-  @Field(views: {'list'})
+  @Field(on: {Place.item, Place.form})
   final int count;
 
-  @Field(views: {'list'})
+  @Field(on: {Place.item, Place.form})
   final int extra;
 
   Item({required this.id, required this.secret, required this.name,
@@ -86,7 +86,7 @@ class Item {
 const _searchSortSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 class Product {
   final int id;
 
@@ -103,7 +103,7 @@ class Product {
 const _unpagedSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products', paged: false)
+@Entity(title: 'Product', path: 'products', paged: false)
 class Product {
   final int id;
 
@@ -117,7 +117,7 @@ class Product {
 const _parentSearchSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Post', path: 'posts')
+@Entity(title: 'Post', path: 'posts')
 class Post {
   final int id;
   @Field()
@@ -125,12 +125,12 @@ class Post {
   Post({required this.id, required this.title});
 }
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 class Comment {
   final int id;
 
   @Parent(Post)
-  @Field(hidden: true)
+  @Field(on: {})
   final int postId;
 
   @Field(searchable: true, sortable: true)
@@ -231,7 +231,7 @@ void main() {
       },
     );
 
-    test('AppBar title uses the entity title from @View', () async {
+    test('AppBar title uses the entity title from @Entity', () async {
       await testBuilder(
         listScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
@@ -344,7 +344,7 @@ void main() {
     const editableProduct = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 class Product {
@@ -478,7 +478,7 @@ class Product {
       );
     });
 
-    test('AC#5 @View(paged: false) has no pagination bar', () async {
+    test('AC#5 @Entity(paged: false) has no pagination bar', () async {
       await expectScreen(
         _unpagedSource,
         allOf(

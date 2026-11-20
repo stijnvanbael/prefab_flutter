@@ -7,7 +7,7 @@ import '../field_widgets/form_field_emitter.dart';
 import '../validators/validator_emitters.dart' show dartStringLiteral;
 import '../field_widgets/form_validation.dart';
 
-/// A hand-written form widget (`@Field(form: FormOptions(custom: ...))`).
+/// A hand-written form widget (`@Field(form: FormOptions(builder: ...))`).
 ///
 /// The form keeps the value in `_<name>Value` and hands the widget the
 /// plain-Flutter contract of `PrefabFieldBuilder`: `initialValue`,

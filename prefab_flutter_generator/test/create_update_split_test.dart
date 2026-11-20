@@ -19,7 +19,7 @@ import 'support/prefab_sources.dart';
 String _entity(String annotations) => """
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Log', path: 'logs')
+@Entity(title: 'Log', path: 'logs')
 $annotations
 class Log {
   final int? id;

@@ -1,6 +1,6 @@
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Book', path: 'books', paged: false)
+@Entity(title: 'Book', path: 'books', paged: false)
 class Book {
   final int id;
   @Field(searchable: true, sortable: true)

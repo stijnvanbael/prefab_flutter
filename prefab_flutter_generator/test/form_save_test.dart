@@ -11,7 +11,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 enum Color { red, green }
 
-@View(title: 'Item', path: 'items')
+@Entity(title: 'Item', path: 'items')
 @Create()
 @Update()
 class Item {
@@ -32,7 +32,7 @@ class Item {
   final DateTime born;
   @Field(label: 'Color')
   final Color color;
-  @Field(label: 'Secret', hidden: true)
+  @Field(label: 'Secret', on: {})
   final String? secret;
   final String? untracked;
 
@@ -55,7 +55,7 @@ class Item {
 const _nestedSource = r"""
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Post', path: 'posts')
+@Entity(title: 'Post', path: 'posts')
 @Create()
 @Update()
 class Post {
@@ -65,13 +65,13 @@ class Post {
   Post({this.id, required this.title});
 }
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 @Create()
 @Update()
 class Comment {
   final int? id;
   @Parent(Post)
-  @Field(hidden: true)
+  @Field(on: {})
   final int postId;
   @Field(label: 'Content')
   final String content;
@@ -82,7 +82,7 @@ class Comment {
 String _bad(String ctor, String fields) => """
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Item', path: 'items')
+@Entity(title: 'Item', path: 'items')
 @Create()
 @Update()
 class Item {
@@ -231,7 +231,7 @@ void main() {
       expect(message, contains('constructor parameter "id" is required'));
     });
 
-    test('required hidden field without a value source is an error', () async {
+    test('required field outside the form without a value source is an error', () async {
       final message = await failure(_bad(
               'Item({this.id, required this.name, required this.owner});',
               'final String owner;')

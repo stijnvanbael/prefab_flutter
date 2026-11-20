@@ -1,6 +1,6 @@
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Account', path: 'accounts')
+@Entity(title: 'Account', path: 'accounts')
 @Create()
 @Update()
 class Account {

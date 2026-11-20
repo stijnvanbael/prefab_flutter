@@ -12,7 +12,7 @@ import '../core/library_emitter.dart';
 import '../features/features.dart';
 import '../generators/prefab_generator.dart';
 
-/// A source library with `@View` classes: its element and its path relative
+/// A source library with `@Entity` classes: its element and its path relative
 /// to the package root (e.g. `lib/product.dart`).
 class PromoteSource {
   const PromoteSource(this.library, this.path);

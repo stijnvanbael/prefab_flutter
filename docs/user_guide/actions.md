@@ -9,7 +9,7 @@ under `lib/`:
 
 ```dart
 @EntityAction(Product, label: 'Duplicate', icon: 'copy',
-    on: {ActionPlace.detail, ActionPlace.item})
+    on: {Place.detail, Place.item})
 Future<void> duplicateProduct(
     BuildContext context, WidgetRef ref, Product product) async {
   await ref.read(productsProvider.notifier).create(
@@ -17,17 +17,17 @@ Future<void> duplicateProduct(
 }
 
 @EntityAction(Product, label: 'Refresh', icon: 'refresh',
-    on: {ActionPlace.list})
+    on: {Place.list})
 void refreshProducts(BuildContext context, WidgetRef ref) =>
     ref.invalidate(productsProvider);
 ```
 
 | Parameter | Meaning |
 |---|---|
-| first argument | The `@View` class the action belongs to |
+| first argument | The `@Entity` class the action belongs to |
 | `label` (required) | Menu text and tooltip |
 | `icon` | Name of a member of Flutter's `Icons` as a string (`'copy'` for `Icons.copy`); the annotation package has no Flutter dependency. Default `Icons.bolt` |
-| `on` | A set of places, default `{ActionPlace.detail}` |
+| `on` | A set of places, default `{Place.detail}` |
 | `order` | Sort key, default `0` |
 
 All arguments must be literals: the annotation is read from the syntax tree,
@@ -35,7 +35,7 @@ without resolving your code (like `@Promoted`).
 
 ## Places and signatures
 
-| `ActionPlace` | Where | Function signature |
+| `Place` | Where | Function signature |
 |---|---|---|
 | `detail` | AppBar of the detail screen, after Edit and Delete | `(BuildContext, WidgetRef, Product)`; disabled while the product is loading |
 | `item` | Trailing menu of every list item | `(BuildContext, WidgetRef, Product)` |

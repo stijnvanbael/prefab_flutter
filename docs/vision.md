@@ -37,7 +37,7 @@ When a design decision is unclear, these decide it, roughly in this order.
    feature first asks: "what is the smallest annotation that expresses this?"
 2. **Infer first, configure second.** Every annotation parameter has a
    sensible default derived from the code (names, types, nullability, JSON
-   mapping). An entity with only `@View()` must produce a usable app.
+   mapping). An entity with only `@Entity()` must produce a usable app.
 3. **Disposable by default, promotable at any time.** Generated code is not
    edited and not committed. Any single generated artifact (a screen, a
    provider, an API client, a route) can be *promoted* into the codebase.

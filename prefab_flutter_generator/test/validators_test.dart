@@ -21,7 +21,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 enum Color { red, green }
 
-@View(title: 'Thing', path: 'things')
+@Entity(title: 'Thing', path: 'things')
 @Create()
 @Update()
 class Thing {
@@ -252,7 +252,6 @@ void _emitterTests() {
     const field = FieldManifest(
       name: 'f',
       label: 'F',
-      hidden: false,
       isParent: false,
       dartType: 'String',
     );

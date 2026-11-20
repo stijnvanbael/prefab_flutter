@@ -7,7 +7,7 @@ import '../core/family_key.dart';
 import '../features/features.dart';
 import '../manifest/entity_manifest.dart';
 
-/// Generates Riverpod providers for every class annotated with [@View].
+/// Generates Riverpod providers for every class annotated with [@Entity].
 ///
 /// Produced providers include:
 /// - `{entity}DetailProvider` — `FutureProvider.autoDispose.family` that fetches a single

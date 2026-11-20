@@ -35,6 +35,14 @@ When a task leaves a design choice open, choose what the principles favour
 and name the principle in the pull request. If a task conflicts with a
 principle, say so in the pull request instead of silently picking one.
 
+## VOCABULARY
+
+`backlog/decisions/decision-2 - Vocabulary.md` defines the terms and naming
+rules (entity, field, place, action, builder, artifact, ...). Annotations,
+parameters, generated names, runtime classes, documentation and task texts
+use these terms with these meanings. A feature that needs a new term adds it
+to that record in the same pull request.
+
 ## WORKING WITH THE BACKLOG FILES
 
 The block above is maintained by Backlog.md; do not edit it. If the Backlog MCP

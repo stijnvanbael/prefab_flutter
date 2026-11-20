@@ -1,6 +1,6 @@
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Alpha', path: 'alphas')
+@Entity(title: 'Alpha', path: 'alphas')
 @Update()
 @Delete()
 class Alpha {

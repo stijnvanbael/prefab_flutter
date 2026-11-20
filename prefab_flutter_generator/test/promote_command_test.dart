@@ -9,7 +9,7 @@ import 'support/prefab_sources.dart';
 const _entity = '''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Alpha', path: 'alphas')
+@Entity(title: 'Alpha', path: 'alphas')
 class Alpha {
   final int? id;
   @Field()

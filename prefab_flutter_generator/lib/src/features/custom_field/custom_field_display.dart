@@ -2,7 +2,7 @@ import '../../core/code.dart';
 import '../../core/field_registries.dart';
 import '../../manifest/field_manifest.dart';
 
-/// A hand-written display widget (`@Field(display: ...)`), used by the detail
+/// A hand-written display widget (`@Field(displayBuilder: ...)`), used by the detail
 /// screen and the list tile slots instead of `Text(value.toString())`. It gets
 /// the field value (also `null` for a nullable field) as `value:`.
 class CustomFieldDisplay extends FieldDisplay {

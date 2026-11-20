@@ -7,7 +7,7 @@ import 'rating_widgets.dart';
 part 'review.g.dart';
 
 @JsonSerializable()
-@View()
+@Entity()
 @Create()
 @Update()
 @Delete()
@@ -31,7 +31,10 @@ class Review {
   final int? rating;
 
   /// Edited and shown with the hand-written widgets of `rating_widgets.dart`.
-  @Field(form: FormOptions(custom: RatingField.new), display: RatingStars.new)
+  @Field(
+    form: FormOptions(builder: RatingField.new),
+    displayBuilder: RatingStars.new,
+  )
   final int? quality;
 
   Review({

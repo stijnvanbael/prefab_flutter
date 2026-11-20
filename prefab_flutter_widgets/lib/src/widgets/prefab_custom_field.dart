@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 /// The contract of a hand-written form widget for one field, named with
-/// `@Field(form: FormOptions(custom: ColorField.new))`.
+/// `@Field(form: FormOptions(builder: ColorField.new))`.
 ///
 /// The generated create and edit screens call the referenced constructor or
 /// function with these named parameters (`key` is never passed; `validator`
@@ -27,7 +27,7 @@ typedef PrefabFieldBuilder<T> = Widget Function({
 });
 
 /// The contract of a hand-written display widget for one field, named with
-/// `@Field(display: ColorSwatch.new)`: the detail screen and the list tile
+/// `@Field(displayBuilder: ColorSwatch.new)`: the detail screen and the list tile
 /// build it with the field value (`null` for an empty nullable field) instead
 /// of showing `toString()`.
 typedef PrefabDisplayBuilder<T> = Widget Function({

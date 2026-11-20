@@ -4,11 +4,11 @@
 > pub.dev badge: added once the package is published (not yet on pub.dev).
 
 Code generator for [`prefab_flutter`](https://pub.dev/packages/prefab_flutter). Reads
-`@View`-annotated Dart classes and emits **one** library per source file:
+`@Entity`-annotated Dart classes and emits **one** library per source file:
 
 | Builder factory | Output extension | Description |
 |-----------------|------------------|-------------|
-| `prefabBuilder` | `.prefab.dart`   | Detail, list and form screens, Riverpod providers, Dio API client and GoRouter routes for every `@View` class in the file |
+| `prefabBuilder` | `.prefab.dart`   | Detail, list and form screens, Riverpod providers, Dio API client and GoRouter routes for every `@Entity` class in the file |
 
 ## Usage
 
@@ -28,7 +28,7 @@ Annotate your entity:
 ```dart
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 @Delete()

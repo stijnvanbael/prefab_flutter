@@ -8,7 +8,7 @@ contains:
 
 | Generated code | Contents |
 |---|---|
-| `ProductListScreen` | A `ListView` of items (or the `PrefabTheme` empty state, "No items found" by default); tapping one opens its detail screen. With a `searchable` field it has a `PrefabSearchBar`, with `sortable` fields a `PrefabSortMenu` in the AppBar, and (unless `@View(paged: false)`) a `PrefabPaginationBar` footer. With `@Create`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
+| `ProductListScreen` | A `ListView` of items (or the `PrefabTheme` empty state, "No items found" by default); tapping one opens its detail screen. With a `searchable` field it has a `PrefabSearchBar`, with `sortable` fields a `PrefabSortMenu` in the AppBar, and (unless `@Entity(paged: false)`) a `PrefabPaginationBar` footer. With `@Create`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
 | `ProductDetailScreen(id:)` | One `ListTile` per visible field, plus Edit/Delete actions and your [`@EntityAction`s](actions.md) |
 | `ProductCreateScreen` | Only with `@Create` |
 | `ProductEditScreen(id:)` | Only with `@Update` |
@@ -16,20 +16,20 @@ contains:
 | `ProductApiClient` | `list` (returns a `PrefabPage<Product>`), `getById`, `delete`, plus `create` (with `@Create`) and `update` (with `@Update`); responses are read with `Product.fromJson` and request bodies are sent as `product.toJson()` |
 | `$productRoutes` | Named after the source file; a `List<RouteBase>` with the routes of every entity in the file |
 
-A file without `@View` classes produces no output. The previous layout of six
+A file without `@Entity` classes produces no output. The previous layout of six
 files per source (`.list_screen.dart`, `.detail_screen.dart`, `.form_screen.dart`,
 `.provider.dart`, `.api_client.dart`, `.routes.dart`) was replaced by the single
 `.prefab.dart` file (PF-32); delete the old files when migrating.
 
 ### JSON serialization requirement
 
-Every `@View` class needs a `fromJson(Map<String, dynamic> json)` factory and a
+Every `@Entity` class needs a `fromJson(Map<String, dynamic> json)` factory and a
 `toJson()` method; the generated API client uses them instead of casting
 `response.data`. The easiest way is `json_serializable`:
 
 ```dart
 @JsonSerializable()
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 class Product {
   // ...fields...
   factory Product.fromJson(Map<String, dynamic> json) => _$ProductFromJson(json);
@@ -42,7 +42,7 @@ Add `json_annotation` and `json_serializable` to your `pubspec.yaml` and add
 missing the build fails with an error naming the entity. List responses are
 decoded with `(response.data as List).map((e) => Product.fromJson(e as Map<String, dynamic>))`.
 
-Several `@View` classes may live in one source file; their code is combined
+Several `@Entity` classes may live in one source file; their code is combined
 in the same generated files.
 
 The edit screen loads the entity through the detail provider and fills the

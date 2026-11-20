@@ -8,7 +8,7 @@ import '../features/entity_screens/child_screen.dart';
 import '../manifest/entity_paths.dart';
 import 'artifact.dart';
 
-final _viewChecker = TypeChecker.typeNamed(View, inPackage: 'prefab_flutter');
+final _entityChecker = TypeChecker.typeNamed(Entity, inPackage: 'prefab_flutter');
 
 /// What a feature module or artifact template knows about one entity: the
 /// manifest (all annotation reading happens there) plus file-level facts.
@@ -42,18 +42,18 @@ class EntityContext {
   /// in the package.
   final List<ChildScreen> childScreens;
 
-  /// Reads every `@View` class of [library] in declaration order.
+  /// Reads every `@Entity` class of [library] in declaration order.
   static List<EntityContext> readAll(
       LibraryReader library, String sourceFileName,
       {List<ActionDeclaration> actions = const [],
       List<ChildScreen> childScreens = const []}) {
-    final annotated = library.annotatedWith(_viewChecker).toList();
+    final annotated = library.annotatedWith(_entityChecker).toList();
     final classes = <(ClassElement, ConstantReader)>[];
     for (final a in annotated) {
       final element = a.element;
       if (element is! ClassElement) {
         throw InvalidGenerationSourceError(
-          '@View can only be applied to classes.',
+          '@Entity can only be applied to classes.',
           element: element,
         );
       }

@@ -9,9 +9,9 @@ import 'field_widgets/field_widgets_feature.dart';
 import 'list_query/list_query_feature.dart';
 import 'nested_resources/nested_resources_feature.dart';
 import 'nullable_fields/nullable_fields_feature.dart';
+import 'places/places_feature.dart';
 import 'update/update_feature.dart';
 import 'validators/validators_feature.dart';
-import 'views/views_feature.dart';
 
 /// Every feature module, alphabetical by directory name. Add one line when
 /// you add a feature; the order has no meaning (contributions are ordered by
@@ -27,7 +27,7 @@ const registeredFeatures = <Feature>[
   ListQueryFeature(),
   NestedResourcesFeature(),
   NullableFieldsFeature(),
+  PlacesFeature(),
   UpdateFeature(),
   ValidatorsFeature(),
-  ViewsFeature(),
 ];

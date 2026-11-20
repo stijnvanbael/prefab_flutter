@@ -7,7 +7,7 @@ part 'reply.g.dart';
 
 /// Third nesting level: Product -> Review -> Reply (PF-19).
 @JsonSerializable()
-@View(title: 'Reply', path: 'replies')
+@Entity(title: 'Reply', path: 'replies')
 @Create()
 @Update()
 @Delete()

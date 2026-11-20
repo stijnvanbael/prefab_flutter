@@ -11,7 +11,7 @@ import '../manifest/field_manifest.dart';
 import '../features/features.dart';
 
 /// Generates a `{Entity}ListScreen` [ConsumerWidget] for every class annotated
-/// with [@View].
+/// with [@Entity].
 ///
 /// When the entity carries a [@Parent]-annotated field the generated list
 /// screen:
