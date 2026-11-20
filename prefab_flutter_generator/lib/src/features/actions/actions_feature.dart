@@ -13,8 +13,9 @@ import 'action_scanner.dart';
 /// file, like `@Promoted`) and arrive in [EntityContext.actions]. The feature
 /// adds them to the detail screen (`appBarActions`), the list screen
 /// (`appBarActions`) and each list item (`itemActions`), all at order 50.
-/// A screen that is promoted is not in the `ArtifactSet`, so it is skipped
-/// without a message.
+/// A screen that is promoted is not in the `ArtifactSet`; the build warns
+/// that it does not show the actions, and the `promote` command writes the
+/// actions into the promoted file.
 class ActionsFeature extends Feature {
   const ActionsFeature();
 
@@ -32,6 +33,7 @@ class ActionsFeature extends Feature {
     final detail =
         artifacts.get<DetailScreenArtifact>(ArtifactKind.detailScreen, id);
     final onDetail = _at(entity, 'detail');
+    _warnPromoted(entity, artifacts, ArtifactKind.detailScreen, onDetail);
     if (detail != null && onDetail.isNotEmpty) {
       final items = sortActions([
         for (final a in onDetail)
@@ -50,6 +52,8 @@ class ActionsFeature extends Feature {
 
     final list =
         artifacts.get<ListScreenArtifact>(ArtifactKind.listScreen, id);
+    _warnPromoted(entity, artifacts, ArtifactKind.listScreen,
+        [..._at(entity, 'list'), ..._at(entity, 'item')]);
     if (list == null) return;
     final onList = _at(entity, 'list');
     if (onList.isNotEmpty) {
@@ -74,6 +78,17 @@ class ActionsFeature extends Feature {
         order: _order,
       );
     }
+  }
+
+  void _warnPromoted(EntityContext entity, ArtifactSet artifacts,
+      ArtifactKind kind, List<ActionDeclaration> actions) {
+    final screen = artifacts.promotedName(kind, entity.manifest.entityName);
+    if (screen == null || actions.isEmpty) return;
+    artifacts.warn('$screen is @Promoted, so it does not show '
+        '${actions.length == 1 ? 'the action' : 'the actions'} '
+        '${[for (final a in actions) a.name].join(', ')} '
+        '(@EntityAction on ${entity.manifest.entityName}). '
+        'Add ${actions.length == 1 ? 'it' : 'them'} to $screen by hand.');
   }
 
   List<ActionDeclaration> _at(EntityContext entity, String place) =>

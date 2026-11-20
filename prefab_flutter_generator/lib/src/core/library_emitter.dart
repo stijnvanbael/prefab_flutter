@@ -109,7 +109,11 @@ class LibraryEmitter {
   }
 
   /// Returns the whole library, or `''` when nothing is generated.
-  String emit(List<EntityContext> entities, {required String header}) {
+  ///
+  /// [onWarning] receives the warnings of features that have contributions
+  /// for a promoted artifact.
+  String emit(List<EntityContext> entities,
+      {required String header, void Function(String message)? onWarning}) {
     final promotedByName = {for (final p in promoted) p.name: p};
     final imports = Imports();
 
@@ -117,18 +121,21 @@ class LibraryEmitter {
     //    providers, ...). A skipped artifact is dropped; its replacement is
     //    imported and re-exported.
     final created = <Artifact>[];
+    final skipped = <Artifact>[];
     var replaced = 0;
     for (final artifact in _ordered(entities)) {
       final replacement = promotedByName[artifact.primaryName];
       if (replacement != null) {
         imports.add(replacement.libraryUri);
         imports.export(replacement.libraryUri, replacement.name);
+        skipped.add(artifact);
         replaced++;
       } else {
         created.add(artifact);
       }
     }
-    final artifacts = ArtifactSet(created);
+    final artifacts =
+        ArtifactSet(created, promoted: skipped, onWarning: onWarning);
 
     // 2. Let every feature contribute to the remaining artifacts.
     for (final entity in entities) {

@@ -96,13 +96,29 @@ class EntityContext {
 /// artifact is not generated (e.g. no `@Update`) or skipped, so a feature
 /// never contributes to hand-written code.
 class ArtifactSet {
-  ArtifactSet(Iterable<Artifact> artifacts)
-      : _byId = {for (final a in artifacts) a.id: a};
+  ArtifactSet(Iterable<Artifact> artifacts,
+      {Iterable<Artifact> promoted = const [],
+      void Function(String message)? onWarning})
+      : _byId = {for (final a in artifacts) a.id: a},
+        _promoted = {for (final a in promoted) a.id: a},
+        _onWarning = onWarning;
 
   final Map<ArtifactId, Artifact> _byId;
+  final Map<ArtifactId, Artifact> _promoted;
+  final void Function(String message)? _onWarning;
 
   Iterable<Artifact> get all => _byId.values;
 
   T? get<T extends Artifact>(ArtifactKind kind, String entity) =>
       _byId[ArtifactId(kind, entity)] as T?;
+
+  /// The primary name of the artifact when it is replaced by a `@Promoted`
+  /// declaration, `null` otherwise. A feature that has something to add to a
+  /// promoted artifact calls [warn] with it, as it cannot write to
+  /// hand-written code.
+  String? promotedName(ArtifactKind kind, String entity) =>
+      _promoted[ArtifactId(kind, entity)]?.primaryName;
+
+  /// Reports [message] as a build warning.
+  void warn(String message) => _onWarning?.call(message);
 }

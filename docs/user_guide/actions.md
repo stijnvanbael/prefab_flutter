@@ -74,7 +74,7 @@ The list notifier methods (`create`, `delete`, ...) already refresh the list.
 ## When nothing is added
 
 An action is only added to a screen that is generated. If the detail or list
-screen is [promoted](promoting.md), its actions are skipped without a message;
-call the function from your own screen. The `promote` command does not copy
-actions into the promoted file (the screen then has no actions until you add
-them). Keeping actions on promotion is planned in PF-68.
+screen is [promoted](promoting.md), the `promote` command writes the actions
+the screen had into the promoted file. An action added afterwards is not shown
+by the promoted screen; the build warns, naming the screen and the action, and
+you call the function from your own screen.

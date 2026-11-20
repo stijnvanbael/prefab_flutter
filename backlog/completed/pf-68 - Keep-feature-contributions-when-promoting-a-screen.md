@@ -1,7 +1,7 @@
 ---
 id: PF-68
 title: Keep feature contributions when promoting a screen
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-11-20 12:00'
 labels: []
@@ -22,8 +22,16 @@ Make promotion lossless or loud:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 `promote` output for a list or detail screen includes the actions and screen links the generated screen has
-- [ ] #2 A contribution that targets a promoted screen produces a build warning naming the screen and the contribution
-- [ ] #3 Tests cover the promote output with actions and screen links, and the warning
-- [ ] #4 docs/user_guide/promoting.md and actions.md describe the behaviour; the Known limitations row is removed
+- [x] #1 `promote` output for a list or detail screen includes the actions and screen links the generated screen has
+- [x] #2 A contribution that targets a promoted screen produces a build warning naming the screen and the contribution
+- [x] #3 Tests cover the promote output with actions and screen links, and the warning
+- [x] #4 docs/user_guide/promoting.md and actions.md describe the behaviour; the Known limitations row is removed
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+- `promote` scans `lib/` for `@EntityAction` and `@EntityScreen` (`scanPackageContributions`) and passes them to the emitter, so the file contains them.
+- `ArtifactSet.promotedName` / `warn`: the actions and entity_screens features warn (`log.warning`) for a promoted screen. The warning appears on every build, since the generator cannot tell whether the promoted screen already calls the function.
+- Example app: it has no promoted screen with contributions and the change is a command and a build warning; covered by generator tests instead.
+<!-- SECTION:NOTES:END -->

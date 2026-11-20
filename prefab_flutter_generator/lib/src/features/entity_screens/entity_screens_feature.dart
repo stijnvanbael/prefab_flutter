@@ -44,6 +44,14 @@ class EntityScreensFeature extends Feature {
         ArtifactKind.detailScreen, manifest.entityName);
     final list = artifacts.get<ListScreenArtifact>(
         ArtifactKind.listScreen, manifest.entityName);
+    final classes = [for (final s in entity.childScreens) s.className];
+    for (final kind in [ArtifactKind.detailScreen, ArtifactKind.listScreen]) {
+      final promoted = artifacts.promotedName(kind, manifest.entityName);
+      if (promoted == null) continue;
+      artifacts.warn('$promoted is @Promoted, so it does not link to '
+          '${classes.join(', ')} (@EntityScreen on ${manifest.entityName}). '
+          'Add the link to $promoted by hand.');
+    }
     for (final screen in entity.childScreens) {
       // The screen's own library is imported by the generated routes, unless
       // it is the entity's file (which every artifact imports already).
