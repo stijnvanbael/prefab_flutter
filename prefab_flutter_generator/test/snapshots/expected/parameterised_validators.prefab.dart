@@ -198,27 +198,27 @@ class AccountDetailScreen extends ConsumerWidget {
             prefabTheme.detailFieldBuilder(
               context,
               'Email',
-              account.email.toString(),
+              Text(account.email.toString()),
             ),
             prefabTheme.detailFieldBuilder(
               context,
               'Username',
-              account.username.toString(),
+              Text(account.username.toString()),
             ),
             prefabTheme.detailFieldBuilder(
               context,
               'Code',
-              account.code.toString(),
+              Text(account.code.toString()),
             ),
             prefabTheme.detailFieldBuilder(
               context,
               'Age',
-              account.age.toString(),
+              Text(account.age.toString()),
             ),
             prefabTheme.detailFieldBuilder(
               context,
               'Website',
-              account.website?.toString() ?? '—',
+              Text(account.website?.toString() ?? '—'),
             ),
           ],
         ),

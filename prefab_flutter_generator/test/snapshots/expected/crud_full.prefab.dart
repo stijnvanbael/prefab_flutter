@@ -222,7 +222,7 @@ class AlphaDetailScreen extends ConsumerWidget {
             prefabTheme.detailFieldBuilder(
               context,
               'Name',
-              alpha.name.toString(),
+              Text(alpha.name.toString()),
             ),
           ],
         ),

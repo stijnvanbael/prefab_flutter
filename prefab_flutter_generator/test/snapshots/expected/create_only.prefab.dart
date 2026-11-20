@@ -178,7 +178,7 @@ class BetaDetailScreen extends ConsumerWidget {
             prefabTheme.detailFieldBuilder(
               context,
               'Name',
-              beta.name.toString(),
+              Text(beta.name.toString()),
             ),
           ],
         ),

@@ -141,17 +141,17 @@ class BookDetailScreen extends ConsumerWidget {
             prefabTheme.detailFieldBuilder(
               context,
               'Title',
-              book.title.toString(),
+              Text(book.title.toString()),
             ),
             prefabTheme.detailFieldBuilder(
               context,
               'Pages',
-              book.pages.toString(),
+              Text(book.pages.toString()),
             ),
             prefabTheme.detailFieldBuilder(
               context,
               'Author',
-              book.author?.toString() ?? '—',
+              Text(book.author?.toString() ?? '—'),
             ),
           ],
         ),

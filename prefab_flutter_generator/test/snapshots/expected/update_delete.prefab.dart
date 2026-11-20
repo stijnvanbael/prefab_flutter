@@ -212,7 +212,7 @@ class GammaDetailScreen extends ConsumerWidget {
             prefabTheme.detailFieldBuilder(
               context,
               'Name',
-              gamma.name.toString(),
+              Text(gamma.name.toString()),
             ),
           ],
         ),

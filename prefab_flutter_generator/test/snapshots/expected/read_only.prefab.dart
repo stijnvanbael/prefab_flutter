@@ -168,7 +168,7 @@ class DeltaDetailScreen extends ConsumerWidget {
             prefabTheme.detailFieldBuilder(
               context,
               'Name',
-              delta.name.toString(),
+              Text(delta.name.toString()),
             ),
           ],
         ),

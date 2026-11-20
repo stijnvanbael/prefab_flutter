@@ -574,7 +574,7 @@ class OrderLineDetailScreen extends ConsumerWidget {
             prefabTheme.detailFieldBuilder(
               context,
               'Product',
-              orderLine.product.toString(),
+              Text(orderLine.product.toString()),
             ),
           ],
         ),
@@ -665,7 +665,7 @@ class OrderLineNoteDetailScreen extends ConsumerWidget {
             prefabTheme.detailFieldBuilder(
               context,
               'Text',
-              orderLineNote.text.toString(),
+              Text(orderLineNote.text.toString()),
             ),
           ],
         ),

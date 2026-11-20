@@ -243,12 +243,12 @@ class AlphaDetailScreen extends ConsumerWidget {
             prefabTheme.detailFieldBuilder(
               context,
               'Name',
-              alpha.name.toString(),
+              Text(alpha.name.toString()),
             ),
             prefabTheme.detailFieldBuilder(
               context,
               'Note',
-              alpha.note?.toString() ?? '—',
+              Text(alpha.note?.toString() ?? '—'),
             ),
           ],
         ),

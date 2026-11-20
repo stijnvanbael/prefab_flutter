@@ -168,12 +168,12 @@ class ItemDetailScreen extends ConsumerWidget {
             prefabTheme.detailFieldBuilder(
               context,
               'Secret',
-              item.secret.toString(),
+              Text(item.secret.toString()),
             ),
             prefabTheme.detailFieldBuilder(
               context,
               'Note',
-              item.note?.toString() ?? '—',
+              Text(item.note?.toString() ?? '—'),
             ),
           ],
         ),

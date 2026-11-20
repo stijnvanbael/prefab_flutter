@@ -143,7 +143,8 @@ void main() {
       final out = await _generate(
         '@Field(display: Swatch.new)\n  final int? color;',
       );
-      expect(out, contains('subtitle: Swatch(value: thing.color),'));
+      expect(out, contains('Swatch(value: thing.color),'));
+      expect(out, contains('prefabTheme.detailFieldBuilder('));
       expect(out, contains('title: Swatch(value: thing.color),'));
       expect(out, isNot(contains("?.toString() ?? '—'")));
     });
