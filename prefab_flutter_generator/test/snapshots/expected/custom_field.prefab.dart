@@ -251,8 +251,12 @@ class AppThemeListScreen extends ConsumerWidget {
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final appTheme = page.items[index];
-                        return ListTile(
+                        return prefabTheme.listItemBuilder(
+                          context,
                           title: Text(appTheme.name.toString()),
+                          subtitle: null,
+                          trailing: null,
+                          actions: const [],
                           onTap: () => context.push('/themes/${appTheme.id}'),
                         );
                       },

@@ -215,8 +215,12 @@ class BookListScreen extends ConsumerWidget {
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final book = page.items[index];
-                        return ListTile(
+                        return prefabTheme.listItemBuilder(
+                          context,
                           title: Text(book.title.toString()),
+                          subtitle: null,
+                          trailing: null,
+                          actions: const [],
                           onTap: () => context.push('/books/${book.id}'),
                         );
                       },

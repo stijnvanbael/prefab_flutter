@@ -117,7 +117,7 @@ place. Fields use three of the four `Place` values:
 
 | Place | Screen | Fields |
 |---|---|---|
-| `Place.item` | Each item of the list screen | The first, second and third field on `item` fill the `ListTile` `title`, `subtitle` and `trailing` slots; further fields are ignored |
+| `Place.item` | Each item of the list screen | The first, second and third field on `item` fill the `title`, `subtitle` and `trailing` slots of the item (a `ListTile` unless [`PrefabTheme.listItemBuilder`](runtime-widgets.md#theming) says otherwise); further fields are ignored |
 | `Place.detail` | Detail screen | All fields on `detail` are listed |
 | `Place.form` | Create and edit screens | All fields on `form` get an input; on edit, the other fields keep their stored value |
 

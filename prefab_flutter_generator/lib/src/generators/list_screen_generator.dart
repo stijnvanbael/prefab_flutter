@@ -200,31 +200,25 @@ class ListScreenArtifact extends Artifact {
     buffer.writeln('          itemCount: page.items.length,');
     buffer.writeln('          itemBuilder: (context, index) {');
     buffer.writeln('            final $entityLower = page.items[index];');
-    buffer.writeln('            return ListTile(');
+    buffer.writeln('            return prefabTheme.listItemBuilder(');
+    buffer.writeln('              context,');
     final slots = itemTile.values;
     const slotNames = ['title', 'subtitle', 'trailing'];
-    for (var i = 0; i < slots.length; i++) {
-      final f = slots[i];
-      final value = fieldValueWidget(fieldValue, f, entityLower);
+    for (var i = 0; i < slotNames.length; i++) {
+      if (i >= slots.length) {
+        buffer.writeln('              ${slotNames[i]}: null,');
+        continue;
+      }
+      final value = fieldValueWidget(fieldValue, slots[i], entityLower);
       _displayImports.addAll(value.imports);
-      if (slotNames[i] == 'trailing' && !itemActions.isEmpty) continue;
       buffer.writeln('              ${slotNames[i]}: ${value.text},');
     }
-    if (!itemActions.isEmpty) {
-      final trailing = slots.length > 2
-          ? fieldValueWidget(fieldValue, slots[2], entityLower).text
-          : null;
-      buffer.writeln('              trailing: Row(');
-      buffer.writeln('                mainAxisSize: MainAxisSize.min,');
-      buffer.writeln('                children: [');
-      if (trailing != null) buffer.writeln('                  $trailing,');
-      buffer.writeln('                  PopupMenuButton<void>(');
-      buffer.writeln('                    itemBuilder: (_) => [');
-      buffer.writeln(itemActions.render(14));
-      buffer.writeln('                    ],');
-      buffer.writeln('                  ),');
-      buffer.writeln('                ],');
-      buffer.writeln('              ),');
+    if (itemActions.isEmpty) {
+      buffer.writeln('              actions: const [],');
+    } else {
+      buffer.writeln('              actions: [');
+      buffer.writeln(itemActions.render(16));
+      buffer.writeln('              ],');
     }
     buffer.writeln("              onTap: () => context.push('$itemPath'),");
     buffer.writeln('            );');

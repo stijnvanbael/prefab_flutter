@@ -285,8 +285,12 @@ class WidgetDemoListScreen extends ConsumerWidget {
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final widgetDemo = page.items[index];
-                        return ListTile(
+                        return prefabTheme.listItemBuilder(
+                          context,
                           title: Text(widgetDemo.auto.toString()),
+                          subtitle: null,
+                          trailing: null,
+                          actions: const [],
                           onTap: () =>
                               context.push('/widget-demos/${widgetDemo.id}'),
                         );

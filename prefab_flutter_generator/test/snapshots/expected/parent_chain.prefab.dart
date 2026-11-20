@@ -701,7 +701,12 @@ class OrderListScreen extends ConsumerWidget {
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final order = page.items[index];
-                        return ListTile(
+                        return prefabTheme.listItemBuilder(
+                          context,
+                          title: null,
+                          subtitle: null,
+                          trailing: null,
+                          actions: const [],
                           onTap: () => context.push('/orders/${order.id}'),
                         );
                       },
@@ -756,8 +761,12 @@ class OrderLineListScreen extends ConsumerWidget {
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final orderLine = page.items[index];
-                        return ListTile(
+                        return prefabTheme.listItemBuilder(
+                          context,
                           title: Text(orderLine.product.toString()),
+                          subtitle: null,
+                          trailing: null,
+                          actions: const [],
                           onTap: () => context
                               .push('/orders/$orderId/lines/${orderLine.id}'),
                         );
@@ -841,8 +850,12 @@ class OrderLineNoteListScreen extends ConsumerWidget {
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final orderLineNote = page.items[index];
-                        return ListTile(
+                        return prefabTheme.listItemBuilder(
+                          context,
                           title: Text(orderLineNote.text.toString()),
+                          subtitle: null,
+                          trailing: null,
+                          actions: const [],
                           onTap: () => context.push(
                               '/orders/$orderId/lines/$orderLineId/notes/${orderLineNote.id}'),
                         );

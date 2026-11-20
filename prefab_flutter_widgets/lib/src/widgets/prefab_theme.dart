@@ -29,6 +29,22 @@ typedef PrefabSaveButtonBuilder = Widget Function(
   bool saving,
 );
 
+/// Builds one item of a list screen.
+///
+/// [title] is the first `@Field(on: Place.item)` field, [subtitle] the second
+/// and [trailing] the third (each is `null` when the entity has fewer item
+/// fields). [actions] are the menu entries of the item's actions (delete,
+/// `@EntityScreen` links, `@EntityAction`s); put them in a
+/// `PopupMenuButton<void>` or any other menu. [onTap] opens the detail screen.
+typedef PrefabListItemBuilder = Widget Function(
+  BuildContext context, {
+  required Widget? title,
+  required Widget? subtitle,
+  required Widget? trailing,
+  required List<PopupMenuEntry<void>> actions,
+  required VoidCallback onTap,
+});
+
 /// Layout decisions of generated list, detail and form screens.
 ///
 /// Set it in `ThemeData.extensions`. Screens fall back to the defaults, which
@@ -50,6 +66,7 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
     this.emptyBuilder = defaultEmptyBuilder,
     this.loadingBuilder = defaultLoadingBuilder,
     this.errorBuilder = defaultErrorBuilder,
+    this.listItemBuilder = defaultListItemBuilder,
     this.detailFieldBuilder = defaultDetailFieldBuilder,
     this.saveButtonBuilder = defaultSaveButtonBuilder,
   });
@@ -71,6 +88,9 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
 
   /// Shown by list, detail and edit screens when loading failed.
   final PrefabErrorBuilder errorBuilder;
+
+  /// Layout of one item of list screens.
+  final PrefabListItemBuilder listItemBuilder;
 
   /// Layout of one label and value in detail screens.
   final PrefabDetailFieldBuilder detailFieldBuilder;
@@ -94,6 +114,29 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
   static Widget defaultErrorBuilder(
           BuildContext context, Object error, StackTrace? stackTrace) =>
       Center(child: Text('Error: $error'));
+
+  static Widget defaultListItemBuilder(
+    BuildContext context, {
+    required Widget? title,
+    required Widget? subtitle,
+    required Widget? trailing,
+    required List<PopupMenuEntry<void>> actions,
+    required VoidCallback onTap,
+  }) =>
+      ListTile(
+        title: title,
+        subtitle: subtitle,
+        trailing: actions.isEmpty
+            ? trailing
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (trailing != null) trailing,
+                  PopupMenuButton<void>(itemBuilder: (_) => actions),
+                ],
+              ),
+        onTap: onTap,
+      );
 
   static Widget defaultDetailFieldBuilder(
           BuildContext context, String label, Widget value) =>
@@ -120,6 +163,7 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
     PrefabEmptyBuilder? emptyBuilder,
     PrefabLoadingBuilder? loadingBuilder,
     PrefabErrorBuilder? errorBuilder,
+    PrefabListItemBuilder? listItemBuilder,
     PrefabDetailFieldBuilder? detailFieldBuilder,
     PrefabSaveButtonBuilder? saveButtonBuilder,
   }) =>
@@ -130,6 +174,7 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
         emptyBuilder: emptyBuilder ?? this.emptyBuilder,
         loadingBuilder: loadingBuilder ?? this.loadingBuilder,
         errorBuilder: errorBuilder ?? this.errorBuilder,
+        listItemBuilder: listItemBuilder ?? this.listItemBuilder,
         detailFieldBuilder: detailFieldBuilder ?? this.detailFieldBuilder,
         saveButtonBuilder: saveButtonBuilder ?? this.saveButtonBuilder,
       );
@@ -148,6 +193,7 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
       emptyBuilder: next.emptyBuilder,
       loadingBuilder: next.loadingBuilder,
       errorBuilder: next.errorBuilder,
+      listItemBuilder: next.listItemBuilder,
       detailFieldBuilder: next.detailFieldBuilder,
       saveButtonBuilder: next.saveButtonBuilder,
     );

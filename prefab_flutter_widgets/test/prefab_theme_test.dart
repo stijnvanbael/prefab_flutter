@@ -51,6 +51,33 @@ void main() {
     expect(find.text('Save'), findsOneWidget);
   });
 
+  testWidgets('default list item builder renders a ListTile with actions',
+      (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(builder: (context) {
+          return const PrefabTheme().listItemBuilder(
+            context,
+            title: const Text('Keyboard'),
+            subtitle: const Text('49'),
+            trailing: null,
+            actions: const [
+              PopupMenuItem<void>(child: Text('Send')),
+            ],
+            onTap: () => taps++,
+          );
+        }),
+      ),
+    ));
+    expect(find.byType(ListTile), findsOneWidget);
+    await tester.tap(find.text('Keyboard'));
+    expect(taps, 1);
+    await tester.tap(find.byType(PopupMenuButton<void>));
+    await tester.pumpAndSettle();
+    expect(find.text('Send'), findsOneWidget);
+  });
+
   test('copyWith replaces only the given values', () {
     const base = PrefabTheme();
     final copy = base.copyWith(formPadding: const EdgeInsets.all(3));
