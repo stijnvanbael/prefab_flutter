@@ -44,6 +44,10 @@ class DetailScreenArtifact extends Artifact {
   /// fields.
   final fieldValue = ValuePoint<FieldValue>('detailScreen.fieldValue');
 
+  /// Tiles after the field tiles (indent 12): links to hand-written child
+  /// screens. Orders in use: 10 entity screens.
+  final afterFields = ExtensionPoint('detailScreen.afterFields');
+
   static Iterable<Artifact> create(EntityContext entity) =>
       [DetailScreenArtifact(entity)];
 
@@ -68,6 +72,7 @@ class DetailScreenArtifact extends Artifact {
         ...appBarActions.imports,
         entity.sourceFileName,
         ...ancestorImports([entity.manifest]),
+        ...afterFields.imports,
       },
     );
   }
@@ -202,6 +207,7 @@ class DetailScreenArtifact extends Artifact {
     for (final field in visibleFields) {
       _writeFieldTile(field, entityLower, buffer);
     }
+    if (!afterFields.isEmpty) buffer.writeln(afterFields.render(12));
 
     buffer.writeln('          ],');
     buffer.writeln('        ),');

@@ -3,6 +3,7 @@ import 'package:glob/glob.dart';
 import 'package:source_gen/source_gen.dart';
 
 import '../features/actions/action_scanner.dart';
+import '../features/entity_screens/child_screen.dart';
 import 'entity_context.dart';
 import 'feature.dart';
 import '../promoted/promoted_scanner.dart';
@@ -31,10 +32,12 @@ class ArtifactGenerator extends Generator {
     final sourceFileName = buildStep.inputId.path.split('/').last;
     final allActions = await readActions(buildStep);
     final self = buildStep.inputId.uri.toString();
+    final childScreens = await readChildScreens(buildStep);
     final entities = EntityContext.readAll(library, sourceFileName, actions: [
       for (final a in allActions) a.uri == self ? a.inSameLibrary() : a,
-    ]);
+    ], childScreens: childScreens);
     final promoted = await readPromoted(buildStep);
+    await _checkChildScreens(entities, childScreens, buildStep);
     if (entities.isEmpty) return '';
     final emitter = LibraryEmitter(
       artifactFactories: artifactFactories,
@@ -45,6 +48,31 @@ class ArtifactGenerator extends Generator {
     await _checkActions(entities, allActions, buildStep);
     final source = emitter.emit(entities, header: banner(name));
     return formatGenerated(source, sourceFileName);
+  }
+
+  /// Fails when an `@EntityScreen` names a class that is not a `@View` entity
+  /// of the package.
+  Future<void> _checkChildScreens(List<EntityContext> entities,
+      List<ChildScreen> screens, BuildStep buildStep) async {
+    final own = {for (final e in entities) e.manifest.entityName};
+    var unknown = [
+      for (final s in screens)
+        if (!own.contains(s.entity)) s,
+    ];
+    if (unknown.isEmpty) return;
+    final known = {...own, ...await readOtherViewNames(buildStep)};
+    unknown = [
+      for (final s in unknown)
+        if (!known.contains(s.entity)) s,
+    ];
+    if (unknown.isEmpty) return;
+    final s = unknown.first;
+    final closest = closestName(s.entity, known);
+    throw InvalidGenerationSourceError(
+      '@EntityScreen ${s.className} (${s.libraryUri}) names ${s.entity}, '
+      'which is not a @View entity'
+      '${closest == null ? '' : '; did you mean $closest?'}',
+    );
   }
 
   /// Fails when a `@Promoted` declaration names no generated artifact of the

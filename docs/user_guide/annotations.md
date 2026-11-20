@@ -148,6 +148,13 @@ Takes over one generated artifact as hand-written code: the generator stops
 producing the artifact named like the annotated top-level declaration. See
 [Promoting generated code](promoting.md).
 
+### `@EntityScreen` (class)
+
+Declares a hand-written screen as a child of an entity: `@EntityScreen(Site,
+path: 'live', title: 'Live')`. The generator adds its route below the entity's
+detail route, a link on the detail screen and a breadcrumb helper. See
+[Hand-written screens below an entity](routes.md#hand-written-screens-below-an-entity).
+
 ### `@Parent` (field)
 
 Marks the field that holds the id of the owning entity, making this entity a

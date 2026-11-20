@@ -10,6 +10,7 @@ import 'src/generators/prefab_generator.dart';
 import 'src/generators/provider_generator.dart';
 import 'src/generators/routes_generator.dart';
 import 'src/features/actions/action_scanner.dart';
+import 'src/features/entity_screens/child_screen.dart';
 import 'src/promoted/promoted_scanner.dart';
 
 /// The generators format their own output (`ArtifactGenerator`, with a pinned
@@ -75,3 +76,6 @@ Builder prefabPromotedBuilder(BuilderOptions options) => PromotedBuilder();
 
 /// Summarises the `@EntityAction` functions of a file for [prefabBuilder].
 Builder prefabActionsBuilder(BuilderOptions options) => ActionsBuilder();
+
+/// Summarises the `@EntityScreen` declarations of a file for [prefabBuilder].
+Builder prefabScreensBuilder(BuilderOptions options) => ChildScreensBuilder();

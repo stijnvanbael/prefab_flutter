@@ -34,6 +34,7 @@ void main() {
     test('public API of $name', () async {
       final summary = File(p.join(fixtures.path, '$name.prefab_promoted.json'));
       final actions = File(p.join(fixtures.path, '$name.prefab_actions.json'));
+      final screens = File(p.join(fixtures.path, '$name.prefab_screens.json'));
       String? generated;
       await testBuilder(
         prefabBuilder(BuilderOptions.empty),
@@ -44,6 +45,8 @@ void main() {
             'a|lib/$name.prefab_promoted.json': summary.readAsStringSync(),
           if (actions.existsSync())
             'a|lib/$name.prefab_actions.json': actions.readAsStringSync(),
+          if (screens.existsSync())
+            'a|lib/$name.prefab_screens.json': screens.readAsStringSync(),
         },
         outputs: {
           'a|lib/$name.prefab.dart': decodedMatches(predicate<String>((s) {

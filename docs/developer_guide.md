@@ -41,6 +41,7 @@ prefab_flutter_generator/
     field_registries.dart           #   FieldEmitter, ValidatorEmitter, FieldDisplay + registries
   lib/src/features/                 # feature modules, one directory each
     features.dart                   #   registeredFeatures (alphabetical)
+    entity_screens/                 #   @EntityScreen: hand-written child screens
     list_query/                     #   search, sort and pagination
   lib/src/generators/               # the artifacts, one file per output kind
     api_client_generator.dart       #   ApiClientArtifact
@@ -185,6 +186,8 @@ Extension points that exist today (all contributions are at column 0):
 
 | Artifact | Point | Holds | Orders in use |
 |---|---|---|---|
+| detail screen | `afterFields` (indent 12) | `Code` | 10 entity screens |
+| routes | `detailChildRoutes` | `ValuePoint<DetailChildRoute>` | 10 entity screens |
 | list screen | `buildStatements` (indent 4) | `Code` | 10 list query |
 | list screen | `appBarActions`, `aboveList`, `belowList` (indent 10) | `Code` | 10 list query (`appBarActions`), 50 actions |
 | list screen | `itemActions` (indent 14, `PopupMenuEntry<void>` expressions) | `Code` | 50 actions |

@@ -11,10 +11,17 @@ builders:
     build_extensions: {".dart": [".prefab_actions.json"]}
     auto_apply: dependents
     build_to: cache
+  prefab_screens:
+    import: "package:prefab_flutter_generator/builder.dart"
+    builder_factories: ["prefabScreensBuilder"]
+    build_extensions: {".dart": [".prefab_screens.json"]}
+    auto_apply: dependents
+    build_to: cache
   prefab_builder:
     import: "package:prefab_flutter_generator/builder.dart"
     builder_factories: ["prefabBuilder"]
     build_extensions: {".dart": [".prefab.dart"]}
     auto_apply: dependents
     build_to: source
-    required_inputs: [".prefab_promoted.json", ".prefab_actions.json"]
+    required_inputs:
+      [".prefab_promoted.json", ".prefab_actions.json", ".prefab_screens.json"]

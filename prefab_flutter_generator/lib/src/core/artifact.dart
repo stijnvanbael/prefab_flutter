@@ -11,6 +11,7 @@ enum ArtifactKind {
   createScreen,
   editScreen,
   routes,
+  breadcrumbs,
 }
 
 /// Identifies one artifact: its kind and the entity it belongs to (for
