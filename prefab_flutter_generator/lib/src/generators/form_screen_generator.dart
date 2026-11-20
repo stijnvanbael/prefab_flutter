@@ -6,6 +6,7 @@ import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
 import '../core/field_registries.dart';
+import '../features/validators/validator_emitters.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/field_manifest.dart';
 
@@ -142,23 +143,6 @@ abstract class _FormScreenArtifact extends Artifact {
       valueExpression: _formValueExpression,
     ),
   ]);
-
-  /// The checks every [Validator] adds to a field's `validator:` callback.
-  late final validatorEmitters = ValidatorEmitters({
-    for (final type in const [
-      RequiredValidator,
-      EmailValidator,
-      UrlValidator,
-      PositiveValidator,
-      NonNegativeValidator,
-      MinValidator,
-      MaxValidator,
-      MinLengthValidator,
-      MaxLengthValidator,
-      PatternValidator,
-    ])
-      type: _LegacyValidatorEmitter(_writeValidatorCheck),
-  });
 
   // ---------------------------------------------------------------------------
   // Widget kind resolution
@@ -884,17 +868,6 @@ abstract class _FormScreenArtifact extends Artifact {
   // Validator check lines
   // ---------------------------------------------------------------------------
 
-  /// Escapes [value] as a single-quoted Dart string literal.
-  String _lit(String value) {
-    final escaped = value
-        .replaceAll(r'\', r'\\')
-        .replaceAll("'", r"\'")
-        .replaceAll(r'$', r'\$')
-        .replaceAll('\n', r'\n')
-        .replaceAll('\r', r'\r');
-    return "'$escaped'";
-  }
-
   /// Rejects text-only validators on widgets that are not text inputs.
   void _checkValidatorsFor(FieldManifest field) {
     final kind = _resolveWidgetKind(field);
@@ -915,7 +888,7 @@ abstract class _FormScreenArtifact extends Artifact {
   }
 
   /// Quoted message of the `required` check (custom or `'Required'`).
-  String _requiredMessage(FieldManifest field) => _lit(
+  String _requiredMessage(FieldManifest field) => dartStringLiteral(
         field.validators
                 .whereType<RequiredValidator>()
                 .map((v) => v.message)
@@ -962,54 +935,6 @@ abstract class _FormScreenArtifact extends Artifact {
       const {_WidgetKind.text, _WidgetKind.numberInput}
           .contains(_resolveWidgetKind(field)) &&
       const {'int', 'double', 'num'}.contains(field.dartType);
-
-  void _writeValidatorCheck(Validator validator, StringBuffer buffer) {
-    String msg(String fallback) => _lit(validator.message ?? fallback);
-    const i = '                ';
-    switch (validator) {
-      case RequiredValidator():
-        break; // handled by _writeValidators
-      case EmailValidator():
-        buffer.writeln(
-          "${i}if (!RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+\$').hasMatch(value)) return ${msg('Invalid email address')};",
-        );
-      case UrlValidator():
-        buffer.writeln('$i{');
-        buffer.writeln('$i  final uri = Uri.tryParse(value);');
-        buffer.writeln(
-          "$i  if (uri == null || !uri.isAbsolute) return ${msg('Invalid URL')};",
-        );
-        buffer.writeln('$i}');
-      case PositiveValidator():
-        _writeNumberCheck(buffer, '<= 0', msg('Must be a positive number'));
-      case NonNegativeValidator():
-        _writeNumberCheck(buffer, '< 0', msg('Must not be negative'));
-      case MinValidator(:final value):
-        _writeNumberCheck(buffer, '< $value', msg('Must be at least $value'));
-      case MaxValidator(:final value):
-        _writeNumberCheck(buffer, '> $value', msg('Must be at most $value'));
-      case MinLengthValidator(:final length):
-        buffer.writeln(
-          "${i}if (value.length < $length) return ${msg('Must be at least $length characters')};",
-        );
-      case MaxLengthValidator(:final length):
-        buffer.writeln(
-          "${i}if (value.length > $length) return ${msg('Must be at most $length characters')};",
-        );
-      case PatternValidator(:final regex):
-        buffer.writeln(
-          "${i}if (!RegExp(${_lit(regex)}).hasMatch(value)) return ${msg('Invalid format')};",
-        );
-    }
-  }
-
-  void _writeNumberCheck(StringBuffer buffer, String failWhen, String message) {
-    const i = '                ';
-    buffer.writeln('$i{');
-    buffer.writeln('$i  final n = double.tryParse(value);');
-    buffer.writeln('$i  if (n == null || n $failWhen) return $message;');
-    buffer.writeln('$i}');
-  }
 }
 
 /// The `{Entity}CreateScreen` widget of one entity with `@Create`.
@@ -1097,19 +1022,4 @@ class _LegacyFieldEmitter extends FieldEmitter {
 
   @override
   String valueExpression(FieldManifest field) => _valueExpression(field);
-}
-
-/// A [ValidatorEmitter] wrapping the check writer that used to live in the
-/// form screen generator.
-class _LegacyValidatorEmitter extends ValidatorEmitter<Validator> {
-  const _LegacyValidatorEmitter(this._write);
-
-  final void Function(Validator, StringBuffer) _write;
-
-  @override
-  Code check(FieldManifest field, Validator validator, String value) {
-    final buffer = StringBuffer();
-    _write(validator, buffer);
-    return Code(buffer.toString());
-  }
 }

@@ -1,6 +1,9 @@
 import 'package:build/build.dart';
 import 'package:build_test/build_test.dart';
+import 'package:prefab_flutter/prefab_flutter.dart';
 import 'package:prefab_flutter_generator/builder.dart';
+import 'package:prefab_flutter_generator/src/features/validators/validator_emitters.dart';
+import 'package:prefab_flutter_generator/src/manifest/field_manifest.dart';
 import 'package:test/test.dart';
 import 'support/prefab_sources.dart';
 
@@ -50,6 +53,7 @@ Future<String> _buildError(String fieldDecl) async {
 }
 
 void main() {
+  _emitterTests();
   group('Parameterised validators (PF-31)', () {
     test(
       'min',
@@ -236,5 +240,63 @@ void main() {
         ),
       ),
     );
+  });
+}
+
+// ---------------------------------------------------------------------------
+// PF-60: one ValidatorEmitter per Validator (features/validators)
+// ---------------------------------------------------------------------------
+
+void _emitterTests() {
+  group('validator emitters (PF-60)', () {
+    const field = FieldManifest(
+      name: 'f',
+      label: 'F',
+      hidden: false,
+      isParent: false,
+      dartType: 'String',
+    );
+
+    test('every Validator has a registered emitter', () {
+      for (final v in const <Validator>[
+        RequiredValidator(),
+        EmailValidator(),
+        UrlValidator(),
+        PositiveValidator(),
+        NonNegativeValidator(),
+        MinValidator(1),
+        MaxValidator(2),
+        MinLengthValidator(1),
+        MaxLengthValidator(2),
+        PatternValidator('a'),
+      ]) {
+        expect(() => validatorEmitters.resolve(v), returnsNormally,
+            reason: '${v.runtimeType}');
+      }
+    });
+
+    test('required adds no further check', () {
+      expect(
+        validatorEmitters
+            .resolve(const RequiredValidator())
+            .check(field, const RequiredValidator(), 'value')
+            .text,
+        isEmpty,
+      );
+    });
+
+    test('min length uses the custom message, escaped', () {
+      const v = MinLengthValidator(3, message: "It's \$short");
+      final text = validatorEmitters.resolve(v).check(field, v, 'value').text;
+      expect(text,
+          contains(r"if (value.length < 3) return 'It\'s \$short';"));
+    });
+
+    test('max checks parse the value as a number', () {
+      const v = MaxValidator(10);
+      final text = validatorEmitters.resolve(v).check(field, v, 'value').text;
+      expect(text, contains('double.tryParse(value)'));
+      expect(text, contains("n > 10) return 'Must be at most 10';"));
+    });
   });
 }
