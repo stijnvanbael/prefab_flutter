@@ -25,6 +25,65 @@ final _parentChecker = TypeChecker.typeNamed(Parent, inPackage: 'prefab_flutter'
 String? _plainType(DartType? type) =>
     type?.getDisplayString().replaceAll('?', '');
 
+/// Reads a hand-written widget reference (PF-65) and checks that it is a
+/// constructor or function with the named parameters of the contract.
+CustomWidgetRef? _readCustomWidget(
+  ConstantReader? reader,
+  FieldElement field,
+  ClassElement entity,
+  String annotation, {
+  required Set<String> required,
+  required Set<String> optional,
+}) {
+  if (reader == null || reader.isNull) return null;
+  final fn = reader.objectValue.toFunctionValue();
+  if (fn == null) {
+    throw InvalidGenerationSourceError(
+      'Field "${field.name}": $annotation must be a constructor tear-off or '
+      'a top-level function (for example ColorField.new).',
+      element: field,
+    );
+  }
+  final named = {
+    for (final p in fn.formalParameters)
+      if (p.isNamed) p.name!: p,
+  };
+  final expected = {...required, ...optional};
+  final missing = required.where((n) => !named.containsKey(n)).toList();
+  final extra = [
+    for (final p in fn.formalParameters)
+      if (!p.isNamed || !expected.contains(p.name))
+        if (p.isRequired) p.name,
+  ];
+  if (missing.isNotEmpty || extra.isNotEmpty) {
+    throw InvalidGenerationSourceError(
+      'Field "${field.name}": $annotation references "${fn.displayName}", '
+      'which must take the named parameters ${required.join(', ')}'
+      '${optional.isEmpty ? '' : ' (and optionally ${optional.join(', ')})'}'
+      '${missing.isEmpty ? '' : '; missing: ${missing.join(', ')}'}'
+      '${extra.isEmpty ? '' : '; unsupported required parameters: '
+          '${extra.join(', ')}'}.',
+      element: field,
+    );
+  }
+  final String invocation;
+  final enclosing = fn.enclosingElement;
+  if (fn is ConstructorElement) {
+    final cls = enclosing!.name!;
+    invocation = fn.name == 'new' || fn.name!.isEmpty ? cls : '$cls.${fn.name}';
+  } else if (enclosing is InterfaceElement) {
+    invocation = '${enclosing.name}.${fn.name}';
+  } else {
+    invocation = fn.name!;
+  }
+  final uri = fn.library.uri.toString();
+  return CustomWidgetRef(
+    invocation: invocation,
+    libraryUri: uri == entity.library.uri.toString() ? null : uri,
+    parameters: named.keys.toSet(),
+  );
+}
+
 String _readFieldRename(ClassElement element) {
   for (final meta in element.metadata.annotations) {
     final value = meta.computeConstantValue();
@@ -449,6 +508,22 @@ class EntityManifest {
           : FieldWidget.auto;
 
       final isEnum = field.type.element is EnumElement;
+      final customForm = _readCustomWidget(
+        formReader.peek('custom'),
+        field,
+        element,
+        'FormOptions.custom',
+        required: const {'initialValue', 'onChanged', 'label'},
+        optional: const {'key', 'validator'},
+      );
+      final customDisplay = _readCustomWidget(
+        fieldAnnotation == null ? null : reader.peek('display'),
+        field,
+        element,
+        'Field.display',
+        required: const {'value'},
+        optional: const {'key'},
+      );
 
       fields.add(
         FieldManifest(
@@ -459,6 +534,8 @@ class EntityManifest {
           dartType: _plainType(field.type)!,
           validators: validators,
           fieldWidget: fieldWidget,
+          customForm: customForm,
+          customDisplay: customDisplay,
           isEnum: isEnum,
           isNullable:
               field.type.nullabilitySuffix == NullabilitySuffix.question,

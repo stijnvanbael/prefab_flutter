@@ -1,5 +1,25 @@
 import 'package:prefab_flutter/prefab_flutter.dart';
 
+/// A hand-written widget a field names in its annotation (PF-65): the
+/// constructor tear-off or function behind `FormOptions.custom` or
+/// `Field.display`.
+class CustomWidgetRef {
+  const CustomWidgetRef({
+    required this.invocation,
+    this.libraryUri,
+    this.parameters = const {},
+  });
+
+  /// What generated code calls: `ColorField`, `ColorField.named`, `buildIt`.
+  final String invocation;
+
+  /// The library that declares it, or `null` when it is the entity's own.
+  final String? libraryUri;
+
+  /// The named parameters it accepts.
+  final Set<String> parameters;
+}
+
 /// Describes a single field on an entity class as understood by the generators.
 class FieldManifest {
   /// Dart field name (e.g. `'firstName'`).
@@ -29,6 +49,12 @@ class FieldManifest {
   /// When `true` the Dart type of the field is nullable (e.g. `String?`).
   final bool isNullable;
 
+  /// The hand-written form widget (`@Field.form.custom`), if any.
+  final CustomWidgetRef? customForm;
+
+  /// The hand-written display widget (`@Field.display`), if any.
+  final CustomWidgetRef? customDisplay;
+
   /// Names of the views the field appears in, or `null` for all views.
   final Set<String>? views;
 
@@ -53,6 +79,8 @@ class FieldManifest {
     this.fieldWidget = FieldWidget.auto,
     this.isEnum = false,
     this.isNullable = false,
+    this.customForm,
+    this.customDisplay,
     this.views,
     this.searchable = false,
     this.sortable = false,

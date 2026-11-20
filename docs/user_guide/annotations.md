@@ -96,6 +96,7 @@ ignored by every generator. Display and listing settings sit directly on
 | `views` | `Set<String>?` | `null` (all views) | Views the field appears in: `'list'`, `'detail'` (see [Views](#views)) |
 | `searchable` | `bool` | `false` | The list screen shows a search bar (once any field is searchable); the text is sent to the server as `q` (see [Search, sorting and pagination](rest-contract.md#search-sorting-and-pagination)) |
 | `sortable` | `bool` | `false` | The list screen's sort menu offers this field ascending and descending |
+| `display` | `Function?` | `null` | A hand-written widget (`ColorSwatch.new`) that shows the value in the detail screen and list tile (see [Custom widgets](field-widgets.md#custom-widgets-for-one-field)) |
 | `form` | `FormOptions` | `FormOptions()` | Form-only settings, below |
 
 `FormOptions` parameters:
@@ -104,6 +105,7 @@ ignored by every generator. Display and listing settings sit directly on
 |---|---|---|---|
 | `widget` | `FieldWidget` | `FieldWidget.auto` | Which input widget the form uses (see [Field widgets](field-widgets.md#field-widgets)) |
 | `validators` | `List<Validator>` | `[]` | Checks run when the form is submitted (see [Validators](validators.md#validators)) |
+| `custom` | `Function?` | `null` | A hand-written form widget (`ColorField.new`) that replaces the generated one; `widget` is then ignored (see [Custom widgets](field-widgets.md#custom-widgets-for-one-field)) |
 
 The **first** visible `@Field` in source order is used as the item title in
 the list screen (unless `views` is used, see below) and as the item name in

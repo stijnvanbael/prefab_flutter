@@ -1,0 +1,37 @@
+class AppThemeApiClient
+  AppThemeApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<AppTheme>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<AppTheme> getById(int id);
+  Future<AppTheme> create(AppTheme appTheme);
+  Future<AppTheme> update(AppTheme appTheme);
+  Future<void> delete(AppTheme appTheme);
+final appThemeDetailProvider = FutureProvider.autoDispose.family<AppTheme, int>;
+final appThemesProvider = AsyncNotifierProvider.autoDispose<AppThemesNotifier, PrefabPage<AppTheme>>;
+class AppThemesNotifier extends AutoDisposeAsyncNotifier<PrefabPage<AppTheme>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<AppTheme>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> create(AppTheme appTheme);
+  Future<void> updateEntity(AppTheme appTheme);
+final appThemeApiClientProvider = Provider.autoDispose<AppThemeApiClient>;
+class AppThemeDetailScreen extends ConsumerWidget
+  final int id;
+  const AppThemeDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class AppThemeListScreen extends ConsumerWidget
+  const AppThemeListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class AppThemeCreateScreen extends ConsumerStatefulWidget
+  const AppThemeCreateScreen({super.key});
+  ConsumerState<AppThemeCreateScreen> createState();
+class AppThemeEditScreen extends ConsumerStatefulWidget
+  final int id;
+  const AppThemeEditScreen({super.key, required this.id});
+  ConsumerState<AppThemeEditScreen> createState();
+List<RouteBase> get $customFieldRoutes;

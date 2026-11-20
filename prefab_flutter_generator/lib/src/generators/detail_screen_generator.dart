@@ -184,8 +184,9 @@ class DetailScreenArtifact extends Artifact {
   ) {
     buffer.writeln('            ListTile(');
     buffer.writeln("              title: const Text('${field.label}'),");
-    final value = fieldValueText(fieldValue, field, entityLower);
-    buffer.writeln('              subtitle: Text($value),');
+    final value = fieldValueWidget(fieldValue, field, entityLower);
+    _imports.addAll(value.imports);
+    buffer.writeln('              subtitle: ${value.text},');
     buffer.writeln('            ),');
   }
 }

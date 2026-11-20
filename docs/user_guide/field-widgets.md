@@ -33,3 +33,48 @@ display string, formatted with the locale's `MaterialLocalizations`
 supported field type because entity classes stay pure Dart. Using
 `timePicker` on a type other than `Duration`/`String`, or `dateTimePicker` on
 a type other than `DateTime`, fails the build with an error.
+
+## Custom widgets for one field
+
+When no `FieldWidget` fits (a colour picker, a schedule editor, a map
+position), plug in one hand-written widget and keep the rest of the screen
+generated. Name it with a constant constructor tear-off or top-level function:
+
+```dart
+@Field(
+  label: 'Accent colour',
+  form: FormOptions(custom: ColorField.new, validators: [Validator.required]),
+  display: ColorSwatch.new,
+)
+final int accent;
+```
+
+**Form widget** (`FormOptions.custom`). It replaces the generated widget in
+the create and edit screens. The generated code calls it with these named
+parameters (the `PrefabFieldBuilder<T>` typedef in `prefab_flutter_widgets`;
+`T` is the field type without `?`):
+
+| Parameter | Type | Meaning |
+|---|---|---|
+| `initialValue` | `T?` | `null` in the create screen, the loaded value in the edit screen |
+| `onChanged` | `ValueChanged<T?>` | call it with every new value; the form keeps the last one and passes it to the entity constructor |
+| `label` | `String` | the field label |
+| `validator` | `String? Function(T? value)?` | runs `Validator.required`; optional, but a widget used for a required field must declare it |
+| `key` | `Key?` | optional, never passed |
+
+Only `Validator.required` can be combined with a custom widget (the other
+validators check text); check other rules inside the widget. Create and
+edit screens share the widget; it is built after the edit screen has loaded
+the entity, so `initialValue` is already the stored value.
+
+**Display widget** (`Field.display`). The detail screen and the list tile
+slots build it with `value:` (the `PrefabDisplayBuilder<T>` typedef; `null`
+for an empty nullable field) instead of `Text(value.toString())`. It also
+replaces the em dash shown for nullable fields.
+
+The generator checks the reference at build time: it must be a constructor
+or function with the named parameters above (and no other required
+parameters). Otherwise the build fails with a message naming the field. Dart
+checks the parameter types in the generated code. The library that declares
+the widget is imported automatically. The example app uses `RatingField` and
+`RatingStars` for `Review.quality`.

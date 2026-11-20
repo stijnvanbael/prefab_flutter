@@ -5,6 +5,7 @@ export 'src/models/prefab_list_adapter.dart';
 export 'src/models/prefab_page.dart';
 export 'src/providers/prefab_dio_provider.dart';
 export 'src/widgets/prefab_breadcrumb_bar.dart';
+export 'src/widgets/prefab_custom_field.dart';
 export 'src/widgets/prefab_delete_dialog.dart';
 export 'src/widgets/prefab_pagination_bar.dart';
 export 'src/widgets/prefab_search_bar.dart';

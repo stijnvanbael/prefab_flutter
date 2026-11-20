@@ -2,6 +2,7 @@ import '../core/feature.dart';
 import 'actions/actions_feature.dart';
 import 'breadcrumbs/breadcrumbs_feature.dart';
 import 'create/create_feature.dart';
+import 'custom_field/custom_field_feature.dart';
 import 'delete/delete_feature.dart';
 import 'entity_screens/entity_screens_feature.dart';
 import 'field_widgets/field_widgets_feature.dart';
@@ -19,6 +20,7 @@ const registeredFeatures = <Feature>[
   ActionsFeature(),
   BreadcrumbsFeature(),
   CreateFeature(),
+  CustomFieldFeature(),
   DeleteFeature(),
   EntityScreensFeature(),
   FieldWidgetsFeature(),
