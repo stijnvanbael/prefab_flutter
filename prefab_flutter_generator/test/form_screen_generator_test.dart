@@ -12,7 +12,7 @@ import 'support/prefab_sources.dart';
 const _requiredSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 class Product {
@@ -28,7 +28,7 @@ class Product {
 const _emailSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'User', path: 'users')
+@Entity(title: 'User', path: 'users')
 @Create()
 @Update()
 class User {
@@ -44,7 +44,7 @@ class User {
 const _positiveNumberSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 class Product {
@@ -60,7 +60,7 @@ class Product {
 const _urlSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Resource', path: 'resources')
+@Entity(title: 'Resource', path: 'resources')
 @Create()
 @Update()
 class Resource {
@@ -76,7 +76,7 @@ class Resource {
 const _tagSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Tag', path: 'tags')
+@Entity(title: 'Tag', path: 'tags')
 class Tag {
   late final int id;
   @Field(label: 'Name')
@@ -90,7 +90,7 @@ class Tag {
 const _multiValidatorSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Contact', path: 'contacts')
+@Entity(title: 'Contact', path: 'contacts')
 @Create()
 @Update()
 class Contact {
@@ -106,7 +106,7 @@ class Contact {
 const _boolSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Setting', path: 'settings')
+@Entity(title: 'Setting', path: 'settings')
 @Create()
 @Update()
 class Setting {
@@ -122,7 +122,7 @@ class Setting {
 const _dateTimeSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Event', path: 'events')
+@Entity(title: 'Event', path: 'events')
 @Create()
 @Update()
 class Event {
@@ -138,7 +138,7 @@ class Event {
 const _multilineSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Article', path: 'articles')
+@Entity(title: 'Article', path: 'articles')
 @Create()
 @Update()
 class Article {
@@ -154,7 +154,7 @@ class Article {
 const _passwordSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Account', path: 'accounts')
+@Entity(title: 'Account', path: 'accounts')
 @Create()
 @Update()
 class Account {
@@ -172,7 +172,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 enum Status { active, inactive }
 
-@View(title: 'Task', path: 'tasks')
+@Entity(title: 'Task', path: 'tasks')
 @Create()
 @Update()
 class Task {
@@ -188,7 +188,7 @@ class Task {
 const _toggleSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Flag', path: 'flags')
+@Entity(title: 'Flag', path: 'flags')
 @Create()
 @Update()
 class Flag {
@@ -206,7 +206,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 enum Priority { low, medium, high }
 
-@View(title: 'Item', path: 'items')
+@Entity(title: 'Item', path: 'items')
 @Create()
 @Update()
 class Item {
@@ -255,7 +255,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 enum Color { red, green }
 
-@View(title: 'Item', path: 'items')
+@Entity(title: 'Item', path: 'items')
 @Create()
 @Update()
 class Item {
@@ -287,24 +287,6 @@ class Item {
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-
-/// Entity still using the deprecated @FormField annotation.
-const _legacySource = r'''
-import 'package:prefab_flutter/prefab_flutter.dart';
-
-@View(title: 'Product', path: 'products')
-@Create()
-@Update()
-class Product {
-  late final int id;
-  @FormField(label: 'Name', validators: [Validator.required])
-  final String name;
-  @FormField(label: 'Notes', widget: FieldWidget.multilineText)
-  final String notes;
-
-  Product({required this.name, required this.notes});
-}
-''';
 
 void main() {
   group('FormScreenGenerator', () {
@@ -707,20 +689,6 @@ void main() {
                 contains(
                     "DropdownMenuItem<Color>(value: null, child: Text(''))"),
               ))),
-        },
-      );
-    });
-
-    test('deprecated @FormField is still honoured', () async {
-      await testBuilder(
-        formScreenBuilder(BuilderOptions.empty),
-        _assets('a', 'lib/product.dart', _legacySource),
-        outputs: {
-          'a|lib/product.form_screen.dart': decodedMatches(allOf(
-            contains("labelText: 'Name'"),
-            contains('maxLines: null'),
-            contains("return 'Required'"),
-          )),
         },
       );
     });

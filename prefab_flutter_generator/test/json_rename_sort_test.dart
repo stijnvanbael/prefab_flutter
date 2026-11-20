@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 
 const _prefabSources = {
   'prefab_flutter|lib/prefab_flutter.dart': r'''
-export 'src/annotations/view.dart';
+export 'src/annotations/entity.dart';
 export 'src/annotations/create.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/delete.dart';
@@ -14,12 +14,12 @@ export 'src/annotations/parent.dart';
 export 'src/enums/field_widget.dart';
 export 'src/enums/validator.dart';
 ''',
-  'prefab_flutter|lib/src/annotations/view.dart': r'''
-class View {
+  'prefab_flutter|lib/src/annotations/entity.dart': r'''
+class Entity {
   final String title;
   final String path;
   final bool paged;
-  const View({required this.title, required this.path, this.paged = true});
+  const Entity({required this.title, required this.path, this.paged = true});
 }
 ''',
   'prefab_flutter|lib/src/annotations/create.dart': r'''
@@ -50,37 +50,21 @@ class FormOptions {
 }
 class Field {
   final String? label;
-  final bool hidden;
   final bool searchable;
   final bool sortable;
   final FormOptions form;
-  final Set<String>? views;
   const Field({
     this.label,
-    this.hidden = false,
-    this.views,
     this.searchable = false,
     this.sortable = false,
     this.form = const FormOptions(),
   });
 }
-class FormField {
-  final String? label;
-  final FieldWidget widget;
-  final List<Validator> validators;
-  final bool hidden;
-  const FormField({
-    this.label,
-    this.widget = FieldWidget.auto,
-    this.validators = const [],
-    this.hidden = false,
-  });
-}
 ''',
   'prefab_flutter|lib/src/annotations/parent.dart': r'''
 class Parent {
-  final Type type;
-  const Parent(this.type);
+  final Type entity;
+  const Parent(this.entity);
 }
 ''',
   'prefab_flutter|lib/src/enums/field_widget.dart': r'''
@@ -217,7 +201,7 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 $classAnnotation
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 class Product {
   final int id;
 

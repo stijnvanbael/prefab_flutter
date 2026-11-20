@@ -12,7 +12,7 @@ import 'support/prefab_sources.dart';
 const _productSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 @Delete()
@@ -32,7 +32,7 @@ class Product {
 const _parentChildSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Post', path: 'posts')
+@Entity(title: 'Post', path: 'posts')
 @Create()
 @Update()
 @Delete()
@@ -47,7 +47,7 @@ class Post {
   Map<String, dynamic> toJson() => {};
 }
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 @Create()
 @Update()
 @Delete()
@@ -55,7 +55,7 @@ class Comment {
   final int id;
 
   @Parent(Post)
-  @Field(hidden: true)
+  @Field(on: {})
   final int postId;
 
   @Field(label: 'Content')
@@ -70,7 +70,7 @@ class Comment {
 const _postFileSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Post', path: 'posts')
+@Entity(title: 'Post', path: 'posts')
 class Post {
   final int id;
   @Field(label: 'Title')
@@ -85,13 +85,13 @@ const _crossFileCommentSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 import 'post.dart';
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 @Create()
 @Update()
 class Comment {
   final int id;
   @Parent(Post)
-  @Field(hidden: true)
+  @Field(on: {})
   final int postId;
   @Field(label: 'Content')
   final String content;
@@ -316,7 +316,7 @@ void main() {
       },
     );
 
-    test('PF-24 @Parent(Type) without @View on the type is an error', () async {
+    test('PF-24 @Parent(Type) without @Entity on the type is an error', () async {
       final source = _crossFileCommentSource
           .replaceFirst(
             'import \'post.dart\';',
@@ -325,7 +325,7 @@ void main() {
           .replaceFirst('@Parent(Post)', '@Parent(Plain)');
       expect(
         await _buildError(_crossFile(source)),
-        contains('without a @View annotation'),
+        contains('without an @Entity annotation'),
       );
     });
 
@@ -435,7 +435,7 @@ void main() {
       );
     });
 
-    test('@View(paged: false) sends no page parameters', () async {
+    test('@Entity(paged: false) sends no page parameters', () async {
       final source = _productSource.replaceFirst(
           "path: 'products')", "path: 'products', paged: false)");
       await testBuilder(

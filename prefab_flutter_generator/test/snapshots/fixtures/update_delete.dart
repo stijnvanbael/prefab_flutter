@@ -1,6 +1,6 @@
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Gamma', path: 'gammas')
+@Entity(title: 'Gamma', path: 'gammas')
 @Update()
 @Delete()
 class Gamma {

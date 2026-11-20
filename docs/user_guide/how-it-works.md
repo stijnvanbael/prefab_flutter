@@ -2,10 +2,10 @@
 
 # How it works
 
-1. You annotate a plain Dart class with `@View` and its fields with
+1. You annotate a plain Dart class with `@Entity` and its fields with
    `@Field`.
 2. `build_runner` runs the Prefab builder over every library that contains a
-   `@View` class and writes one `.prefab.dart` file next to the source file
+   `@Entity` class and writes one `.prefab.dart` file next to the source file
    (see [Generated files](generated-files.md#generated-files)).
 3. You register the generated routes with GoRouter and wrap the app in a
    Riverpod `ProviderScope`.

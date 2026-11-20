@@ -1,6 +1,6 @@
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Delta', path: 'deltas')
+@Entity(title: 'Delta', path: 'deltas')
 class Delta {
   final int? id;
   @Field()

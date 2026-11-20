@@ -1,6 +1,6 @@
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Order', path: 'orders')
+@Entity(title: 'Order', path: 'orders')
 @Update()
 class Order {
   final int id;
@@ -11,11 +11,11 @@ class Order {
   Map<String, dynamic> toJson() => {};
 }
 
-@View(title: 'Order Line', path: 'lines')
+@Entity(title: 'Order Line', path: 'lines')
 class OrderLine {
   final int? id;
   @Parent(Order)
-  @Field(hidden: true)
+  @Field(on: {})
   final int orderId;
   @Field()
   final String product;

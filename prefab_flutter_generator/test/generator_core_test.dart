@@ -180,7 +180,6 @@ import 'dart:async';''');
     const field = FieldManifest(
       name: 'price',
       label: 'Price',
-      hidden: false,
       isParent: false,
       dartType: 'int',
       isNullable: true,
@@ -200,7 +199,6 @@ import 'dart:async';''');
       const flag = FieldManifest(
           name: 'f',
           label: 'F',
-          hidden: false,
           isParent: false,
           dartType: 'bool');
       expect(emitters.resolve(flag).widget, FieldWidget.toggle);
@@ -208,7 +206,6 @@ import 'dart:async';''');
       const explicit = FieldManifest(
           name: 'f',
           label: 'F',
-          hidden: false,
           isParent: false,
           dartType: 'String',
           fieldWidget: FieldWidget.toggle);

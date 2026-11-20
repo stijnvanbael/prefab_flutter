@@ -7,7 +7,7 @@ import '../features/features.dart';
 import '../manifest/entity_manifest.dart';
 
 /// Generates GoRouter [GoRoute] declarations for every class annotated with
-/// [@View] in a source library.
+/// [@Entity] in a source library.
 ///
 /// Entities nested with [@Parent] (to any depth) are emitted inside their
 /// parent's detail route, each level with its own path parameter

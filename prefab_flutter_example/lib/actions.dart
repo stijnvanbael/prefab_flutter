@@ -14,7 +14,7 @@ import 'review.dart';
   Product,
   label: 'Duplicate',
   icon: 'copy',
-  on: {ActionPlace.item},
+  on: {Place.item},
 )
 Future<void> duplicateProduct(
     BuildContext context, WidgetRef ref, Product product) async {
@@ -24,7 +24,7 @@ Future<void> duplicateProduct(
       inStock: product.inStock));
 }
 
-@EntityAction(Product, label: 'Refresh', icon: 'refresh', on: {ActionPlace.list})
+@EntityAction(Product, label: 'Refresh', icon: 'refresh', on: {Place.list})
 void refreshProducts(BuildContext context, WidgetRef ref) =>
     ref.invalidate(productsProvider);
 

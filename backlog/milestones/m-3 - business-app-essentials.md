@@ -12,7 +12,7 @@ Scope:
 - Relations: reference fields with a lookup or picker and a display label;
   links to related lists
 - Links from detail screens to nested child lists (PF-35)
-- Annotation defaults: `@View()` without parameters (PF-21)
+- Annotation defaults: `@Entity()` without parameters (PF-21)
 - More field types: money and decimals, quantities with units (kW, kWh, %),
   time ranges and schedules, lists of values, embedded value objects, files
   and images, rich text and markdown display

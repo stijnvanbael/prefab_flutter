@@ -12,7 +12,7 @@ request. To take over one of these artifacts instead of using it, see
 [Promoting generated code](promoting.md), which lists the signatures a promoted
 artifact has to keep.
 
-Everything is shown for the entity `Product` (`@View(path: 'products')`).
+Everything is shown for the entity `Product` (`@Entity(path: 'products')`).
 Collection names are plural (`productsProvider`), single-entity names singular.
 
 ## Public names

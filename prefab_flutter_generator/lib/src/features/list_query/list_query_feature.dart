@@ -10,7 +10,7 @@ import '../../manifest/entity_manifest.dart';
 import '../../manifest/field_manifest.dart';
 
 /// Search, sort and pagination of the list (`@Field.searchable`,
-/// `@Field.sortable`, `@View.paged`).
+/// `@Field.sortable`, `@Entity.paged`).
 ///
 /// The list notifier keeps the query state and exposes the setters; the API
 /// client sends it as query parameters; the list screen shows a search bar,

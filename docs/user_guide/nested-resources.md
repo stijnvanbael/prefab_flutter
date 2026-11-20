@@ -5,14 +5,14 @@
 An entity with a `@Parent` field is shown under its parent:
 
 ```dart
-@View(title: 'Post', path: 'posts')
+@Entity(title: 'Post', path: 'posts')
 class Post {
   final int? id;
   @Field() final String title;
   Post({this.id, required this.title});
 }
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 class Comment {
   final int? id;
   @Field() @Parent(Post) final int postId;
@@ -24,7 +24,7 @@ class Comment {
 Rules:
 
 - `@Parent(Post)` names the parent entity explicitly. The parent must carry a
-  `@View` annotation (its `path` is used in routes and API URLs); otherwise the
+  `@Entity` annotation (its `path` is used in routes and API URLs); otherwise the
   build fails.
 - The parent may be declared in the same file or in **another source file**.
   A child whose parent lives in another file is registered as a top-level route

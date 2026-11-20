@@ -2,7 +2,7 @@
 
 # Routes
 
-For `@View(path: 'products')` with `@Create` and `@Update` (the `create` route needs `@Create`, the `edit` route needs `@Update`):
+For `@Entity(path: 'products')` with `@Create` and `@Update` (the `create` route needs `@Create`, the `edit` route needs `@Update`):
 
 | Path | Screen |
 |---|---|
@@ -74,14 +74,14 @@ the entity's file. The generator then
 
 | Parameter | Meaning |
 |---|---|
-| entity (first argument) | The `@View` class the screen belongs to |
+| entity (first argument) | The `@Entity` class the screen belongs to |
 | `path` | One route segment (letters, digits, `-`, `_`); not `edit` and not the path of a nested entity |
 | `title` | Label of the link and last breadcrumb; defaults to `path` in sentence case (`study-session` gives `Study session`) |
 
 The build fails with a readable message when the constructor does not fit:
 a missing or positional `id` or ancestor id parameter, a different id type, a
 required parameter the route cannot pass, a path that is already taken, or an
-entity that is not a `@View` class (with a "did you mean" hint). Optional
+entity that is not an `@Entity` class (with a "did you mean" hint). Optional
 parameters such as `super.key` are fine.
 
 The declarations are found without resolving generated code, through a

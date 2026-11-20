@@ -4,7 +4,7 @@ import 'package:source_gen/source_gen.dart';
 
 import 'entity_manifest.dart';
 
-final _viewChecker = TypeChecker.typeNamed(View, inPackage: 'prefab_flutter');
+final _entityChecker = TypeChecker.typeNamed(Entity, inPackage: 'prefab_flutter');
 
 /// Builds navigation paths for entities in one place, so list, detail, form
 /// and routes generation agree on nested (`@Parent`) URLs.
@@ -16,11 +16,11 @@ class EntityPaths {
   /// manifests are only accepted for API stability.
   const EntityPaths(Iterable<EntityManifest> manifests);
 
-  /// Collects the manifests of every [@View] class in [element]'s library.
+  /// Collects the manifests of every [@Entity] class in [element]'s library.
   factory EntityPaths.forLibraryOf(Element element) {
     final manifests = <EntityManifest>[];
     for (final a
-        in LibraryReader(element.library!).annotatedWith(_viewChecker)) {
+        in LibraryReader(element.library!).annotatedWith(_entityChecker)) {
       final e = a.element;
       if (e is ClassElement) {
         manifests.add(EntityManifest.from(e, a.annotation));

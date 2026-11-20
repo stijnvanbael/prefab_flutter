@@ -4,10 +4,10 @@
 
 All annotations come from `package:prefab_flutter/prefab_flutter.dart`.
 
-### `@View` (class)
+### `@Entity` (class)
 
 Marks a class as a Prefab entity. Every other annotation only has an effect on
-a class that also has `@View`.
+a class that also has `@Entity`.
 
 | Parameter | Type | Required | Meaning |
 |---|---|---|---|
@@ -16,10 +16,10 @@ a class that also has `@View`.
 | `paged` | `bool` | no (`true`) | Page the list on the server. With `false` the list is requested in one go (no `page`/`size` parameters) and the list screen has no pagination bar |
 
 ```dart
-@View()                                      // title 'Product', path 'products'
+@Entity()                                      // title 'Product', path 'products'
 class Product { ... }
 
-@View(title: 'Product', path: 'products')    // explicit, same result
+@Entity(title: 'Product', path: 'products')    // explicit, same result
 class Product { ... }
 ```
 
@@ -92,11 +92,10 @@ ignored by every generator. Display and listing settings sit directly on
 | Parameter | Type | Default | Meaning |
 |---|---|---|---|
 | `label` | `String?` | field name in title case (`firstName` → `First Name`) | Label in forms and the detail screen |
-| `hidden` | `bool` | `false` | Exclude the field from forms and the detail screen |
-| `views` | `Set<String>?` | `null` (all views) | Views the field appears in: `'list'`, `'detail'` (see [Views](#views)) |
+| `on` | `Set<Place>?` | `null` (every place) | Places the field appears in: `Place.item`, `Place.detail`, `Place.form`; `{}` shows it nowhere (see [Places](#places)) |
 | `searchable` | `bool` | `false` | The list screen shows a search bar (once any field is searchable); the text is sent to the server as `q` (see [Search, sorting and pagination](rest-contract.md#search-sorting-and-pagination)) |
 | `sortable` | `bool` | `false` | The list screen's sort menu offers this field ascending and descending |
-| `display` | `Function?` | `null` | A hand-written widget (`ColorSwatch.new`) that shows the value in the detail screen and list tile (see [Custom widgets](field-widgets.md#custom-widgets-for-one-field)) |
+| `displayBuilder` | `Function?` | `null` | A hand-written widget (`ColorSwatch.new`) that shows the value in the detail screen and list tile (see [Custom widgets](field-widgets.md#custom-widgets-for-one-field)) |
 | `form` | `FormOptions` | `FormOptions()` | Form-only settings, below |
 
 `FormOptions` parameters:
@@ -105,31 +104,33 @@ ignored by every generator. Display and listing settings sit directly on
 |---|---|---|---|
 | `widget` | `FieldWidget` | `FieldWidget.auto` | Which input widget the form uses (see [Field widgets](field-widgets.md#field-widgets)) |
 | `validators` | `List<Validator>` | `[]` | Checks run when the form is submitted (see [Validators](validators.md#validators)) |
-| `custom` | `Function?` | `null` | A hand-written form widget (`ColorField.new`) that replaces the generated one; `widget` is then ignored (see [Custom widgets](field-widgets.md#custom-widgets-for-one-field)) |
+| `builder` | `Function?` | `null` | A hand-written form widget (`ColorField.new`) that replaces the generated one; `widget` is then ignored (see [Custom widgets](field-widgets.md#custom-widgets-for-one-field)) |
 
 The **first** visible `@Field` in source order is used as the item title in
-the list screen (unless `views` is used, see below) and as the item name in
+the list screen (unless a field names its places, see below) and as the item name in
 the delete dialog.
 
-#### Views
+#### Places
 
-`views` controls where a field is shown. A field without `views` appears in
-every view. The generators use two view names:
+`on` controls where a field is shown. A field without `on` appears in every
+place. Fields use three of the four `Place` values:
 
-| View | Screen | Slot mapping |
+| Place | Screen | Fields |
 |---|---|---|
-| `'list'` | List screen | The first, second and third field in the view fill the `ListTile` `title`, `subtitle` and `trailing` slots; further fields are ignored |
-| `'detail'` | Detail screen | All fields in the view are listed; if none is in the view, all visible fields are shown |
+| `Place.item` | Each item of the list screen | The first, second and third field on `item` fill the `ListTile` `title`, `subtitle` and `trailing` slots; further fields are ignored |
+| `Place.detail` | Detail screen | All fields on `detail` are listed |
+| `Place.form` | Create and edit screens | All fields on `form` get an input; on edit, the other fields keep their stored value |
 
-When no field of an entity declares `views`, the list tile shows only the
-first visible field as its title, exactly as before. Forms are not affected
-by `views`.
+`Place.list` (the list screen's AppBar) is for [actions](actions.md) only; on
+a field it fails the build. When no field of an entity names its places, the
+list item shows only the first visible field as its title. `on: {}` keeps
+the field in the model (and in the edit request) but shows it nowhere.
 
 ```dart
-@Field(views: {'list', 'detail'})
+@Field(on: {Place.item, Place.detail, Place.form})
 final String name;
 
-@Field(views: {'detail'})
+@Field(on: {Place.detail, Place.form})
 final String description;
 ```
 
@@ -137,12 +138,6 @@ final String description;
 @Field(label: 'Description', form: FormOptions(widget: FieldWidget.multilineText))
 final String description;
 ```
-
-> **Deprecated:** `@FormField(label:, widget:, validators:, hidden:)` is kept
-> as a deprecated alias for one release and behaves like the equivalent
-> `@Field`. It is replaced because its name clashes with Flutter's `FormField`
-> widget. Migrate by renaming it and moving `widget` and `validators` into
-> `form: FormOptions(...)`.
 
 ### `@Promoted` (class or variable)
 

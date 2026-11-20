@@ -60,7 +60,7 @@ Future<void> main(List<String> args) async {
   }
 }
 
-/// Resolves the libraries under `lib/` that declare `@View` classes.
+/// Resolves the libraries under `lib/` that declare `@Entity` classes.
 Future<List<PromoteSource>> _readSources(String root) async {
   final collection = AnalysisContextCollection(
       includedPaths: [p.join(root, 'lib')]);
@@ -71,7 +71,7 @@ Future<List<PromoteSource>> _readSources(String root) async {
           f.path.endsWith('.dart') &&
           !f.path.endsWith('.prefab.dart') &&
           !f.path.endsWith('.g.dart') &&
-          f.readAsStringSync().contains('@View'))
+          f.readAsStringSync().contains('@Entity'))
       .toList()
     ..sort((a, b) => a.path.compareTo(b.path));
   final sources = <PromoteSource>[];

@@ -1,6 +1,6 @@
 /// Marks a field as a reference to the owning (parent) entity.
 ///
-/// [type] is the parent entity class, which must be annotated with `@View` and
+/// [entity] is the parent entity class, which must be annotated with `@Entity` and
 /// may be declared in another source file:
 ///
 /// ```dart
@@ -12,7 +12,7 @@
 /// annotated field must match the type of the parent's `id` field.
 class Parent {
   /// The parent entity class.
-  final Type type;
+  final Type entity;
 
-  const Parent(this.type);
+  const Parent(this.entity);
 }

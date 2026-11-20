@@ -14,9 +14,8 @@ final _createChecker = TypeChecker.typeNamed(Create, inPackage: 'prefab_flutter'
 final _updateChecker = TypeChecker.typeNamed(Update, inPackage: 'prefab_flutter');
 final _deleteChecker = TypeChecker.typeNamed(Delete, inPackage: 'prefab_flutter');
 final _fieldChecker = TypeChecker.typeNamed(Field, inPackage: 'prefab_flutter');
-final _formFieldChecker = TypeChecker.typeNamed(FormField, inPackage: 'prefab_flutter');
 final _idChecker = TypeChecker.typeNamed(Id, inPackage: 'prefab_flutter');
-final _viewChecker = TypeChecker.typeNamed(View, inPackage: 'prefab_flutter');
+final _entityChecker = TypeChecker.typeNamed(Entity, inPackage: 'prefab_flutter');
 final _parentChecker = TypeChecker.typeNamed(Parent, inPackage: 'prefab_flutter');
 
 /// Reads the `fieldRename` of the class's `@JsonSerializable` (by name, so the
@@ -82,6 +81,25 @@ CustomWidgetRef? _readCustomWidget(
     libraryUri: uri == entity.library.uri.toString() ? null : uri,
     parameters: named.keys.toSet(),
   );
+}
+
+/// Reads `@Field.on`: `null` for every place, otherwise the set of places.
+/// [Place.list] is the list screen's AppBar, where no field can appear.
+Set<Place>? _readFieldPlaces(
+    ConstantReader field, String entityName, String fieldName) {
+  final on = field.peek('on');
+  if (on == null || on.isNull) return null;
+  final places = {
+    for (final o in on.setValue) Place.values.byName(o.variable!.name!)
+  };
+  if (places.contains(Place.list)) {
+    throw InvalidGenerationSourceError(
+      'Field "$entityName.$fieldName" has Place.list in on:, but fields '
+      'cannot appear in the list screen\'s AppBar. Use Place.item to show '
+      'the field in each list item.',
+    );
+  }
+  return places;
 }
 
 String _readFieldRename(ClassElement element) {
@@ -163,10 +181,10 @@ class AncestorManifest {
   /// Lower-camel-case class name, e.g. `order`.
   final String entityNameLower;
 
-  /// URL path from the ancestor's `@View.path`.
+  /// URL path from the ancestor's `@Entity.path`.
   final String path;
 
-  /// Title from the ancestor's `@View.title`.
+  /// Title from the ancestor's `@Entity.title`.
   final String title;
 
   /// Dart type of the ancestor's id (`'int'` or `'String'`).
@@ -214,7 +232,7 @@ class AncestorManifest {
 }
 
 /// Summarises everything the generators need to know about a single
-/// [@View]-annotated entity class.
+/// [@Entity]-annotated entity class.
 class EntityManifest {
   /// Dart class name (e.g. `'Product'`).
   final String entityName;
@@ -222,10 +240,10 @@ class EntityManifest {
   /// Lower-camel-case version of [entityName] (e.g. `'product'`).
   final String entityNameLower;
 
-  /// Human-readable title from [@View.title].
+  /// Human-readable title from [@Entity.title].
   final String title;
 
-  /// URL path segment from [@View.path] (e.g. `'products'`).
+  /// URL path segment from [@Entity.path] (e.g. `'products'`).
   final String path;
 
   /// Whether the entity class carries the [@Create] annotation.
@@ -255,10 +273,10 @@ class EntityManifest {
   /// Class name of the parent entity named in `@Parent(Type)`, or `null`.
   final String? parentEntityName;
 
-  /// URL path of the parent entity (from the parent's `@View.path`).
+  /// URL path of the parent entity (from the parent's `@Entity.path`).
   final String? parentPath;
 
-  /// Title of the parent entity (from the parent's `@View.title`).
+  /// Title of the parent entity (from the parent's `@Entity.title`).
   final String? parentTitle;
 
   /// Dart type of the parent's `id` field (e.g. `'int'`).
@@ -270,7 +288,7 @@ class EntityManifest {
   /// Parameters of the unnamed constructor, or `null` when the class has none.
   final List<ConstructorParam>? constructorParams;
 
-  /// Whether the list is paged server-side ([@View.paged]).
+  /// Whether the list is paged server-side ([@Entity.paged]).
   final bool paged;
 
   EntityManifest({
@@ -298,12 +316,14 @@ class EntityManifest {
   // Convenience accessors used by generators
   // ---------------------------------------------------------------------------
 
-  /// All fields that should appear in the detail screen (non-hidden, non-parent).
+  /// All fields shown in at least one place (not `on: {}`), without the
+  /// parent field.
   List<FieldManifest> get visibleFields =>
-      fields.where((f) => !f.hidden && !f.isParent).toList();
+      fields.where((f) => !f.isShownNowhere && !f.isParent).toList();
 
-  /// All fields that should appear in the form screen (non-hidden, non-parent).
-  List<FieldManifest> get formFields => visibleFields;
+  /// All fields that appear in the create and edit forms ([Place.form]).
+  List<FieldManifest> get formFields =>
+      visibleFields.where((f) => f.isOn(Place.form)).toList();
 
   /// Name of the first visible field, used as the item label in delete dialogs.
   /// Falls back to the id field when no visible fields are declared.
@@ -380,7 +400,7 @@ class EntityManifest {
   // ---------------------------------------------------------------------------
 
   /// Builds an [EntityManifest] from the class element and the already-read
-  /// [@View] annotation.
+  /// [@Entity] annotation.
   static EntityManifest from(
     ClassElement element,
     ConstantReader viewAnnotation,
@@ -430,27 +450,18 @@ class EntityManifest {
     for (final field in instanceFields) {
       if (field == idField) continue;
 
-      final fieldAnnotation = _fieldChecker.firstAnnotationOf(field);
-      final legacyAnnotation = fieldAnnotation == null
-          ? _formFieldChecker.firstAnnotationOf(field)
-          : null;
-      final annotation = fieldAnnotation ?? legacyAnnotation;
+      final annotation = _fieldChecker.firstAnnotationOf(field);
       if (annotation == null) continue;
 
       final reader = ConstantReader(annotation);
-      // Form-only settings: `@Field.form`, or the top level of `@FormField`.
-      final formReader = fieldAnnotation != null ? reader.read('form') : reader;
+      final formReader = reader.read('form');
 
       final labelReader = reader.read('label');
       final label = labelReader.isNull
           ? _fieldNameToLabel(field.name!)
           : labelReader.stringValue;
 
-      final hidden = reader.read('hidden').boolValue;
-      final viewsObj = fieldAnnotation == null ? null : reader.peek('views');
-      final views = (viewsObj == null || viewsObj.isNull)
-          ? null
-          : viewsObj.setValue.map((o) => o.toStringValue()!).toSet();
+      final places = _readFieldPlaces(reader, element.name!, field.name!);
       final parentAnnotation = _parentChecker.firstAnnotationOf(field);
       final isParent = parentAnnotation != null;
       if (isParent) {
@@ -461,7 +472,7 @@ class EntityManifest {
             element: field,
           );
         }
-        final parentType = parentAnnotation.getField('type')?.toTypeValue();
+        final parentType = parentAnnotation.getField('entity')?.toTypeValue();
         final parentTypeElement = parentType?.element;
         if (parentTypeElement is! ClassElement) {
           throw InvalidGenerationSourceError(
@@ -470,18 +481,18 @@ class EntityManifest {
             element: field,
           );
         }
-        final parentView = _viewChecker.firstAnnotationOf(parentTypeElement);
-        if (parentView == null) {
+        final parentEntity = _entityChecker.firstAnnotationOf(parentTypeElement);
+        if (parentEntity == null) {
           throw InvalidGenerationSourceError(
             '@Parent(${parentTypeElement.name}) on "${field.name}" references '
-            'a class without a @View annotation. Annotate '
-            '"${parentTypeElement.name}" with @View.',
+            'a class without an @Entity annotation. Annotate '
+            '"${parentTypeElement.name}" with @Entity.',
             element: field,
           );
         }
-        final parentViewReader = ConstantReader(parentView);
-        parentPath = viewPath(parentViewReader, parentTypeElement.name!);
-        parentTitle = viewTitle(parentViewReader, parentTypeElement.name!);
+        final parentEntityReader = ConstantReader(parentEntity);
+        parentPath = viewPath(parentEntityReader, parentTypeElement.name!);
+        parentTitle = viewTitle(parentEntityReader, parentTypeElement.name!);
         final parentIdField = _findIdField(parentTypeElement);
         parentIdType = _plainType(parentIdField?.type);
         final fieldType = _plainType(field.type)!;
@@ -509,18 +520,18 @@ class EntityManifest {
 
       final isEnum = field.type.element is EnumElement;
       final customForm = _readCustomWidget(
-        formReader.peek('custom'),
+        formReader.peek('builder'),
         field,
         element,
-        'FormOptions.custom',
+        'FormOptions.builder',
         required: const {'initialValue', 'onChanged', 'label'},
         optional: const {'key', 'validator'},
       );
       final customDisplay = _readCustomWidget(
-        fieldAnnotation == null ? null : reader.peek('display'),
+        reader.peek('displayBuilder'),
         field,
         element,
-        'Field.display',
+        'Field.displayBuilder',
         required: const {'value'},
         optional: const {'key'},
       );
@@ -529,7 +540,6 @@ class EntityManifest {
         FieldManifest(
           name: field.name!,
           label: label,
-          hidden: hidden,
           isParent: isParent,
           dartType: _plainType(field.type)!,
           validators: validators,
@@ -539,7 +549,7 @@ class EntityManifest {
           isEnum: isEnum,
           isNullable:
               field.type.nullabilitySuffix == NullabilitySuffix.question,
-          views: views,
+          places: places,
           // peek: tolerate older annotation sources without these flags.
           searchable: reader.peek('searchable')?.boolValue ?? false,
           sortable: reader.peek('sortable')?.boolValue ?? false,
@@ -612,7 +622,7 @@ class EntityManifest {
       if (parentField == null) break;
       final type = _parentChecker
           .firstAnnotationOf(parentField)
-          ?.getField('type')
+          ?.getField('entity')
           ?.toTypeValue()
           ?.element;
       if (type is! ClassElement) {
@@ -632,10 +642,10 @@ class EntityManifest {
           element: element,
         );
       }
-      if (_viewChecker.firstAnnotationOf(type) == null) {
+      if (_entityChecker.firstAnnotationOf(type) == null) {
         throw InvalidGenerationSourceError(
           '@Parent(${type.name}) on "${parentField.name}" references a class '
-          'without a @View annotation. Annotate "${type.name}" with @View.',
+          'without an @Entity annotation. Annotate "${type.name}" with @Entity.',
           element: parentField,
         );
       }
@@ -646,15 +656,16 @@ class EntityManifest {
     final result = <AncestorManifest>[];
     for (var i = chain.length - 1; i >= 0; i--) {
       final cls = chain[i];
-      final view = ConstantReader(_viewChecker.firstAnnotationOf(cls)!);
+      final view = ConstantReader(_entityChecker.firstAnnotationOf(cls)!);
       final idField = _findIdField(cls);
       final label = cls.fields
           .where((f) => !f.isStatic && !f.isSynthetic && f != idField)
           .where((f) => !_parentChecker.hasAnnotationOf(f))
           .where((f) {
-        final a = _fieldChecker.firstAnnotationOf(f) ??
-            _formFieldChecker.firstAnnotationOf(f);
-        return a != null && !ConstantReader(a).read('hidden').boolValue;
+        final a = _fieldChecker.firstAnnotationOf(f);
+        if (a == null) return false;
+        final on = ConstantReader(a).peek('on');
+        return on == null || on.isNull || on.setValue.isNotEmpty;
       }).firstOrNull;
       final labelField = label ?? idField;
       final lower = _toLowerCamel(cls.name!);
@@ -705,7 +716,7 @@ class EntityManifest {
     return name[0].toLowerCase() + name.substring(1);
   }
 
-  /// The `@View.title` of an entity: the explicit value, or the class name in
+  /// The `@Entity.title` of an entity: the explicit value, or the class name in
   /// title case (`ProductOrder` → `Product Order`).
   static String viewTitle(ConstantReader view, String className) {
     final explicit = view.peek('title');
@@ -713,7 +724,7 @@ class EntityManifest {
     return classNameWords(className).map(_capitalize).join(' ');
   }
 
-  /// The `@View.path` of an entity: the explicit value, or the kebab-case
+  /// The `@Entity.path` of an entity: the explicit value, or the kebab-case
   /// plural of the class name (`ProductOrder` → `product-orders`).
   static String viewPath(ConstantReader view, String className) {
     final explicit = view.peek('path');

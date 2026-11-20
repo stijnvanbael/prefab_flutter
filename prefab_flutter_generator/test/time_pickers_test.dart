@@ -18,7 +18,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 enum Color { red, green }
 
-@View(title: 'Thing', path: 'things')
+@Entity(title: 'Thing', path: 'things')
 @Update()
 class Thing {
   late final int id;

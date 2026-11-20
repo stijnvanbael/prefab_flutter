@@ -12,7 +12,7 @@ import 'support/prefab_sources.dart';
 const _entities = '''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Site', path: 'sites')
+@Entity(title: 'Site', path: 'sites')
 @Update()
 class Site {
   final String id;
@@ -23,11 +23,11 @@ class Site {
   Map<String, dynamic> toJson() => {};
 }
 
-@View(title: 'Meter', path: 'meters')
+@Entity(title: 'Meter', path: 'meters')
 class Meter {
   final int? id;
   @Parent(Site)
-  @Field(hidden: true)
+  @Field(on: {})
   final String siteId;
   @Field()
   final String label;

@@ -20,7 +20,7 @@ class ColorSwatch {
   final int? value;
 }
 
-@View(title: 'Theme', path: 'themes')
+@Entity(title: 'Theme', path: 'themes')
 @Create()
 @Update()
 class AppTheme {
@@ -31,12 +31,12 @@ class AppTheme {
 
   @Field(
     label: 'Accent colour',
-    form: FormOptions(custom: ColorField.new, validators: [Validator.required]),
-    display: ColorSwatch.new,
+    form: FormOptions(builder: ColorField.new, validators: [Validator.required]),
+    displayBuilder: ColorSwatch.new,
   )
   final int accent;
 
-  @Field(form: FormOptions(custom: ColorField.new), display: ColorSwatch.new)
+  @Field(form: FormOptions(builder: ColorField.new), displayBuilder: ColorSwatch.new)
   final int? highlight;
 
   AppTheme({

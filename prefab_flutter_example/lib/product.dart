@@ -7,7 +7,7 @@ part 'product.g.dart';
 enum ProductCategory { electronics, office, accessories }
 
 @JsonSerializable()
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 @Delete()
@@ -35,9 +35,10 @@ class Product {
   @Field(sortable: true)
   final ProductCategory? category;
 
-  /// Multi-line text with a length validator, shown on the detail view only.
+  /// Multi-line text with a length validator, shown on the detail screen and
+  /// in the form but not in the list (`on:`).
   @Field(
-    views: {'detail'},
+    on: {Place.detail, Place.form},
     form: FormOptions(
       widget: FieldWidget.multilineText,
       validators: [Validator.maxLength(200)],

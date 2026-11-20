@@ -7,7 +7,7 @@ import 'support/prefab_sources.dart';
 const _nestedSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Post', path: 'posts')
+@Entity(title: 'Post', path: 'posts')
 @Create()
 @Update()
 @Delete()
@@ -20,7 +20,7 @@ class Post {
   Post({this.id, required this.title});
 }
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 @Create()
 @Update()
 @Delete()
@@ -28,7 +28,7 @@ class Comment {
   final int? id;
 
   @Parent(Post)
-  @Field(hidden: true)
+  @Field(on: {})
   final int postId;
 
   @Field(label: 'Content')
@@ -46,12 +46,12 @@ class Post {
   Post({required this.id});
 }
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 class Comment {
   final int id;
 
   @Parent(Post)
-  @Field(hidden: true)
+  @Field(on: {})
   final int postId;
 
   Comment({required this.id, required this.postId});
@@ -160,7 +160,7 @@ void main() {
       }
       expect(
         '$error\n${logs.join('\n')}',
-        contains('references a class without a @View annotation'),
+        contains('references a class without an @Entity annotation'),
       );
     });
   });

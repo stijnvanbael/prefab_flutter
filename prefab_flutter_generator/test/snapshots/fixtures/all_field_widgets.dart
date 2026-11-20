@@ -2,7 +2,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 enum Status { open, closed }
 
-@View(title: 'Widget Demo', path: 'widget-demos')
+@Entity(title: 'Widget Demo', path: 'widget-demos')
 @Create()
 @Update()
 class WidgetDemo {

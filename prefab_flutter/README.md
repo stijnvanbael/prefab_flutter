@@ -11,7 +11,7 @@ Apply these annotations to your Dart entity classes and run `build_runner` to ge
 
 | Annotation | Description |
 |---|---|
-| `@View` | Marks a class as a prefab entity and drives all code generation |
+| `@Entity` | Marks a class as a prefab entity and drives all code generation |
 | `@Create` | Generates the create screen, route, list-screen create button and `create()` methods |
 | `@Update` | Generates the edit screen and route, an **Edit** action on the detail screen and `update()` methods |
 | `@Delete` | Adds a **Delete** action backed by a confirmation dialog |
@@ -25,7 +25,7 @@ Apply these annotations to your Dart entity classes and run `build_runner` to ge
 
 | Enum | Values |
 |---|---|
-| `ActionPlace` | `detail`, `list`, `item` (where an `@EntityAction` appears) |
+| `Place` | `detail`, `list`, `item` (where an `@EntityAction` appears) |
 | `Validator` | `required`, `email`, `url`, `positive`, `nonNegative`, `min(n)`, `max(n)`, `minLength(n)`, `maxLength(n)`, `pattern(regex)` |
 | `FieldWidget` | `auto`, `multilineText`, `password`, `datePicker`, `timePicker`, `dateTimePicker`, `dropdown`, `toggle` |
 
@@ -47,7 +47,7 @@ Annotate your entity class:
 ```dart
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 @Delete()

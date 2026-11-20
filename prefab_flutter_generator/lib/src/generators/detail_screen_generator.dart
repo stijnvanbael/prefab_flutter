@@ -11,12 +11,12 @@ import '../manifest/entity_paths.dart';
 import '../manifest/field_manifest.dart';
 
 /// Generates a read-only `{Entity}DetailScreen` [ConsumerWidget] for every
-/// class annotated with [@View].
+/// class annotated with [@Entity].
 ///
 /// The generated screen:
 /// - watches `{entity}DetailProvider(id)` from Riverpod,
 /// - shows all non-hidden [@Field] fields as labelled [ListTile]s,
-/// - sets the AppBar title from [@View.title],
+/// - sets the AppBar title from [@Entity.title],
 /// - adds an **Edit** AppBar action when [@Update] is present,
 /// - adds a **Delete** AppBar action (with confirmation dialog) when
 ///   [@Delete] is present.

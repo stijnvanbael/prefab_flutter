@@ -59,7 +59,7 @@ class ArtifactGenerator extends Generator {
     return formatGenerated(source, sourceFileName);
   }
 
-  /// Fails when an `@EntityScreen` names a class that is not a `@View` entity
+  /// Fails when an `@EntityScreen` names a class that is not an `@Entity` entity
   /// of the package.
   Future<void> _checkChildScreens(List<EntityContext> entities,
       List<ChildScreen> screens, BuildStep buildStep) async {
@@ -69,7 +69,7 @@ class ArtifactGenerator extends Generator {
         if (!own.contains(s.entity)) s,
     ];
     if (unknown.isEmpty) return;
-    final known = {...own, ...await readOtherViewNames(buildStep)};
+    final known = {...own, ...await readOtherEntityNames(buildStep)};
     unknown = [
       for (final s in unknown)
         if (!known.contains(s.entity)) s,
@@ -79,14 +79,14 @@ class ArtifactGenerator extends Generator {
     final closest = closestName(s.entity, known);
     throw InvalidGenerationSourceError(
       '@EntityScreen ${s.className} (${s.libraryUri}) names ${s.entity}, '
-      'which is not a @View entity'
+      'which is not an @Entity class'
       '${closest == null ? '' : '; did you mean $closest?'}',
     );
   }
 
   /// Fails when a `@Promoted` declaration names no generated artifact of the
   /// package. Names this file does not generate are looked up in the other
-  /// libraries with `@View` classes, and only then reported.
+  /// libraries with `@Entity` classes, and only then reported.
   Future<void> _checkPromoted(LibraryEmitter emitter,
       List<EntityContext> entities,
       List<PromotedDeclaration> promoted, BuildStep buildStep) async {
@@ -125,7 +125,7 @@ class ArtifactGenerator extends Generator {
     );
   }
 
-  /// Fails when an `@EntityAction` names a class that is not a `@View` entity
+  /// Fails when an `@EntityAction` names a class that is not an `@Entity` entity
   /// of the package. Entities of other libraries are looked up like in
   /// [_checkPromoted], and only when this file does not have the entity.
   Future<void> _checkActions(List<EntityContext> entities,
@@ -162,7 +162,7 @@ class ArtifactGenerator extends Generator {
     final a = unknown.first;
     final closest = closestName(a.entity, known);
     throw InvalidGenerationSourceError(
-      '@EntityAction on ${a.name} (${a.uri}): ${a.entity} is not a @View '
+      '@EntityAction on ${a.name} (${a.uri}): ${a.entity} is not an @Entity '
       'entity${closest == null ? '' : '; did you mean $closest?'}',
     );
   }

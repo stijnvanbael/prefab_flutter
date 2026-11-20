@@ -1,14 +1,15 @@
-/// Marks a class as a prefab entity and drives all code generation.
+/// Marks a class as an entity: Prefab Flutter generates its screens,
+/// providers, API client and routes.
 ///
 /// Example:
 /// ```dart
-/// @View()
+/// @Entity()
 /// class Product { ... }
 ///
-/// @View(title: 'Product', path: 'products') // explicit, same result
+/// @Entity(title: 'Product', path: 'products') // explicit, same result
 /// class Product { ... }
 /// ```
-class View {
+class Entity {
   /// Human-readable name shown in the AppBar and other UI surfaces. Defaults
   /// to the class name in title case (`ProductOrder` → `Product Order`).
   final String? title;
@@ -26,5 +27,5 @@ class View {
   /// with `false` the list is requested in one go and has no pagination bar.
   final bool paged;
 
-  const View({this.title, this.path, this.paged = true});
+  const Entity({this.title, this.path, this.paged = true});
 }

@@ -1,4 +1,5 @@
 import '../enums/field_widget.dart';
+import '../enums/place.dart';
 import '../enums/validator.dart';
 
 /// Form-only settings of a [Field], passed as [Field.form].
@@ -23,21 +24,20 @@ class FormOptions {
   /// and `label`, and may take `validator` and `key` (the `PrefabFieldBuilder`
   /// contract of `prefab_flutter_widgets`). Only [Validator.required] can be
   /// combined with it.
-  final Function? custom;
+  final Function? builder;
 
   const FormOptions({
     this.widget = FieldWidget.auto,
     this.validators = const [],
-    this.custom,
+    this.builder,
   });
 }
 
-/// Marks a field on a [@View] entity for inclusion in the generated list,
-/// detail and form screens.
+/// Marks a field of an [Entity] for use in the generated list, detail and
+/// form screens.
 ///
-/// Display and listing concerns (label, visibility, and later searching,
-/// sorting and views) live directly on [Field]; form-only settings live in
-/// [form].
+/// Display and listing settings (label, places, searching, sorting) live
+/// directly on [Field]; form-only settings live in [form].
 ///
 /// Example:
 /// ```dart
@@ -49,9 +49,6 @@ class Field {
   /// converted to title case when omitted (`firstName` → `First Name`).
   final String? label;
 
-  /// When `true` the field is excluded from both the form and detail screens.
-  final bool hidden;
-
   /// When `true` the generated list screen shows a search bar and the field
   /// is included in the server-side search (the `q` query parameter).
   final bool searchable;
@@ -62,43 +59,24 @@ class Field {
   /// Form-only settings (widget and validators).
   final FormOptions form;
 
-  /// Names of the views the field appears in (`'list'`, `'detail'`).
-  /// `null` (the default) means the field appears in all views.
-  final Set<String>? views;
+  /// The places the field appears in: [Place.item], [Place.detail] and
+  /// [Place.form]. `null` (the default) means every place; an empty set
+  /// keeps the field in the model but shows it nowhere.
+  final Set<Place>? on;
 
   /// A hand-written widget that shows the value in the detail screen and the
   /// list tile instead of its `toString()`, as a constant constructor tear-off
   /// or top-level function (`ColorSwatch.new`). It must take the named
   /// parameter `value` and may take `key` (the `PrefabDisplayBuilder`
   /// contract of `prefab_flutter_widgets`).
-  final Function? display;
+  final Function? displayBuilder;
 
   const Field({
     this.label,
-    this.hidden = false,
-    this.views,
+    this.on,
     this.searchable = false,
     this.sortable = false,
     this.form = const FormOptions(),
-    this.display,
-  });
-}
-
-/// Deprecated predecessor of [Field].
-///
-/// Equivalent to `@Field(label: ..., hidden: ..., form: FormOptions(widget:
-/// ..., validators: ...))`. Kept for one release.
-@Deprecated('Use @Field (with form: FormOptions(...)) instead.')
-class FormField {
-  final String? label;
-  final FieldWidget widget;
-  final List<Validator> validators;
-  final bool hidden;
-
-  const FormField({
-    this.label,
-    this.widget = FieldWidget.auto,
-    this.validators = const [],
-    this.hidden = false,
+    this.displayBuilder,
   });
 }

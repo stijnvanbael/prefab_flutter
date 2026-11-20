@@ -11,7 +11,7 @@ import '../features/features.dart';
 import '../manifest/entity_manifest.dart';
 
 /// Generates a Dio-backed `{Entity}ApiClient` class for every class annotated
-/// with [@View].
+/// with [@Entity].
 ///
 /// Each API client exposes list and getById; the create, update and delete
 /// methods come from the create, update and delete features (delete is always

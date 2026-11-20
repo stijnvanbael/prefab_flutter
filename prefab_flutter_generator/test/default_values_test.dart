@@ -6,7 +6,7 @@ import 'package:test/test.dart';
 
 const _prefabSources = {
   'prefab_flutter|lib/prefab_flutter.dart': r'''
-export 'src/annotations/view.dart';
+export 'src/annotations/entity.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/delete.dart';
 export 'src/annotations/field.dart';
@@ -15,11 +15,11 @@ export 'src/annotations/id.dart';
 export 'src/enums/field_widget.dart';
 export 'src/enums/validator.dart';
 ''',
-  'prefab_flutter|lib/src/annotations/view.dart': r'''
-class View {
+  'prefab_flutter|lib/src/annotations/entity.dart': r'''
+class Entity {
   final String? title;
   final String? path;
-  const View({this.title, this.path});
+  const Entity({this.title, this.path});
 }
 ''',
   'prefab_flutter|lib/src/annotations/update.dart': r'''
@@ -45,31 +45,17 @@ class FormOptions {
 }
 class Field {
   final String? label;
-  final bool hidden;
   final FormOptions form;
   const Field({
     this.label,
-    this.hidden = false,
     this.form = const FormOptions(),
-  });
-}
-class FormField {
-  final String? label;
-  final FieldWidget widget;
-  final List<Validator> validators;
-  final bool hidden;
-  const FormField({
-    this.label,
-    this.widget = FieldWidget.auto,
-    this.validators = const [],
-    this.hidden = false,
   });
 }
 ''',
   'prefab_flutter|lib/src/annotations/parent.dart': r'''
 class Parent {
-  final Type type;
-  const Parent(this.type);
+  final Type entity;
+  const Parent(this.entity);
 }
 ''',
   'prefab_flutter|lib/src/annotations/id.dart': r'''
@@ -193,7 +179,7 @@ final class PatternValidator extends Validator {
 const _minimalSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View()
+@Entity()
 @Update()
 class ProductOrder {
   final String? id;
@@ -208,7 +194,7 @@ class ProductOrder {
 const _explicitSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Order', path: 'orders-x')
+@Entity(title: 'Order', path: 'orders-x')
 class ProductOrder {
   final String? id;
   @Field()
@@ -222,7 +208,7 @@ class ProductOrder {
 const _chainSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View()
+@Entity()
 class Post {
   final String? id;
   @Field()
@@ -232,7 +218,7 @@ class Post {
   Map<String, dynamic> toJson() => {};
 }
 
-@View()
+@Entity()
 class Comment {
   final String? id;
   @Field()
@@ -250,7 +236,7 @@ Map<String, Object> _assets(String source, String file) => {
     };
 
 void main() {
-  test('minimal @View() derives route path from the class name', () async {
+  test('minimal @Entity() derives route path from the class name', () async {
     await testBuilder(
       routesBuilder(BuilderOptions.empty),
       _assets(_minimalSource, 'product_order'),
@@ -261,7 +247,7 @@ void main() {
     );
   });
 
-  test('minimal @View() derives the screen title from the class name',
+  test('minimal @Entity() derives the screen title from the class name',
       () async {
     await testBuilder(
       detailScreenBuilder(BuilderOptions.empty),
@@ -286,7 +272,7 @@ void main() {
     );
   });
 
-  test('bare @View() works for parent entities', () async {
+  test('bare @Entity() works for parent entities', () async {
     await testBuilder(
       routesBuilder(BuilderOptions.empty),
       _assets(_chainSource, 'chain'),

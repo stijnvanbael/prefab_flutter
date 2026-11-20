@@ -1,6 +1,6 @@
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Beta', path: 'betas')
+@Entity(title: 'Beta', path: 'betas')
 @Create()
 class Beta {
   final int? id;

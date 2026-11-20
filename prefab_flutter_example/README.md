@@ -5,9 +5,9 @@ See the [root README](../README.md) and the [user guide](../docs/user_guide.md).
 A runnable example for [prefab_flutter](../README.md). It has three annotated
 entities and an in-memory mock backend, so no server is needed.
 
-- `lib/product.dart`: a top-level `Product` entity (`@View`, `@Create`, `@Update`, `@Delete`, `@Field`) showing
+- `lib/product.dart`: a top-level `Product` entity (`@Entity`, `@Create`, `@Update`, `@Delete`, `@Field`) showing
   search and sort, validators (`required`, `positive`, `maxLength`), an enum
-  dropdown, a multi-line text field limited to the detail view (`views`) and a
+  dropdown, a multi-line text field kept out of the list (`on: {Place.detail, Place.form}`) and a
   date picker.
 - `lib/review.dart`: a nested `Review` entity (`@Parent(Product)`), served under
   `/products/:productId/reviews`, with a `numberInput` rating validated with

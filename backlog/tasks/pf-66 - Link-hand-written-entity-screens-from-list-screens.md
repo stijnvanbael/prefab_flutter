@@ -14,7 +14,7 @@ dependencies:
 <!-- SECTION:DESCRIPTION:BEGIN -->
 A screen declared with `@EntityScreen(Entity, path:, title:)` gets a link tile on the generated detail screen only. List screens do not link to it, so a hand-written screen that applies to one item (e.g. statistics of a product) is one extra tap away from the list. Left open after PF-45.
 
-Offer the link in the list screen, for example as an item menu entry next to the `ActionPlace.item` actions of PF-44, so both share the rendering in `features/actions/action_rendering.dart`.
+Offer the link in the list screen, for example as an item menu entry next to the `Place.item` actions of PF-44, so both share the rendering in `features/actions/action_rendering.dart`.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

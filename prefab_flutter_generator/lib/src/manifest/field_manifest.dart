@@ -1,8 +1,8 @@
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 /// A hand-written widget a field names in its annotation (PF-65): the
-/// constructor tear-off or function behind `FormOptions.custom` or
-/// `Field.display`.
+/// constructor tear-off or function behind `FormOptions.builder` or
+/// `Field.displayBuilder`.
 class CustomWidgetRef {
   const CustomWidgetRef({
     required this.invocation,
@@ -28,9 +28,6 @@ class FieldManifest {
   /// Human-readable label (from [@Field.label] or derived from [name]).
   final String label;
 
-  /// When `true` the field is excluded from form and detail screens.
-  final bool hidden;
-
   /// When `true` the field references a parent entity (annotated with [@Parent]).
   final bool isParent;
 
@@ -49,14 +46,14 @@ class FieldManifest {
   /// When `true` the Dart type of the field is nullable (e.g. `String?`).
   final bool isNullable;
 
-  /// The hand-written form widget (`@Field.form.custom`), if any.
+  /// The hand-written form widget (`@Field.form.builder`), if any.
   final CustomWidgetRef? customForm;
 
-  /// The hand-written display widget (`@Field.display`), if any.
+  /// The hand-written display widget (`@Field.displayBuilder`), if any.
   final CustomWidgetRef? customDisplay;
 
-  /// Names of the views the field appears in, or `null` for all views.
-  final Set<String>? views;
+  /// The places the field appears in (`@Field.on`), or `null` for every place.
+  final Set<Place>? places;
 
   /// When `true` the field takes part in the list search ([@Field.searchable]).
   final bool searchable;
@@ -72,7 +69,6 @@ class FieldManifest {
   const FieldManifest({
     required this.name,
     required this.label,
-    required this.hidden,
     required this.isParent,
     required this.dartType,
     this.validators = const [],
@@ -81,14 +77,17 @@ class FieldManifest {
     this.isNullable = false,
     this.customForm,
     this.customDisplay,
-    this.views,
+    this.places,
     this.searchable = false,
     this.sortable = false,
     String? jsonName,
   }) : jsonName = jsonName ?? name;
 
-  /// Whether the field appears in the view named [viewName].
-  bool inView(String viewName) => views == null || views!.contains(viewName);
+  /// Whether the field appears in [place].
+  bool isOn(Place place) => places == null || places!.contains(place);
+
+  /// Whether the field appears in no place at all (`@Field(on: {})`).
+  bool get isShownNowhere => places != null && places!.isEmpty;
 
   /// Whether the form must reject an empty value: non-nullable fields are
   /// required by default, nullable fields only with [Validator.required].

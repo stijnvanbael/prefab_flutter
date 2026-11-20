@@ -10,7 +10,7 @@ analysed and tested on its own.
 
 | Package | Kind | Role |
 |---|---|---|
-| `prefab_flutter` | Pure Dart | The public annotations (`@View`, `@Field`, `@Update`, `@Delete`, `@Parent`, `@Id`) and the `FieldWidget`/`Validator` types. It has no dependencies, so generator and app can both import it. |
+| `prefab_flutter` | Pure Dart | The public annotations (`@Entity`, `@Field`, `@Update`, `@Delete`, `@Parent`, `@Id`) and the `FieldWidget`/`Validator` types. It has no dependencies, so generator and app can both import it. |
 | `prefab_flutter_generator` | Pure Dart, `dev_dependency` of apps | The `build_runner` builder. It reads the annotations with the analyzer and `source_gen`, and writes one `<file>.prefab.dart` per annotated source file. |
 | `prefab_flutter_widgets` | Flutter | Runtime widgets and helpers that generated code calls (`PrefabDeleteDialog`, `PrefabSearchBar`, `PrefabSortMenu`, `PrefabPaginationBar`, `PrefabListAdapter`, `prefabDioProvider`). |
 | `prefab_flutter_example` | Flutter app | A runnable app with an in-memory mock backend. CI runs the generator on it and analyses the output, so it proves that the generated code compiles. |
@@ -32,7 +32,7 @@ prefab_flutter_generator/
   lib/src/core/                     # the generator core (no feature knowledge)
     code.dart                       #   Code, Libs, Imports
     artifact.dart                   #   Artifact, ArtifactId, ArtifactKind
-    entity_context.dart             #   EntityContext (reads @View classes), ArtifactSet
+    entity_context.dart             #   EntityContext (reads @Entity classes), ArtifactSet
     extension_point.dart            #   ExtensionPoint (ordered, optionally single-valued)
     feature.dart                    #   Feature (feature module contract)
     library_emitter.dart            #   LibraryEmitter: assembles a .prefab.dart
@@ -61,7 +61,13 @@ The architecture is decided in
 structured templates per artifact, extension points that feature modules
 contribute to, and an import collector. There is no `code_builder`.
 
-1. **Entities.** `EntityContext.readAll` finds the `@View` classes of a source
+Names follow the vocabulary in
+[decision-2](../backlog/decisions/decision-2%20-%20Vocabulary.md): entity,
+field, place, action, builder, artifact and the naming rules for annotations,
+parameters and generated names. Name a new annotation or parameter from that
+list, or add the term to the record in the same pull request.
+
+1. **Entities.** `EntityContext.readAll` finds the `@Entity` classes of a source
    file with a `TypeChecker` and builds an `EntityManifest` per class from the
    analyzer elements. Read annotations through the manifest
    (`EntityManifest`, `FieldManifest`), not directly in a template, so every
@@ -111,8 +117,8 @@ contribute to, and an import collector. There is no `code_builder`.
    `lib/src/features/field_widgets/` (state declaration, prefill, form field,
    value expression); the registry is `formFieldEmitters`. The validators are
    one class per `Validator` in `lib/src/features/validators/` (PF-60). The
-   views (which fields the list tile and detail screen show) are in
-   `lib/src/features/views/` (PF-64); create, update and delete are in
+   places (which fields the list item and detail screen show, `@Field.on`)
+   are in `lib/src/features/places/` (PF-64, PF-73); create, update and delete are in
    `lib/src/features/create/`, `update/` and `delete/` (PF-63).
 7. **Tests.** The per-kind generators (`ApiClientGenerator`, ...,
    `RoutesGenerator`) are `ArtifactGenerator`s with the factories of one kind.
@@ -185,7 +191,7 @@ a separate, small change (the artifact owns its skeleton and renders the
 point). It may not edit another feature's directory or the templates beyond
 adding a point.
 
-`FieldManifest` and the raw flags (`searchable`, `sortable`, `@View.paged`)
+`FieldManifest` and the raw flags (`searchable`, `sortable`, `@Entity.paged`)
 stay in `lib/src/manifest/`: they are read in one place with the defaults and
 inference of every field (principle 2), and several features look at the same
 field. Derived getters used by one feature move into its module.
@@ -205,8 +211,8 @@ Extension points that exist today (all contributions are at column 0):
 | list screen, detail screen | `appBarBottom` (indent 8, single-valued `bottom:` argument) | `Code` | breadcrumbs |
 | API client, detail provider, list provider, list screen, detail screen | `familyKey` (the ids of the owning resources, outermost first; `FamilyKey` renders them) | `ValuePoint<FamilyId>` | nested resources (order = depth) |
 | routes | `routes` (top-level route of an entity with `@Parent`), `childRoutes` (routes inside a parent's detail route), `screenArguments` (extra screen arguments) | `ValuePoint<RouteSpec>`, `ValuePoint<Function>` | nested resources |
-| list screen | `itemTile` | `ValuePoint<FieldManifest>` (title, subtitle, trailing) | 10 views |
-| detail screen | `detailFields` | `ValuePoint<FieldManifest>` | 10 views |
+| list screen | `itemTile` | `ValuePoint<FieldManifest>` (title, subtitle, trailing) | 10 places |
+| detail screen | `detailFields` | `ValuePoint<FieldManifest>` | 10 places |
 | list screen, detail screen | `fieldValue` | `ValuePoint<FieldValue>` | 10 nullable fields |
 | list notifier | `state`, `onBuild`, `methods` (indent 2, 4, 2) | `Code` | 10 list query (`state`, `onBuild`); `methods`: 10 list query, 20 create, 30 update, 40 delete |
 | list notifier | `fetchArguments` | `ValuePoint<NamedArgument>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |

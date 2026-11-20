@@ -18,7 +18,7 @@ import 'support/prefab_sources.dart';
 const _productSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 @Delete()
@@ -43,7 +43,7 @@ class Product {
 const _tagSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Tag', path: 'tags')
+@Entity(title: 'Tag', path: 'tags')
 class Tag {
   late final int id;
   @Field(label: 'Name')
@@ -53,11 +53,11 @@ class Tag {
 }
 ''';
 
-/// A source file with two @View entities to test combined $prefabRoutes.
+/// A source file with two @Entity entities to test combined $prefabRoutes.
 const _twoEntitiesSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 class Product {
@@ -68,7 +68,7 @@ class Product {
   Product({required this.name});
 }
 
-@View(title: 'Tag', path: 'tags')
+@Entity(title: 'Tag', path: 'tags')
 class Tag {
   late final int id;
   @Field(label: 'Name')
@@ -82,7 +82,7 @@ class Tag {
 const _parentChildSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Post', path: 'posts')
+@Entity(title: 'Post', path: 'posts')
 @Create()
 @Update()
 @Delete()
@@ -95,7 +95,7 @@ class Post {
   Post({required this.id, required this.title});
 }
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 @Create()
 @Update()
 @Delete()
@@ -103,7 +103,7 @@ class Comment {
   final int id;
 
   @Parent(Post)
-  @Field(hidden: true)
+  @Field(on: {})
   final int postId;
 
   @Field(label: 'Content')
@@ -116,7 +116,7 @@ class Comment {
 const _postFileSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Post', path: 'posts')
+@Entity(title: 'Post', path: 'posts')
 class Post {
   final int id;
   @Field(label: 'Title')
@@ -129,13 +129,13 @@ const _crossFileCommentSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 import 'post.dart';
 
-@View(title: 'Comment', path: 'comments')
+@Entity(title: 'Comment', path: 'comments')
 @Create()
 @Update()
 class Comment {
   final int id;
   @Parent(Post)
-  @Field(hidden: true)
+  @Field(on: {})
   final int postId;
   @Field(label: 'Content')
   final String content;
@@ -178,7 +178,7 @@ void main() {
       );
     });
 
-    test('AC#1 — list route uses the entity path from @View', () async {
+    test('AC#1 — list route uses the entity path from @Entity', () async {
       await testBuilder(
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
@@ -372,7 +372,7 @@ void main() {
 
     // Non-annotated files should produce no output.
 
-    test('produces no output for files without @View annotations', () async {
+    test('produces no output for files without @Entity annotations', () async {
       await testBuilder(routesBuilder(BuilderOptions.empty), {
         ...Map<String, Object>.from(prefabSources),
         'a|lib/plain.dart': r'''

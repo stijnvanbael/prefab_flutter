@@ -15,7 +15,7 @@ dependencies:
 <!-- SECTION:DESCRIPTION:BEGIN -->
 The energy balancing app shows what is happening now (device states, measurements). Prefab offers server-sent event streams for entities annotated `@Streaming`. Generated list and detail providers should update live when the entity is streaming, without the developer writing a subscription.
 
-Add an opt-in on the model (e.g. `@View(live: true)` or a `@Streaming` annotation mirroring Prefab, to decide), an SSE client on top of the configured Dio in `prefab_flutter_widgets` (reconnect with backoff, closed when no provider listens), and providers that apply created, updated and deleted events to their state. The event format belongs to the backend adapter.
+Add an opt-in on the model (e.g. `@Entity(live: true)` or a `@Streaming` annotation mirroring Prefab, to decide), an SSE client on top of the configured Dio in `prefab_flutter_widgets` (reconnect with backoff, closed when no provider listens), and providers that apply created, updated and deleted events to their state. The event format belongs to the backend adapter.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

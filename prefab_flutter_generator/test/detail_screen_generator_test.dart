@@ -18,7 +18,7 @@ import 'support/prefab_sources.dart';
 const _productSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Product', path: 'products')
+@Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 @Delete()
@@ -31,7 +31,7 @@ class Product {
   @Field(label: 'Price')
   final double price;
 
-  @Field(hidden: true)
+  @Field(on: {})
   final String internalCode;
 
   Product({
@@ -47,7 +47,7 @@ class Product {
 const _tagSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Tag', path: 'tags')
+@Entity(title: 'Tag', path: 'tags')
 class Tag {
   late final int id;
   @Field(label: 'Name')
@@ -62,7 +62,7 @@ class Tag {
 const _orderSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Order', path: 'orders')
+@Entity(title: 'Order', path: 'orders')
 class Order {
   late final int id;
   @Field()
@@ -76,7 +76,7 @@ class Order {
 const _nullableSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Item', path: 'items')
+@Entity(title: 'Item', path: 'items')
 class Item {
   late final int id;
   @Field(label: 'Name')
@@ -104,14 +104,14 @@ Map<String, Object> _assets(String pkg, String path, String source) => {
 const _viewsSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Item', path: 'items')
+@Entity(title: 'Item', path: 'items')
 class Item {
   final int id;
 
-  @Field(label: 'Only list', views: {'list'})
+  @Field(label: 'Only list', on: {Place.item, Place.form})
   final String onlyList;
 
-  @Field(label: 'Only detail', views: {'detail'})
+  @Field(label: 'Only detail', on: {Place.detail, Place.form})
   final String onlyDetail;
 
   @Field(label: 'Everywhere')
@@ -155,7 +155,7 @@ void main() {
       );
     });
 
-    test('AC#3 — AppBar title uses the entity title from @View', () async {
+    test('AC#3 — AppBar title uses the entity title from @Entity', () async {
       await testBuilder(
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
@@ -168,7 +168,7 @@ void main() {
     });
 
     test(
-      'AC#2 — renders non-hidden fields as labelled read-only tiles',
+      'AC#2 — renders visible fields as labelled read-only tiles',
       () async {
         await testBuilder(
           detailScreenBuilder(BuilderOptions.empty),
@@ -187,7 +187,7 @@ void main() {
       },
     );
 
-    test('AC#2 — hidden fields are excluded from the detail screen', () async {
+    test('AC#2 — fields with on: {} are excluded from the detail screen', () async {
       await testBuilder(
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),

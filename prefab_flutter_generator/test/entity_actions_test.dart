@@ -9,7 +9,7 @@ import 'support/prefab_sources.dart';
 const _entity = '''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Alpha', path: 'alphas')
+@Entity(title: 'Alpha', path: 'alphas')
 @Update()
 class Alpha {
   final int? id;
@@ -63,11 +63,11 @@ void main() {
       final actions = scanActions('''
 $_header
 @EntityAction(Product, label: 'Duplicate', icon: 'copy',
-    on: {ActionPlace.detail, ActionPlace.item}, order: -1)
+    on: {Place.detail, Place.item}, order: -1)
 Future<void> duplicateProduct(
     BuildContext context, WidgetRef ref, Product product) async {}
 
-@EntityAction(Product, label: 'Export', on: {ActionPlace.list})
+@EntityAction(Product, label: 'Export', on: {Place.list})
 void exportProducts(BuildContext context, WidgetRef ref) {}
 
 @EntityAction(Product, label: 'Open')
@@ -105,7 +105,7 @@ void a(BuildContext context, Product product) {}
 void a(BuildContext context, WidgetRef ref, Review review) {}
 ''', contains('found (BuildContext, WidgetRef, Review)'));
       rejects('''
-@EntityAction(Product, label: 'X', on: {ActionPlace.list})
+@EntityAction(Product, label: 'X', on: {Place.list})
 void a(BuildContext context, WidgetRef ref, Product product) {}
 ''', contains('expected the parameters (BuildContext, WidgetRef)'));
       rejects('''
@@ -116,7 +116,7 @@ void a(BuildContext context, WidgetRef ref, [Product? product]) {}
 
     test('PF-44 AC#5 - other misuse is reported with the function name', () {
       rejects('''
-@EntityAction(Product, label: 'X', on: {ActionPlace.list, ActionPlace.item})
+@EntityAction(Product, label: 'X', on: {Place.list, Place.item})
 void a(BuildContext context, WidgetRef ref) {}
 ''', allOf(contains('@EntityAction on a'), contains('declare two functions')));
       rejects('''

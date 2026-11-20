@@ -20,7 +20,7 @@
 class EntityScreen {
   const EntityScreen(this.entity, {required this.path, this.title});
 
-  /// The entity (a `@View` class) the screen belongs to.
+  /// The entity (an `@Entity` class) the screen belongs to.
   final Type entity;
 
   /// The route segment below the entity's detail route, e.g. `live` for

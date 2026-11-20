@@ -177,12 +177,12 @@ List<ChildScreenParam> _constructorParams(ClassDeclaration declaration) {
   return params;
 }
 
-/// Names of the classes annotated with `@View` in [source].
-List<String> scanViewNames(String source) {
+/// Names of the classes annotated with `@Entity` in [source].
+List<String> scanEntityNames(String source) {
   final unit = parseString(content: source, throwIfDiagnostics: false).unit;
   return [
     for (final d in unit.declarations)
-      if (d is ClassDeclaration && d.metadata.any((a) => _annotationName(a) == 'View'))
+      if (d is ClassDeclaration && d.metadata.any((a) => _annotationName(a) == 'Entity'))
         d.name.lexeme,
   ];
 }
@@ -230,8 +230,8 @@ Future<List<ChildScreen>> readChildScreens(BuildStep buildStep) async {
   return result;
 }
 
-/// The names of the `@View` classes in the other libraries of the package.
-Future<Set<String>> readOtherViewNames(BuildStep buildStep) async {
+/// The names of the `@Entity` classes in the other libraries of the package.
+Future<Set<String>> readOtherEntityNames(BuildStep buildStep) async {
   final names = <String>{};
   final ids = await buildStep.findAssets(Glob('lib/**.dart')).toList();
   for (final id in ids) {
@@ -241,7 +241,7 @@ Future<Set<String>> readOtherViewNames(BuildStep buildStep) async {
       continue;
     }
     final source = await buildStep.readAsString(id);
-    if (source.contains('View')) names.addAll(scanViewNames(source));
+    if (source.contains('Entity')) names.addAll(scanEntityNames(source));
   }
   return names;
 }

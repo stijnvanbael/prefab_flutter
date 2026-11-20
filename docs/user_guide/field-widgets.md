@@ -43,13 +43,13 @@ generated. Name it with a constant constructor tear-off or top-level function:
 ```dart
 @Field(
   label: 'Accent colour',
-  form: FormOptions(custom: ColorField.new, validators: [Validator.required]),
-  display: ColorSwatch.new,
+  form: FormOptions(builder: ColorField.new, validators: [Validator.required]),
+  displayBuilder: ColorSwatch.new,
 )
 final int accent;
 ```
 
-**Form widget** (`FormOptions.custom`). It replaces the generated widget in
+**Form widget** (`FormOptions.builder`). It replaces the generated widget in
 the create and edit screens. The generated code calls it with these named
 parameters (the `PrefabFieldBuilder<T>` typedef in `prefab_flutter_widgets`;
 `T` is the field type without `?`):
@@ -67,7 +67,7 @@ validators check text; others are planned in PF-69); check other rules inside th
 edit screens share the widget; it is built after the edit screen has loaded
 the entity, so `initialValue` is already the stored value.
 
-**Display widget** (`Field.display`). The detail screen and the list tile
+**Display widget** (`Field.displayBuilder`). The detail screen and the list tile
 slots build it with `value:` (the `PrefabDisplayBuilder<T>` typedef; `null`
 for an empty nullable field) instead of `Text(value.toString())`. It also
 replaces the em dash shown for nullable fields.

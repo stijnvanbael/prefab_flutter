@@ -1,6 +1,6 @@
 /// Signals that a prefab entity can be created.
 ///
-/// When present on a class annotated with [@View], prefab generates the
+/// When present on a class annotated with [@Entity], prefab generates the
 /// `{Entity}CreateScreen`, the `create` route, the create button on the list
 /// screen and the `create()` methods on the provider and API client.
 ///

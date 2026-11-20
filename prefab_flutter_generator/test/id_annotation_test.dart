@@ -7,7 +7,7 @@ import 'support/prefab_sources.dart';
 const _stringIdSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Item', path: 'items')
+@Entity(title: 'Item', path: 'items')
 @Create()
 @Update()
 class Item {
@@ -25,7 +25,7 @@ class Item {
 const _noIdSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Item', path: 'items')
+@Entity(title: 'Item', path: 'items')
 class Item {
   @Field()
   final String name;
@@ -39,7 +39,7 @@ class Item {
 const _intIdSource = r'''
 import 'package:prefab_flutter/prefab_flutter.dart';
 
-@View(title: 'Item', path: 'items')
+@Entity(title: 'Item', path: 'items')
 @Create()
 @Update()
 class Item {

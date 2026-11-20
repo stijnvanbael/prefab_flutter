@@ -16,7 +16,6 @@ FieldManifest field(
     FieldManifest(
       name: 'f',
       label: 'F',
-      hidden: false,
       isParent: false,
       dartType: type,
       fieldWidget: widget,
