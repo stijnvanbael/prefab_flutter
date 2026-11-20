@@ -109,8 +109,9 @@ scanPackageContributions(String packageName, Map<String, String> files) {
     final source = files[path]!;
     final uri = 'package:$packageName/${path.substring(4)}';
     try {
-      if (source.contains('EntityAction'))
+      if (source.contains('EntityAction')) {
         actions.addAll(scanActions(source, uri));
+      }
       if (source.contains('EntityScreen')) {
         screens.addAll(scanChildScreens(source, uri));
       }
