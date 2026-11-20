@@ -562,13 +562,17 @@ void main() {
 
     // PF-8 — _prefillControllers and edit screen provider wiring
 
-    test('PF-8 — generated file imports the provider file', () async {
+    test('PF-38 — imports the entity, not the sibling generator output',
+        () async {
       await testBuilder(
         formScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _requiredSource),
         outputs: {
           'a|lib/product.form_screen.dart': decodedMatches(
-            contains("import 'product.provider.dart'"),
+            allOf(
+              contains("import 'product.dart'"),
+              isNot(contains("import 'product.provider.dart'")),
+            ),
           ),
         },
       );

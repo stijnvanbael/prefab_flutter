@@ -29,56 +29,97 @@ prefab_flutter_generator/
     entity_manifest.dart            #   EntityManifest, constructor params
     field_manifest.dart             #   FieldManifest
     entity_paths.dart               #   route and file path helpers
-  lib/src/generators/               # one source_gen Generator per output kind
-    api_client_generator.dart
-    provider_generator.dart
-    detail_screen_generator.dart
-    list_screen_generator.dart
-    form_screen_generator.dart
-    routes_generator.dart
-    prefab_generator.dart           # runs all of the above, merges the output
+  lib/src/core/                     # the generator core (no feature knowledge)
+    code.dart                       #   Code, Libs, Imports
+    artifact.dart                   #   Artifact, ArtifactId, ArtifactKind
+    entity_context.dart             #   EntityContext (reads @View classes), ArtifactSet
+    extension_point.dart            #   ExtensionPoint (ordered, optionally single-valued)
+    feature.dart                    #   Feature (feature module contract)
+    library_emitter.dart            #   LibraryEmitter: assembles a .prefab.dart
+    artifact_generator.dart         #   ArtifactGenerator: source_gen wrapper
+    field_registries.dart           #   FieldEmitter, ValidatorEmitter, FieldDisplay + registries
+  lib/src/generators/               # the artifacts, one file per output kind
+    api_client_generator.dart       #   ApiClientArtifact
+    provider_generator.dart         #   DetailProvider-, ListProvider-, ApiClientProviderArtifact
+    detail_screen_generator.dart    #   DetailScreenArtifact
+    list_screen_generator.dart      #   ListScreenArtifact
+    form_screen_generator.dart      #   CreateScreenArtifact, EditScreenArtifact
+    routes_generator.dart           #   RoutesArtifact (one per source file)
+    prefab_generator.dart           #   PrefabGenerator: all artifact factories
   test/                             # one test file per generator, plus feature tests
 ```
 
-1. Each generator is a `source_gen` `Generator`. It finds `@View` classes with
-   a `TypeChecker`, builds an `EntityManifest` from the analyzer elements, and
-   returns Dart source as a string.
-2. `PrefabGenerator` calls every generator, removes the imports that point at
-   the other generators' files, merges and sorts the remaining imports, and
-   concatenates the bodies into one `.prefab.dart` library.
-3. Read annotations through the manifest (`EntityManifest`, `FieldManifest`),
-   not directly in the generator, so every generator sees the same defaults
-   and inference.
+The architecture is decided in
+[decision-1](../backlog/decisions/decision-1%20-%20Generator-architecture.md):
+structured templates per artifact, extension points that feature modules
+contribute to, and an import collector. There is no `code_builder`.
 
-This structure is being replaced by artifacts, extension points and feature
-modules, as decided in
-[decision-1](../backlog/decisions/decision-1%20-%20Generator-architecture.md)
-(core planned in PF-38, feature modules in PF-39). A throwaway prototype of
-the detail screen lives in `prefab_flutter_generator/prototype/pf37/`; it is
-not part of the generator and not run by CI.
+1. **Entities.** `EntityContext.readAll` finds the `@View` classes of a source
+   file with a `TypeChecker` and builds an `EntityManifest` per class from the
+   analyzer elements. Read annotations through the manifest
+   (`EntityManifest`, `FieldManifest`), not directly in a template, so every
+   artifact sees the same defaults and inference.
+2. **Artifacts.** An `Artifact` is one independently emitted unit: an API
+   client, a provider, a screen, the routes. It has an `ArtifactId` (kind and
+   entity), a `primaryName` (`ProductDetailScreen`), the `declaredNames` it
+   introduces, and `emit()`, which returns a `Code`: the text of the
+   artifact plus the libraries (`Libs.materialUi`, a relative file name, ...)
+   it needs. Each artifact class owns the template of its output. An
+   `ArtifactFactory` creates the artifacts of one entity.
+3. **Imports.** Fragments name the libraries they need; nothing writes
+   `import` lines. `LibraryEmitter` merges the imports of the artifacts it
+   emits (package imports sorted, a blank line, other imports sorted). A
+   library is imported only if some emitted artifact needs it. All artifacts
+   of a source file live in one library, so they never import each other.
+4. **Emission.** `PrefabGenerator` is an `ArtifactGenerator` with the
+   factories of every kind. `LibraryEmitter.emit` creates the artifacts
+   kind-major (all API clients, then all provider groups, ...; a factory may
+   return several artifacts of an entity that must stay together), lets
+   features contribute, emits each artifact separately and writes banner,
+   imports and bodies. The emitter can skip artifacts by name
+   (`LibraryEmitter.promoted`); the skipped artifact is replaced by an import
+   and a re-export of the hand-written declaration. This is not yet reachable
+   from annotations (promotion is planned in PF-42).
+5. **Extension points.** An `ExtensionPoint` collects `Code` contributions from
+   features, rendered by `order`, then feature name, so the registration
+   order of features never matters. A single-valued point
+   (`maxContributions: 1`) fails with both feature names when two features
+   claim it. A `Feature` (`lib/src/core/feature.dart`) adds artifacts and
+   contributes to the extension points of the artifacts it finds in the
+   `ArtifactSet`; no feature module exists yet and the templates do not
+   expose points yet (PF-39).
+6. **Registries.** `FieldEmitters` (how a `FieldWidget` appears in the forms),
+   `ValidatorEmitters` (the check a `Validator` adds) and `FieldDisplays` (how a
+   value is shown in detail screens and list tiles) look up the emitter by the
+   annotation value. The first implementations wrap the code that used to live
+   in the form, detail and list templates; they move into one class per widget
+   or validator in the follow-ups of PF-39.
+7. **Tests.** The per-kind generators (`ApiClientGenerator`, ...,
+   `RoutesGenerator`) are `ArtifactGenerator`s with the factories of one kind.
+   They back the per-kind builders in `lib/builder.dart` that unit tests use;
+   their output is one library with exactly the imports of its artifacts.
 
-## Adding a generator
+## Adding an artifact
 
 Say you want to generate `{Entity}Foo` classes.
 
-1. **Write the generator.** Create `lib/src/generators/foo_generator.dart`
-   with a class that extends `Generator`. Return `''` when the library has no
-   `@View` class. Build `EntityManifest`s from the annotated elements, as
-   `routes_generator.dart` does, and emit Dart source. Start the output with
-   the `import` lines it needs; `PrefabGenerator` merges them.
-2. **Register it in `PrefabGenerator`.** Add `FooGenerator()` to the list in
-   the `PrefabGenerator` constructor
-   (`lib/src/generators/prefab_generator.dart`). If it generates a sibling
-   file under its own extension for testing, add that extension (for example
-   `foo`) to the `_siblingImport` regular expression so cross-imports are
-   dropped from the merged file. The generator order is the order of the
-   output.
-3. **Add a test builder in `lib/builder.dart`.** Add a factory such as
+1. **Write the artifact.** Create `lib/src/generators/foo_generator.dart` with
+   a class `FooArtifact extends Artifact` that takes an `EntityContext`.
+   Implement `id`, `primaryName` and `emit()`: write the template (from the
+   manifest) and return `Code(text.trim(), imports: {...})` with every library
+   the text uses (`Libs.*`, `entity.sourceFileName`). Add a factory
+   (`static Iterable<Artifact> create(EntityContext entity)`) that returns an
+   empty list when the entity has no `Foo`. Add a value to `ArtifactKind`.
+2. **Register it in `PrefabGenerator`.** Add `FooArtifact.create` to the list
+   in `lib/src/generators/prefab_generator.dart`. The order of the list is the
+   order of the output.
+3. **Add a test builder in `lib/builder.dart`.** Add a `FooGenerator extends
+   ArtifactGenerator` with `FooArtifact.create` and a factory such as
    `Builder fooBuilder(BuilderOptions options) => LibraryBuilder(FooGenerator(), generatedExtension: '.foo.dart');`.
-   This is only for unit tests, which exercise one generator in isolation.
+   This is only for unit tests, which exercise one kind in isolation.
 4. **Keep `build.yaml` unchanged.** Only `prefab_builder` (`.dart` ->
    `.prefab.dart`, `auto_apply: dependents`, `build_to: source`) is registered,
-   and it covers every generator through `PrefabGenerator`. Edit `build.yaml`
+   and it covers every artifact through `PrefabGenerator`. Edit `build.yaml`
    only to add a new *builder* with a different output extension; then list its
    factory under `builder_factories` and its `build_extensions`, and note the
    new file in the user guide.

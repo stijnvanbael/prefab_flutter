@@ -1,8 +1,8 @@
-// PF-37 prototype - not part of the published generator. PF-38 implements
-// the real core in lib/src/core/ and deletes this directory.
-
 /// Well-known libraries generated code imports.
 abstract final class Libs {
+  static const dio = 'package:dio/dio.dart';
+  static const dartAsync = 'dart:async';
+  static const flutterServices = 'package:flutter/services.dart';
   static const materialUi = 'package:material_ui/material_ui.dart';
   static const riverpod = 'package:flutter_riverpod/flutter_riverpod.dart';
   static const goRouter = 'package:go_router/go_router.dart';
@@ -12,8 +12,8 @@ abstract final class Libs {
 
 /// A fragment of generated Dart source plus the libraries it needs.
 ///
-/// Fragments are written at column 0; the extension point they are added to
-/// indents them. A fragment never writes `import` lines itself.
+/// A fragment never contains `import` lines; the libraries it needs are named
+/// in [imports] and collected by the core.
 class Code {
   const Code(this.text, {this.imports = const {}});
 
@@ -23,20 +23,21 @@ class Code {
 
 /// Collects the imports of every fragment that is emitted into one library.
 ///
-/// [render] reproduces today's `PrefabGenerator` order (package imports
-/// sorted, a blank line, other imports sorted), so migrated output stays
-/// byte-identical.
+/// [render] orders them as the generator always did: package imports sorted,
+/// a blank line, other imports sorted, then the exports of promoted artifacts.
 class Imports {
   final _uris = <String>{};
   final _exports = <String, Set<String>>{};
 
   void add(String uri) => _uris.add(uri);
 
+  void addAll(Iterable<String> uris) => _uris.addAll(uris);
+
   /// Re-exports [name] from [uri] (used for promoted artifacts).
   void export(String uri, String name) =>
       (_exports[uri] ??= <String>{}).add(name);
 
-  void addAll(Iterable<String> uris) => _uris.addAll(uris);
+  bool get isEmpty => _uris.isEmpty && _exports.isEmpty;
 
   String render() {
     final package = _uris.where((u) => u.startsWith('package:')).toList()
@@ -53,10 +54,6 @@ class Imports {
     ].join('\n');
   }
 }
-
-/// Joins [lines], dropping `null`s, so templates can include optional lines
-/// with `if (...) '...'` collection elements or `cond ? '...' : null`.
-String lines(Iterable<String?> lines) => lines.whereType<String>().join('\n');
 
 /// Indents every non-empty line of [text] by [spaces].
 String indent(String text, int spaces) {

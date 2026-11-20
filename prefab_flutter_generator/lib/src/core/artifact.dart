@@ -1,5 +1,3 @@
-// PF-37 prototype - not part of the published generator.
-
 import 'code.dart';
 
 /// The kinds of artifact the generator emits; one value per promotable unit.
@@ -7,6 +5,7 @@ enum ArtifactKind {
   apiClient,
   detailProvider,
   listProvider,
+  apiClientProvider,
   detailScreen,
   listScreen,
   createScreen,
@@ -14,7 +13,8 @@ enum ArtifactKind {
   routes,
 }
 
-/// Identifies one artifact: its kind and the entity it belongs to.
+/// Identifies one artifact: its kind and the entity it belongs to (for
+/// [ArtifactKind.routes], which is one per library, the first entity).
 class ArtifactId {
   const ArtifactId(this.kind, this.entity);
 
@@ -46,6 +46,6 @@ abstract class Artifact {
   List<String> get declaredNames => [primaryName];
 
   /// Renders the artifact after all features have contributed to its
-  /// extension points.
+  /// extension points. The text carries no leading or trailing blank lines.
   Code emit();
 }

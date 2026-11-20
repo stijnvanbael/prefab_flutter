@@ -1,14 +1,12 @@
-import 'package:analyzer/dart/element/element.dart';
-import 'package:build/build.dart';
-import 'package:prefab_flutter/prefab_flutter.dart';
-import 'package:source_gen/source_gen.dart';
-
+import '../core/artifact.dart';
+import '../core/artifact_generator.dart';
+import '../core/code.dart';
+import '../core/entity_context.dart';
+import '../core/field_registries.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
 import '../manifest/field_manifest.dart';
 import 'breadcrumbs.dart';
-
-const _viewChecker = TypeChecker.fromRuntime(View);
 
 /// Generates a read-only `{Entity}DetailScreen` [ConsumerWidget] for every
 /// class annotated with [@View].
@@ -20,78 +18,42 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 /// - adds an **Edit** AppBar action when [@Update] is present,
 /// - adds a **Delete** AppBar action (with confirmation dialog) when
 ///   [@Delete] is present.
-class DetailScreenGenerator extends Generator {
+class DetailScreenGenerator extends ArtifactGenerator {
+  DetailScreenGenerator()
+      : super('DetailScreenGenerator', const [DetailScreenArtifact.create]);
+}
+
+/// The `{Entity}DetailScreen` widget of one entity.
+class DetailScreenArtifact extends Artifact {
+  DetailScreenArtifact(this.entity);
+
+  final EntityContext entity;
+
+  static Iterable<Artifact> create(EntityContext entity) =>
+      [DetailScreenArtifact(entity)];
+
+  /// The libraries the fragments written so far need.
+  final _imports = <String>{Libs.materialUi, Libs.riverpod};
+
   @override
-  String generate(LibraryReader library, BuildStep buildStep) {
-    final annotated = library.annotatedWith(_viewChecker).toList();
-    if (annotated.isEmpty) return '';
+  ArtifactId get id =>
+      ArtifactId(ArtifactKind.detailScreen, entity.manifest.entityName);
 
-    final manifests = <EntityManifest>[];
-    for (final a in annotated) {
-      final element = a.element;
-      if (element is! ClassElement) {
-        throw InvalidGenerationSourceError(
-          '@View can only be applied to classes.',
-          element: element,
-        );
-      }
-      manifests.add(EntityManifest.from(element, a.annotation));
-    }
+  @override
+  String get primaryName => '${entity.manifest.entityName}DetailScreen';
 
-    final sourceFileName = buildStep.inputId.path.split('/').last;
-    final paths = EntityPaths(manifests);
-
+  @override
+  Code emit() {
     final buffer = StringBuffer();
-    _writeHeader(buffer);
-    _writeImports(manifests, sourceFileName, buffer);
-    for (final manifest in manifests) {
-      buffer.writeln();
-      _writeDetailScreenClass(manifest, paths, buffer);
-    }
-    return buffer.toString();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Header
-  // ---------------------------------------------------------------------------
-
-  void _writeHeader(StringBuffer buffer) {
-    const separator =
-        '// **************************************************************************';
-    buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('//');
-    buffer.writeln(separator);
-    buffer.writeln('// DetailScreenGenerator');
-    buffer.writeln(separator);
-    buffer.writeln();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Imports
-  // ---------------------------------------------------------------------------
-
-  void _writeImports(
-    List<EntityManifest> manifests,
-    String sourceFileName,
-    StringBuffer buffer,
-  ) {
-    buffer.writeln("import 'package:material_ui/material_ui.dart';");
-    buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
-
-    if (manifests.any((m) => m.hasUpdate || m.hasDelete || m.hasBreadcrumbs)) {
-      buffer.writeln("import 'package:go_router/go_router.dart';");
-    }
-
-    if (manifests.any((m) => m.hasDelete || m.hasBreadcrumbs)) {
-      buffer.writeln(
-          "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';");
-    }
-
-    // Relative import for the entity file.
-    buffer.writeln("import '$sourceFileName';");
-    for (final uri in ancestorImports(manifests)) {
-      buffer.writeln("import '$uri';");
-    }
+    _writeDetailScreenClass(entity.manifest, entity.paths, buffer);
+    return Code(
+      buffer.toString().trim(),
+      imports: {
+        ..._imports,
+        entity.sourceFileName,
+        ...ancestorImports([entity.manifest]),
+      },
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -133,6 +95,7 @@ class DetailScreenGenerator extends Generator {
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
     if (manifest.hasBreadcrumbs) {
+      _imports.addAll({Libs.goRouter, Libs.widgets});
       buffer.writeln(breadcrumbBottom(manifest, '        '));
     }
 
@@ -163,6 +126,7 @@ class DetailScreenGenerator extends Generator {
     buffer.writeln('        actions: [');
 
     if (manifest.hasUpdate) {
+      _imports.add(Libs.goRouter);
       buffer.writeln('          IconButton(');
       buffer.writeln('            icon: const Icon(Icons.edit),');
       buffer.writeln("            tooltip: 'Edit',");
@@ -172,6 +136,7 @@ class DetailScreenGenerator extends Generator {
     }
 
     if (manifest.hasDelete) {
+      _imports.addAll({Libs.goRouter, Libs.widgets});
       buffer.writeln('          IconButton(');
       buffer.writeln('            icon: const Icon(Icons.delete),');
       buffer.writeln("            tooltip: 'Delete',");
@@ -234,9 +199,7 @@ class DetailScreenGenerator extends Generator {
   ) {
     buffer.writeln('            ListTile(');
     buffer.writeln("              title: const Text('${field.label}'),");
-    final value = field.isNullable
-        ? "$entityLower.${field.name}?.toString() ?? '\u2014'"
-        : '$entityLower.${field.name}.toString()';
+    final value = fieldDisplays.resolve(field).text(field, entityLower);
     buffer.writeln('              subtitle: Text($value),');
     buffer.writeln('            ),');
   }

@@ -1,13 +1,11 @@
-import 'package:analyzer/dart/element/element.dart';
-import 'package:build/build.dart';
-import 'package:prefab_flutter/prefab_flutter.dart';
-import 'package:source_gen/source_gen.dart';
-
+import '../core/artifact.dart';
+import '../core/artifact_generator.dart';
+import '../core/code.dart';
+import '../core/entity_context.dart';
+import '../core/field_registries.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
 import 'breadcrumbs.dart';
-
-const _viewChecker = TypeChecker.fromRuntime(View);
 
 /// Generates a `{Entity}ListScreen` [ConsumerWidget] for every class annotated
 /// with [@View].
@@ -18,71 +16,42 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 ///   provided by the router via [state.pathParameters]),
 /// - passes the parent ID to the Riverpod list provider so the provider can
 ///   scope its API call to the correct parent resource.
-class ListScreenGenerator extends Generator {
+class ListScreenGenerator extends ArtifactGenerator {
+  ListScreenGenerator()
+      : super('ListScreenGenerator', const [ListScreenArtifact.create]);
+}
+
+/// The `{Entity}ListScreen` widget of one entity.
+class ListScreenArtifact extends Artifact {
+  ListScreenArtifact(this.entity);
+
+  final EntityContext entity;
+
+  static Iterable<Artifact> create(EntityContext entity) =>
+      [ListScreenArtifact(entity)];
+
   @override
-  String generate(LibraryReader library, BuildStep buildStep) {
-    final annotated = library.annotatedWith(_viewChecker).toList();
-    if (annotated.isEmpty) return '';
+  ArtifactId get id =>
+      ArtifactId(ArtifactKind.listScreen, entity.manifest.entityName);
 
-    final manifests = <EntityManifest>[];
-    for (final a in annotated) {
-      final element = a.element;
-      if (element is! ClassElement) continue;
-      manifests.add(EntityManifest.from(element, a.annotation));
-    }
+  @override
+  String get primaryName => '${entity.manifest.entityName}ListScreen';
 
-    final sourceFileName = buildStep.inputId.path.split('/').last;
-    final paths = EntityPaths(manifests);
-
+  @override
+  Code emit() {
     final buffer = StringBuffer();
-    _writeHeader(buffer);
-    _writeImports(manifests, sourceFileName, buffer);
-    buffer.writeln();
-
-    for (final manifest in manifests) {
-      _writeListScreenClass(manifest, paths, buffer);
-      buffer.writeln();
-    }
-
-    return buffer.toString();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Header
-  // ---------------------------------------------------------------------------
-
-  void _writeHeader(StringBuffer buffer) {
-    const sep =
-        '// **************************************************************************';
-    buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('//');
-    buffer.writeln(sep);
-    buffer.writeln('// ListScreenGenerator');
-    buffer.writeln(sep);
-    buffer.writeln();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Imports
-  // ---------------------------------------------------------------------------
-
-  void _writeImports(
-    List<EntityManifest> manifests,
-    String sourceFileName,
-    StringBuffer buffer,
-  ) {
-    buffer.writeln("import 'package:material_ui/material_ui.dart';");
-    buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
-    buffer.writeln("import 'package:go_router/go_router.dart';");
-    buffer.writeln(
-        "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';");
-    buffer.writeln();
-    final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
-    buffer.writeln("import '$base.dart';");
-    buffer.writeln("import '$base.provider.dart';");
-    for (final uri in ancestorImports(manifests)) {
-      buffer.writeln("import '$uri';");
-    }
+    _writeListScreenClass(entity.manifest, entity.paths, buffer);
+    return Code(
+      buffer.toString().trim(),
+      imports: {
+        Libs.materialUi,
+        Libs.riverpod,
+        Libs.goRouter,
+        Libs.widgets,
+        entity.sourceFileName,
+        ...ancestorImports([entity.manifest]),
+      },
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -201,9 +170,7 @@ class ListScreenGenerator extends Generator {
     const slotNames = ['title', 'subtitle', 'trailing'];
     for (var i = 0; i < slots.length; i++) {
       final f = slots[i];
-      final value = f.isNullable
-          ? "$entityLower.${f.name}?.toString() ?? '\u2014'"
-          : '$entityLower.${f.name}.toString()';
+      final value = fieldDisplays.resolve(f).text(f, entityLower);
       buffer.writeln('              ${slotNames[i]}: Text($value),');
     }
     buffer.writeln("              onTap: () => context.push('$itemPath'),");

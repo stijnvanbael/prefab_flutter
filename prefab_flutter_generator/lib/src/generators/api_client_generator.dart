@@ -1,11 +1,11 @@
 import 'package:analyzer/dart/element/element.dart';
-import 'package:build/build.dart';
-import 'package:prefab_flutter/prefab_flutter.dart';
 import 'package:source_gen/source_gen.dart';
 
+import '../core/artifact.dart';
+import '../core/artifact_generator.dart';
+import '../core/code.dart';
+import '../core/entity_context.dart';
 import '../manifest/entity_manifest.dart';
-
-const _viewChecker = TypeChecker.fromRuntime(View);
 
 /// Generates a Dio-backed `{Entity}ApiClient` class for every class annotated
 /// with [@View].
@@ -23,33 +23,37 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 /// PUT  /{parentPath}/{parentId}/{path}/{id}
 /// DELETE /{parentPath}/{parentId}/{path}/{id}
 /// ```
-class ApiClientGenerator extends Generator {
+class ApiClientGenerator extends ArtifactGenerator {
+  ApiClientGenerator()
+      : super('ApiClientGenerator', const [ApiClientArtifact.create]);
+}
+
+/// The `{Entity}ApiClient` class of one entity.
+class ApiClientArtifact extends Artifact {
+  ApiClientArtifact(this.entity);
+
+  final EntityContext entity;
+
+  static Iterable<Artifact> create(EntityContext entity) {
+    _requireJsonSupport(entity.element);
+    return [ApiClientArtifact(entity)];
+  }
+
   @override
-  String generate(LibraryReader library, BuildStep buildStep) {
-    final annotated = library.annotatedWith(_viewChecker).toList();
-    if (annotated.isEmpty) return '';
+  ArtifactId get id =>
+      ArtifactId(ArtifactKind.apiClient, entity.manifest.entityName);
 
-    final manifests = <EntityManifest>[];
-    for (final a in annotated) {
-      final element = a.element;
-      if (element is! ClassElement) continue;
-      _requireJsonSupport(element);
-      manifests.add(EntityManifest.from(element, a.annotation));
-    }
+  @override
+  String get primaryName => '${entity.manifest.entityName}ApiClient';
 
-    final sourceFileName = buildStep.inputId.path.split('/').last;
-
+  @override
+  Code emit() {
     final buffer = StringBuffer();
-    _writeHeader(buffer);
-    _writeImports(sourceFileName, buffer);
-    buffer.writeln();
-
-    for (final manifest in manifests) {
-      _writeApiClientClass(manifest, buffer);
-      buffer.writeln();
-    }
-
-    return buffer.toString();
+    _writeApiClientClass(entity.manifest, buffer);
+    return Code(
+      buffer.toString().trim(),
+      imports: {Libs.dio, Libs.widgets, entity.sourceFileName},
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -58,7 +62,7 @@ class ApiClientGenerator extends Generator {
 
   /// Fails the build unless [element] has a `fromJson(Map<String, dynamic>)`
   /// constructor and a `toJson()` method (e.g. from `json_serializable`).
-  void _requireJsonSupport(ClassElement element) {
+  static void _requireJsonSupport(ClassElement element) {
     final fromJson = element.getNamedConstructor('fromJson');
     final toJson = element.getMethod('toJson');
     final missing = <String>[
@@ -72,34 +76,6 @@ class ApiClientGenerator extends Generator {
       '@JsonSerializable() (json_serializable) or write them by hand.',
       element: element,
     );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Header
-  // ---------------------------------------------------------------------------
-
-  void _writeHeader(StringBuffer buffer) {
-    const sep =
-        '// **************************************************************************';
-    buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('//');
-    buffer.writeln(sep);
-    buffer.writeln('// ApiClientGenerator');
-    buffer.writeln(sep);
-    buffer.writeln();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Imports
-  // ---------------------------------------------------------------------------
-
-  void _writeImports(String sourceFileName, StringBuffer buffer) {
-    buffer.writeln("import 'package:dio/dio.dart';");
-    buffer.writeln(
-        "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';");
-    buffer.writeln();
-    final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
-    buffer.writeln("import '$base.dart';");
   }
 
   // ---------------------------------------------------------------------------
