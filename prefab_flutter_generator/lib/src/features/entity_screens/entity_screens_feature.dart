@@ -6,8 +6,10 @@ import '../../core/entity_context.dart';
 import '../../core/feature.dart';
 import '../../core/library_emitter.dart';
 import '../../generators/detail_screen_generator.dart';
+import '../../generators/list_screen_generator.dart';
 import '../../generators/routes_generator.dart';
 import '../../manifest/entity_manifest.dart';
+import '../actions/action_rendering.dart';
 import '../breadcrumbs/breadcrumb_items.dart';
 import 'child_screen.dart';
 
@@ -15,7 +17,9 @@ import 'child_screen.dart';
 ///
 /// Adds the route of every screen under the entity's detail route (routes
 /// point `detailChildRoutes`, order 10), a link tile on the detail screen
-/// (`afterFields`, order 10) and the `{entity}Breadcrumbs` helper artifact.
+/// (`afterFields`, order 10), a menu entry per screen on each list item
+/// (`itemActions`, order 40, before the `@EntityAction`s at 50, rendered like
+/// them by `action_rendering.dart`) and the `{entity}Breadcrumbs` helper artifact.
 /// The constructor of each screen is checked against the ids the route passes.
 class EntityScreensFeature extends Feature {
   const EntityScreensFeature();
@@ -38,6 +42,8 @@ class EntityScreensFeature extends Feature {
         ArtifactKind.routes, entity.libraryManifests.first.entityName);
     final detail = artifacts.get<DetailScreenArtifact>(
         ArtifactKind.detailScreen, manifest.entityName);
+    final list = artifacts.get<ListScreenArtifact>(
+        ArtifactKind.listScreen, manifest.entityName);
     for (final screen in entity.childScreens) {
       // The screen's own library is imported by the generated routes, unless
       // it is the entity's file (which every artifact imports already).
@@ -66,7 +72,28 @@ ListTile(
         order: 10,
       );
     }
+    if (list != null) {
+      final itemId = '\${${list.itemName}.${manifest.idFieldName}}';
+      final base = entity.paths.itemPath(manifest, itemId);
+      final items = sortActions([
+        for (final s in entity.childScreens)
+          ActionItem(
+            label: s.title,
+            call: "context.push('$base/${s.path}')",
+            order: _itemOrder,
+            name: s.path,
+          ),
+      ]);
+      list.itemActions.add(
+        _name,
+        Code(renderMenuEntries(items), imports: {Libs.goRouter}),
+        order: _itemOrder,
+      );
+    }
   }
+
+  /// Order of the item menu entries; the `@EntityAction`s follow at 50.
+  static const _itemOrder = 40;
 
   /// Fails the build, naming the screen, when its path or constructor does
   /// not fit the route.

@@ -66,6 +66,10 @@ the entity's file. The generator then
   `id` and `orderId`);
 - adds a tile with the `title` to the entity's detail screen (not when the
   detail screen is [promoted](promoting.md)) that opens the screen;
+- adds an entry with the `title` to the item menu of the list screen (not when
+  the list screen is promoted), one per screen, with the item's id and its
+  ancestor ids in the route. The entries come before the
+  [`@EntityAction`s](annotations.md) of `Place.item` and look like them;
 - generates `siteBreadcrumbs(context, ref, {title, id, ...ancestor ids})`, which
   returns the breadcrumb bar of the generated screens: the ancestors, the
   entity (labelled with its first visible field) and `title`. Use it as
