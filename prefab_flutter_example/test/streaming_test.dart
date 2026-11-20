@@ -91,4 +91,32 @@ void main() {
     expect(find.text('Display'), findsWidgets);
     expect(find.text('Monitor'), findsNothing);
   });
+
+  testWidgets('PF-74 the list catches up after the stream reconnects',
+      (tester) async {
+    final backend = await _pumpApp(tester);
+    expect(find.text('Keyboard'), findsOneWidget);
+
+    backend.dropProductStreams();
+    backend.changeProductSilently(1, {'name': 'Mechanical keyboard'});
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mechanical keyboard'), findsOneWidget);
+    expect(find.text('Keyboard'), findsNothing);
+  });
+
+  testWidgets('PF-74 the detail screen catches up after the stream reconnects',
+      (tester) async {
+    final backend = await _pumpApp(tester, location: '/products/2');
+    expect(find.text('Monitor'), findsWidgets);
+
+    backend.dropProductStreams();
+    backend.changeProductSilently(2, {'name': 'Display'});
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Display'), findsWidgets);
+    expect(find.text('Monitor'), findsNothing);
+  });
 }

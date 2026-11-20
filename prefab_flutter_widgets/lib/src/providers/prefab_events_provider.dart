@@ -15,7 +15,11 @@ import 'prefab_dio_provider.dart';
 /// [events] connects when it is listened to, closes the connection when the
 /// listener cancels and reconnects with exponential backoff (starting at
 /// [initialDelay], at most [maxDelay], reset by a successful connection) when
-/// the connection fails or ends.
+/// the connection fails or ends. After such a gap the first event of the new
+/// connection is [PrefabEvent.reconnected]: events may have been missed, so
+/// listeners reload what they show. A backend that replays missed events
+/// ([PrefabBackend.resumeWithLastEventId]) skips that signal when the stream
+/// resumes from the `Last-Event-ID` the source sent.
 class PrefabEventSource {
   final Dio dio;
   final PrefabBackend backend;
@@ -55,9 +59,14 @@ class PrefabEventSource {
     CancelToken? cancel;
     var attempt = 0;
     var closed = false;
+    // Set when a connection ended or failed: events may have been missed.
+    var gap = false;
+    // The `id:` of the last event received, sent as `Last-Event-ID`.
+    String? lastEventId;
 
     void scheduleReconnect(void Function() connect) {
       if (closed) return;
+      gap = true;
       retry = Timer(delayFor(attempt++), connect);
     }
 
@@ -70,12 +79,21 @@ class PrefabEventSource {
         options: Options(
           responseType: ResponseType.stream,
           receiveTimeout: Duration.zero,
-          headers: {'Accept': 'text/event-stream'},
+          headers: {
+            'Accept': 'text/event-stream',
+            if (lastEventId != null) 'Last-Event-ID': lastEventId!,
+          },
         ),
       )
           .then((response) {
         if (closed) return;
         attempt = 0;
+        if (gap) {
+          gap = false;
+          if (!(backend.resumeWithLastEventId && lastEventId != null)) {
+            controller.add(const PrefabEvent.reconnected());
+          }
+        }
         String? name;
         final data = <String>[];
         lines = utf8.decoder
@@ -90,6 +108,8 @@ class PrefabEventSource {
               }
               name = null;
               data.clear();
+            } else if (line.startsWith('id:')) {
+              lastEventId = line.substring(3).trim();
             } else if (line.startsWith('event:')) {
               name = line.substring(6).trim();
             } else if (line.startsWith('data:')) {

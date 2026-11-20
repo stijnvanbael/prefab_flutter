@@ -49,7 +49,7 @@ class MockBackendAdapter implements HttpClientAdapter {
   /// The open `/products/stream` connections. Every change of a product is
   /// sent to them as a server-sent event, as a `@Streaming` Prefab backend
   /// does.
-  final _productEvents = StreamController<List<int>>.broadcast();
+  var _productEvents = StreamController<List<int>>.broadcast();
 
   /// Sends a server-sent event to every open product stream, as if another
   /// client had changed a product: [name] is `created`, `updated` or
@@ -57,6 +57,21 @@ class MockBackendAdapter implements HttpClientAdapter {
   void emitProductEvent(String name, Map<String, dynamic> data) =>
       _productEvents
           .add(utf8.encode('event: $name\ndata: ${jsonEncode(data)}\n\n'));
+
+  /// Ends every open product stream, as a lost network connection does. The
+  /// client reconnects with backoff; events emitted while no stream is open
+  /// are lost.
+  void dropProductStreams() {
+    _productEvents.close();
+    _productEvents = StreamController<List<int>>.broadcast();
+  }
+
+  /// Changes fields of a product without sending an event, as if it happened
+  /// while the client was disconnected.
+  void changeProductSilently(int id, Map<String, dynamic> fields) {
+    final row = _tables['products']!.firstWhere((r) => r['id'] == id);
+    row.addAll(fields);
+  }
 
   @override
   Future<ResponseBody> fetch(

@@ -161,6 +161,12 @@ class PrefabBackend {
   final String updatedEvent;
   final String deletedEvent;
 
+  /// Whether the event stream replays the events missed while disconnected
+  /// when a reconnect sends the `Last-Event-ID` header (the `id:` of the last
+  /// event received). Then lists and details are not reloaded after a
+  /// reconnect that has such an id; otherwise they always are.
+  final bool resumeWithLastEventId;
+
   /// The Prefab preset (see the class documentation).
   const PrefabBackend({
     this.versionTransport = PrefabVersionTransport.body,
@@ -187,6 +193,7 @@ class PrefabBackend {
     this.createdEvent = 'created',
     this.updatedEvent = 'updated',
     this.deletedEvent = 'deleted',
+    this.resumeWithLastEventId = false,
   });
 
   /// The Simple preset: `sort=-field` and `{ "items": [...], "total": n }`.
@@ -215,6 +222,7 @@ class PrefabBackend {
     this.createdEvent = 'created',
     this.updatedEvent = 'updated',
     this.deletedEvent = 'deleted',
+    this.resumeWithLastEventId = false,
   });
 
   /// The URL of the event stream of the collection at [collectionUrl].

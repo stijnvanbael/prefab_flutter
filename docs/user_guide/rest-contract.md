@@ -201,9 +201,22 @@ format: pass other names to the constructor, or override `eventsUrl` and
 provider listens (`prefabEventsProvider(url)` shares one connection per URL)
 and closes it when the last one is gone. When the connection fails or ends it
 reconnects with exponential backoff (1 s, 2 s, 4 s, ... at most 30 s; a
-successful connection resets it). Events that happened while disconnected are
-not replayed (see [Known limitations](known-limitations.md)); use the
-list's Refresh or `reload()` to catch up.
+successful connection resets it).
+
+**Catching up after a reconnect.** Events that happened while the connection
+was down are lost, so the first event of every new connection after a gap is a
+`PrefabEvent.reconnected()` (`PrefabEventType.reconnected`, no entity data).
+The generated list notifier then reloads the current page (the same as
+`reload()`, so `newItems` is reset) and the generated detail provider loads
+its entity again; events that arrive during the reload are applied after it.
+If the reload of a detail fails, for example because the entity was deleted in
+the meantime, the provider shows that error.
+
+The source remembers the `id:` of the last event and sends it as the
+`Last-Event-ID` header when it reconnects. A backend that replays the missed
+events for it sets `PrefabBackend(resumeWithLastEventId: true)`: reconnects
+with a known last id then skip the reload. Without an id (or without the
+flag) the reload always happens.
 
 **What a list does with an event** (`applyPrefabEvent`):
 
@@ -228,6 +241,8 @@ ProviderScope(
   child: const MyApp(),
 );
 controller.add(const PrefabEvent(PrefabEventType.updated, {'id': 7, ...}));
+// Simulate a dropped connection: lists and details reload.
+controller.add(const PrefabEvent.reconnected());
 ```
 
 ### Migrating from `PrefabListAdapter`
