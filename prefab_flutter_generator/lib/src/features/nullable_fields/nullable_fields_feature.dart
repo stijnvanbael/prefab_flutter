@@ -10,8 +10,7 @@ import '../../generators/list_screen_generator.dart';
 ///
 /// Contributes to the `fieldValue` point of both screens (order 10). The
 /// nullable handling of the create and edit forms (empty option, `null` when
-/// the text is empty) still lives with the widget kinds in the form screen
-/// and moves with them (PF-59).
+/// the text is empty) lives in each widget's emitter in `field_widgets`.
 class NullableFieldsFeature extends Feature {
   const NullableFieldsFeature();
 

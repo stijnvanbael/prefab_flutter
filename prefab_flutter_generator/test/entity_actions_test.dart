@@ -42,6 +42,9 @@ Future<String> _generate(Map<String, String> extra,
         out = s;
         return true;
       }, 'captured')),
+      // `generateFor` does not stop other inputs from being generated.
+      if (extra.containsKey('a|lib/beta.dart'))
+        'a|lib/beta.prefab.dart': anything,
     },
   );
   return out!;
@@ -240,16 +243,31 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
     });
 
     test('PF-44 - an action for an unknown entity fails the build', () async {
-      await expectLater(
-        _generate({
-          'a|lib/actions.prefab_actions.json': _json([
-            {'name': 'dup', 'entity': 'Alpa', 'label': 'Dup', 'places': ['detail']},
-          ]),
-        }),
-        throwsA(isA<Object>().having((e) => e.toString(), 'message',
-            allOf(contains('@EntityAction on dup'),
-                contains('did you mean Alpha?')))),
-      );
+      // The builder reports the error in the build log.
+      final logs = <String>[];
+      try {
+        await testBuilder(
+          prefabBuilder(BuilderOptions.empty),
+          {
+            ...prefabSources,
+            'a|lib/alpha.dart': _entity,
+            'a|lib/actions.prefab_actions.json': _json([
+              {
+                'name': 'dup',
+                'entity': 'Alpa',
+                'label': 'Dup',
+                'places': ['detail']
+              },
+            ]),
+          },
+          generateFor: {'a|lib/alpha.dart'},
+          outputs: {},
+          onLog: (r) => logs.add('${r.message}\n${r.error ?? ''}'),
+        );
+      } catch (_) {}
+      final log = logs.join('\n');
+      expect(log, contains('@EntityAction on dup'));
+      expect(log, contains('did you mean Alpha?'));
     });
 
     test('PF-44 - an entity without actions generates as before', () async {

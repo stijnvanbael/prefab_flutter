@@ -223,7 +223,7 @@ String? _parameterType(FormalParameter p) {
           ? normal.type
           : null;
   if (type is NamedType) {
-    final n = type.name2.lexeme;
+    final n = type.name.lexeme;
     return type.question == null ? n : '$n?';
   }
   return null;

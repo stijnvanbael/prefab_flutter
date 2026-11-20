@@ -7,10 +7,8 @@ import 'extension_point.dart';
 /// How one resolved [FieldWidget] appears in the create and edit forms.
 ///
 /// Registered in a [FieldEmitters] registry, so a new widget is one new class
-/// and one registry line. The first implementation wraps the code that used to
-/// live in the form screen generator; `stateDeclaration` and `initialValue`
-/// join this interface when that code moves out of the form template
-/// (PF-39 follow-ups).
+/// and one registry line. The implementations live in
+/// `features/field_widgets/`.
 abstract class FieldEmitter {
   const FieldEmitter();
 
@@ -24,6 +22,14 @@ abstract class FieldEmitter {
   /// Throws if [field] cannot be rendered by this emitter (e.g. a time picker
   /// on an `int`).
   void check(FieldManifest field) {}
+
+  /// The declaration of the form state of [field] (a controller or a value),
+  /// as members of the screen's state class; `null` if it has none.
+  Code? stateDeclaration(FieldManifest field);
+
+  /// The statements that copy the value of [field] from [entity] (an
+  /// expression of the loaded item) into the form state, in the edit screen.
+  Code initialValue(FieldManifest field, String entity);
 
   /// The form widget of [field].
   Code formField(FieldManifest field);
