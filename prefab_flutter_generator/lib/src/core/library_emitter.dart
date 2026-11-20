@@ -2,6 +2,7 @@ import 'artifact.dart';
 import 'code.dart';
 import 'entity_context.dart';
 import 'feature.dart';
+import '../promoted/signature_check.dart';
 
 /// Creates the artifacts of one kind for an entity (none when the entity does
 /// not have that artifact, e.g. no edit screen without `@Update`).
@@ -10,13 +11,17 @@ typedef ArtifactFactory = Iterable<Artifact> Function(EntityContext entity);
 /// A hand-written declaration (annotated with `@Promoted`) that replaces a
 /// generated artifact.
 class PromotedDeclaration {
-  const PromotedDeclaration(this.name, this.libraryUri);
+  const PromotedDeclaration(this.name, this.libraryUri, {this.shape});
 
   /// Top-level name, equal to the artifact's [Artifact.primaryName].
   final String name;
 
   /// Library generated code imports to reach it.
   final String libraryUri;
+
+  /// The syntax of the declaration (see `shapeOf`), `null` when unknown; the
+  /// signature is then not checked.
+  final Map<String, Object?>? shape;
 }
 
 /// Assembles one generated library from artifacts and feature contributions.
@@ -94,6 +99,24 @@ class LibraryEmitter {
   /// The primary names of all artifacts of [entities], promoted or not.
   List<String> artifactNames(List<EntityContext> entities) =>
       [for (final (_, a) in _create(entities)) a.primaryName];
+
+  /// One message per `@Promoted` declaration of [promoted] whose signature
+  /// differs from what the generated code calls (see
+  /// `checkPromotedSignature`).
+  List<String> promotedMismatches(List<EntityContext> entities) {
+    final promotedByName = {for (final p in promoted) p.name: p};
+    final messages = <String>[];
+    for (final (i, artifact) in _create(entities)) {
+      final p = promotedByName[artifact.primaryName];
+      if (p?.shape == null) continue;
+      final message = checkPromotedSignature(artifact.id.kind,
+          artifact.primaryName, entities[i].manifest, p!.shape!);
+      if (message != null) {
+        messages.add('@Promoted ${p.name} (${p.libraryUri}) $message');
+      }
+    }
+    return messages;
+  }
 
   /// Emits every artifact separately, by primary name, with the libraries it
   /// needs. Used by the `promote` command; `@Promoted` declarations are not

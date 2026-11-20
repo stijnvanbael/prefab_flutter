@@ -82,8 +82,10 @@ class AlphaDetailScreen {}
 '''
         },
         outputs: {
-          'a|lib/screens/x.prefab_promoted.json':
-              '[{"name":"AlphaDetailScreen","uri":"package:a/screens/x.dart"}]',
+          'a|lib/screens/x.prefab_promoted.json': decodedMatches(allOf(
+              contains('"name":"AlphaDetailScreen"'),
+              contains('"uri":"package:a/screens/x.dart"'),
+              contains('"shape":{"kind":"class"'))),
         },
       );
     });

@@ -86,8 +86,26 @@ the warning stays until the screen is no longer promoted.
 ## Artifacts and the signature to keep
 
 Generated code refers to your declaration exactly as to the generated one, so
-keep the public signature. If you do not, the build reports a compile error
-at the generated call site.
+keep the public signature. The generator checks it on every build and fails
+with a message that names the declaration, the expected signature and the
+difference:
+
+```
+@Promoted AlphaDetailScreen (package:a/p.dart) does not match the generated
+code that uses it. Expected: const AlphaDetailScreen({super.key, required int id}).
+Found: const AlphaDetailScreen({required String id}). parameter id has type
+String, expected int.
+```
+
+The check reads the syntax of your declaration, so it works before the
+generated code exists. It reports what it can see and stays silent about what
+it cannot: a `super.` parameter, an inherited method, or a provider built by a
+helper function without type arguments are accepted. Checked per artifact:
+screens (a class with a `const` constructor taking the listed named
+parameters, nothing else required), API clients (constructor with the `Dio`
+and the adapter as positional parameters, the generated methods with the
+ancestor ids), providers (the type arguments, including the key type) and
+routes (a top-level getter or variable of type `List<RouteBase>`).
 
 | Artifact | Primary name (entity `Product`) | Signature to keep |
 |---|---|---|
@@ -108,9 +126,9 @@ The `id` parameter has the type of the entity's id (`int` or `String`).
 - Promotion is per artifact, not per entity; promote each artifact you want.
 - The name must be declared at the top level of a file under `lib/` of the
   same package.
-- A wrong signature is not reported by the generator; it is a compile error
-  in the generated file that calls the promoted artifact (build-time checks
-  are planned in PF-70).
+- The signature check is syntactic: a difference it cannot see (the return
+  type of a method, the members of the notifier of a list provider) is still
+  a compile error in the generated file that calls the promoted artifact.
 - A promoted list or detail screen does not get actions or `@EntityScreen`
   links added later: the build warns about each one (see below), and you add
   it to the screen by hand.

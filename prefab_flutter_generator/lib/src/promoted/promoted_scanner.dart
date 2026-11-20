@@ -6,24 +6,32 @@ import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 
 import '../core/library_emitter.dart';
+import 'promoted_shape.dart';
 
 /// Names of the top-level declarations annotated with `@Promoted()` in
 /// [source], read from the unresolved syntax tree (so the scan does not depend
 /// on generated code). Accepts `@Promoted()` and `@prefix.Promoted()`.
-List<String> scanPromotedNames(String source) {
+List<String> scanPromotedNames(String source) =>
+    [for (final (name, _) in scanPromoted(source)) name];
+
+/// Like [scanPromotedNames], with the shape of each declaration (see
+/// `shapeOf`) that the signature check compares with the generated code.
+List<(String, Map<String, Object?>)> scanPromoted(String source) {
   final unit = parseString(content: source, throwIfDiagnostics: false).unit;
-  final names = <String>[];
+  final result = <(String, Map<String, Object?>)>[];
   for (final declaration in unit.declarations) {
     if (!declaration.metadata.any(_isPromoted)) continue;
     // ignore: deprecated_member_use
     if (declaration is NamedCompilationUnitMember) {
       // ignore: deprecated_member_use
-      names.add(declaration.name.lexeme);
+      result.add((declaration.name.lexeme, shapeOf(declaration)));
     } else if (declaration is TopLevelVariableDeclaration) {
-      names.addAll(declaration.variables.variables.map((v) => v.name.lexeme));
+      for (final v in declaration.variables.variables) {
+        result.add((v.name.lexeme, shapeOf(declaration, variable: v.name.lexeme)));
+      }
     }
   }
-  return names;
+  return result;
 }
 
 bool _isPromoted(Annotation a) {
@@ -51,13 +59,14 @@ class PromotedBuilder implements Builder {
     }
     final source = await buildStep.readAsString(id);
     if (!source.contains('Promoted')) return;
-    final names = scanPromotedNames(source);
-    if (names.isEmpty) return;
+    final found = scanPromoted(source);
+    if (found.isEmpty) return;
     final uri = id.uri.toString();
     await buildStep.writeAsString(
       id.changeExtension(promotedExtension),
       jsonEncode([
-        for (final n in names) {'name': n, 'uri': uri},
+        for (final (name, shape) in found)
+          {'name': name, 'uri': uri, 'shape': shape},
       ]),
     );
   }
@@ -74,7 +83,8 @@ Future<List<PromotedDeclaration>> readPromoted(BuildStep buildStep) async {
     final json = jsonDecode(await buildStep.readAsString(id)) as List;
     for (final entry in json) {
       result.add(PromotedDeclaration(
-          entry['name'] as String, entry['uri'] as String));
+          entry['name'] as String, entry['uri'] as String,
+          shape: (entry['shape'] as Map?)?.cast<String, Object?>()));
     }
   }
   return result;
