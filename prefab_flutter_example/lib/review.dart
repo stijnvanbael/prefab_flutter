@@ -2,6 +2,7 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:prefab_flutter/prefab_flutter.dart';
 
 import 'product.dart';
+import 'rating_widgets.dart';
 
 part 'review.g.dart';
 
@@ -29,11 +30,16 @@ class Review {
   )
   final int? rating;
 
+  /// Edited and shown with the hand-written widgets of `rating_widgets.dart`.
+  @Field(form: FormOptions(custom: RatingField.new), display: RatingStars.new)
+  final int? quality;
+
   Review({
     this.id,
     required this.productId,
     required this.comment,
     this.rating,
+    this.quality,
   });
 
   factory Review.fromJson(Map<String, dynamic> json) =>

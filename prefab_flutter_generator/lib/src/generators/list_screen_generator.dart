@@ -86,6 +86,9 @@ class ListScreenArtifact extends Artifact {
         : '${m.entityNameLower}sProvider(${key.listExpr((a) => a.name)})';
   }
 
+  /// Libraries of the custom display widgets written so far (PF-65).
+  final _displayImports = <String>{};
+
   /// Name of the local variable holding the watched `AsyncValue` of the page.
   String get asyncName => '${entity.manifest.entityNameLower}sAsync';
 
@@ -113,6 +116,7 @@ class ListScreenArtifact extends Artifact {
         ...belowList.imports,
         ...itemActions.imports,
         ...floatingActionButton.imports,
+        ..._displayImports,
         Libs.materialUi,
         Libs.riverpod,
         Libs.goRouter,
@@ -199,18 +203,19 @@ class ListScreenArtifact extends Artifact {
     const slotNames = ['title', 'subtitle', 'trailing'];
     for (var i = 0; i < slots.length; i++) {
       final f = slots[i];
-      final value = fieldValueText(fieldValue, f, entityLower);
+      final value = fieldValueWidget(fieldValue, f, entityLower);
+      _displayImports.addAll(value.imports);
       if (slotNames[i] == 'trailing' && !itemActions.isEmpty) continue;
-      buffer.writeln('              ${slotNames[i]}: Text($value),');
+      buffer.writeln('              ${slotNames[i]}: ${value.text},');
     }
     if (!itemActions.isEmpty) {
       final trailing = slots.length > 2
-          ? fieldValueText(fieldValue, slots[2], entityLower)
+          ? fieldValueWidget(fieldValue, slots[2], entityLower).text
           : null;
       buffer.writeln('              trailing: Row(');
       buffer.writeln('                mainAxisSize: MainAxisSize.min,');
       buffer.writeln('                children: [');
-      if (trailing != null) buffer.writeln('                  Text($trailing),');
+      if (trailing != null) buffer.writeln('                  $trailing,');
       buffer.writeln('                  PopupMenuButton<void>(');
       buffer.writeln('                    itemBuilder: (_) => [');
       buffer.writeln(itemActions.render(14));

@@ -15,9 +15,20 @@ class FormOptions {
   /// Validation rules applied to this field in the form screen.
   final List<Validator> validators;
 
+  /// A hand-written form widget for this field, as a constant constructor
+  /// tear-off or top-level function (`ColorField.new`). It replaces the
+  /// generated widget; [widget] is then ignored.
+  ///
+  /// The reference must take the named parameters `initialValue`, `onChanged`
+  /// and `label`, and may take `validator` and `key` (the `PrefabFieldBuilder`
+  /// contract of `prefab_flutter_widgets`). Only [Validator.required] can be
+  /// combined with it.
+  final Function? custom;
+
   const FormOptions({
     this.widget = FieldWidget.auto,
     this.validators = const [],
+    this.custom,
   });
 }
 
@@ -55,6 +66,13 @@ class Field {
   /// `null` (the default) means the field appears in all views.
   final Set<String>? views;
 
+  /// A hand-written widget that shows the value in the detail screen and the
+  /// list tile instead of its `toString()`, as a constant constructor tear-off
+  /// or top-level function (`ColorSwatch.new`). It must take the named
+  /// parameter `value` and may take `key` (the `PrefabDisplayBuilder`
+  /// contract of `prefab_flutter_widgets`).
+  final Function? display;
+
   const Field({
     this.label,
     this.hidden = false,
@@ -62,6 +80,7 @@ class Field {
     this.searchable = false,
     this.sortable = false,
     this.form = const FormOptions(),
+    this.display,
   });
 }
 

@@ -1,6 +1,7 @@
 import '../../core/entity_context.dart';
 import '../../core/feature.dart';
 import '../../core/field_registries.dart';
+import '../custom_field/custom_field_emitter.dart';
 import 'choice_field_emitters.dart';
 import 'form_field_emitter.dart';
 import 'picker_field_emitters.dart';
@@ -27,6 +28,7 @@ class FieldWidgetsFeature extends Feature {
 /// The emitter of every `FieldWidget`; for `FieldWidget.auto` the first
 /// emitter that accepts the field's type wins, so plain text stays last.
 final formFieldEmitters = FieldEmitters<FormFieldEmitter>(const [
+  CustomFormFieldEmitter(),
   ToggleFieldEmitter(),
   DatePickerFieldEmitter(),
   NumberInputFieldEmitter(),

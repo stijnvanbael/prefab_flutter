@@ -1,5 +1,6 @@
 import 'package:prefab_flutter/prefab_flutter.dart';
 
+import '../features/custom_field/custom_field_display.dart';
 import '../manifest/field_manifest.dart';
 import 'code.dart';
 import 'extension_point.dart';
@@ -15,6 +16,10 @@ abstract class FieldEmitter {
   /// The annotation value this emitter renders. [FieldWidget.auto] is never
   /// returned: auto fields are resolved by [accepts].
   FieldWidget get widget;
+
+  /// Whether this emitter renders [field] whatever its [FieldWidget] (a
+  /// custom widget); checked before [widget] and [accepts].
+  bool claims(FieldManifest field) => false;
 
   /// Whether [FieldWidget.auto] resolves [field] to this emitter.
   bool accepts(FieldManifest field);
@@ -49,9 +54,11 @@ class FieldEmitters<E extends FieldEmitter> {
   /// The emitter of [field]: the one registered for an explicit
   /// [FieldManifest.fieldWidget], else the first that accepts it.
   E resolve(FieldManifest field) {
-    final emitter = field.fieldWidget == FieldWidget.auto
-        ? emitters.firstWhere((e) => e.accepts(field))
-        : emitters.firstWhere((e) => e.widget == field.fieldWidget);
+    final claimed = emitters.where((e) => e.claims(field)).firstOrNull;
+    final emitter = claimed ??
+        (field.fieldWidget == FieldWidget.auto
+            ? emitters.firstWhere((e) => e.accepts(field))
+            : emitters.firstWhere((e) => e.widget == field.fieldWidget));
     emitter.check(field);
     return emitter;
   }
@@ -89,6 +96,10 @@ abstract class FieldDisplay {
 
   /// Dart expression of type `String`, e.g. `p.price.toString()`.
   String text(FieldManifest field, String receiver);
+
+  /// A widget expression that shows the value instead of `Text(text(...))`,
+  /// or `null` to use the text.
+  Code? widget(FieldManifest field, String receiver) => null;
 }
 
 /// The [FieldDisplay]s; the first that accepts a field shows it.
@@ -115,7 +126,10 @@ class DefaultFieldDisplay extends FieldDisplay {
 }
 
 /// The field displays used by the detail and list screens.
-final fieldDisplays = FieldDisplays(const [DefaultFieldDisplay()]);
+final fieldDisplays = FieldDisplays(const [
+  CustomFieldDisplay(),
+  DefaultFieldDisplay(),
+]);
 
 /// A feature's way to show a field value in a detail screen or list tile; the
 /// `fieldValue` extension point of those screens holds these. The first
@@ -141,4 +155,19 @@ String fieldValueText(
     if (v.accepts(field)) return v.text(field, receiver);
   }
   return fieldDisplays.resolve(field).text(field, receiver);
+}
+
+/// The widget showing [field] in a detail screen or list tile: the custom
+/// display widget if the field names one, else `Text` of [fieldValueText].
+Code fieldValueWidget(
+  ValuePoint<FieldValue> point,
+  FieldManifest field,
+  String receiver,
+) {
+  for (final d in fieldDisplays.displays) {
+    if (!d.accepts(field)) continue;
+    final widget = d.widget(field, receiver);
+    if (widget != null) return widget;
+  }
+  return Code('Text(${fieldValueText(point, field, receiver)})');
 }
