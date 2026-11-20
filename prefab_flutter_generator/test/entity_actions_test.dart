@@ -228,7 +228,7 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
       expect(out, isNot(contains("import 'package:a/alpha.dart'")));
     });
 
-    test('PF-44 AC#4 - promoted screens are left alone without a message',
+    test('PF-44 AC#4 - promoted screens are left alone',
         () async {
       final out = await _generate({
         'a|lib/actions.prefab_actions.json': _json([

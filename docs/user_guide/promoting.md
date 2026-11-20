@@ -64,6 +64,25 @@ file, so the app compiles and behaves the same.
 - The command reads the `@Entity` classes under `lib/`, not the generated file,
   so it works before the first `build_runner build` too.
 
+## Actions and screen links
+
+`promote` writes a list or detail screen with the `@EntityAction` calls and the
+`@EntityScreen` link tiles the generated screen has at that moment, as plain
+code (with the imports of the functions and screens), so the promoted screen
+behaves like the one it replaces.
+
+A contribution added after the promotion cannot be written into your file. On
+every build the generator warns for each promoted screen that has one, naming
+the screen and the contribution:
+
+```
+AlphaDetailScreen is @Promoted, so it does not show the action archive
+(@EntityAction on Alpha). Add it to AlphaDetailScreen by hand.
+```
+
+The generator cannot tell whether your screen already calls the function, so
+the warning stays until the screen is no longer promoted.
+
 ## Artifacts and the signature to keep
 
 Generated code refers to your declaration exactly as to the generated one, so
@@ -92,5 +111,6 @@ The `id` parameter has the type of the entity's id (`int` or `String`).
 - A wrong signature is not reported by the generator; it is a compile error
   in the generated file that calls the promoted artifact (build-time checks
   are planned in PF-70).
-- A promoted list or detail screen does not show actions or `@EntityScreen`
-  links (planned in PF-68).
+- A promoted list or detail screen does not get actions or `@EntityScreen`
+  links added later: the build warns about each one (see below), and you add
+  it to the screen by hand.

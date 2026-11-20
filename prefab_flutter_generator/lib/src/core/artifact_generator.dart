@@ -86,7 +86,7 @@ class ArtifactGenerator extends Generator {
     );
     await _checkPromoted(emitter, entities, promoted, buildStep);
     await _checkActions(entities, allActions, buildStep);
-    final source = emitter.emit(entities, header: banner(name));
+    final source = emitter.emit(entities, header: banner(name), onWarning: log.warning);
     return formatGenerated(source, sourceFileName);
   }
 
