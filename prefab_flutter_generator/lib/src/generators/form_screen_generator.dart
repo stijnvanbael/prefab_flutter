@@ -47,6 +47,10 @@ abstract class FormScreenArtifact extends Artifact {
         imports: {..._imports, entity.sourceFileName},
       );
 
+  /// The fields of the edit form, or of the create form.
+  List<FieldManifest> _fieldsOf(bool isEdit) =>
+      isEdit ? manifest.updateFormFields : manifest.createFormFields;
+
   FormFieldEmitter _emitter(FieldManifest field) =>
       formFieldEmitters.resolve(field);
 
@@ -62,7 +66,7 @@ abstract class FormScreenArtifact extends Artifact {
     required bool isEdit,
     required StringBuffer buffer,
   }) {
-    final fields = manifest.formFields;
+    final fields = _fieldsOf(isEdit);
 
     buffer.writeln(
       'class $stateClassName extends ConsumerState<$widgetClassName> {',
@@ -137,7 +141,7 @@ abstract class FormScreenArtifact extends Artifact {
     buffer.writeln('          padding: prefabTheme.formPadding,');
     buffer.writeln('          children: [');
     buffer.writeln('            PrefabFormErrorBanner(errors: _formErrors),');
-    for (final field in manifest.formFields) {
+    for (final field in manifest.createFormFields) {
       _writeFormField(field, buffer);
     }
     _writeSaveButton(saveButtonLabel, buffer);
@@ -199,7 +203,7 @@ abstract class FormScreenArtifact extends Artifact {
     buffer.writeln('            padding: prefabTheme.formPadding,');
     buffer.writeln('            children: [');
     buffer.writeln('              PrefabFormErrorBanner(errors: _formErrors),');
-    for (final field in manifest.formFields) {
+    for (final field in manifest.updateFormFields) {
       _writeFormField(field, buffer);
     }
     _writeSaveButton(saveButtonLabel, buffer);
@@ -284,7 +288,7 @@ abstract class FormScreenArtifact extends Artifact {
         'form can create instances.',
       );
     }
-    final formFields = {for (final f in manifest.formFields) f.name: f};
+    final formFields = {for (final f in _fieldsOf(isEdit)) f.name: f};
     final arguments = <String>[];
     for (final param in params) {
       final String? expression;
@@ -300,8 +304,17 @@ abstract class FormScreenArtifact extends Artifact {
       }
 
       if (expression == null) {
-        // No source: the parameter must be optional (or nullable) so it can
-        // be omitted / passed as null.
+        // No source. On create, a required value the server sets gets a
+        // placeholder the create request never carries; otherwise the
+        // parameter must be optional (or nullable) so it can be omitted.
+        if (!isEdit && param.isRequired && !param.isNullable) {
+          final placeholder = _placeholder(param);
+          if (placeholder != null) {
+            arguments.add(
+                param.isNamed ? '${param.name}: $placeholder' : placeholder);
+            continue;
+          }
+        }
         if (param.isRequired && !param.isNullable) {
           throw InvalidGenerationSourceError(
             'Cannot build ${manifest.entityName} in the create form: the '
@@ -327,13 +340,35 @@ abstract class FormScreenArtifact extends Artifact {
     return arguments;
   }
 
+  /// A stand-in for a value the server sets, so that the create form can
+  /// build the entity. The create request never sends it (PF-53).
+  static String? _placeholder(ConstructorParam param) {
+    if (param.isEnum) return '${param.typeName}.values.first';
+    switch (param.typeName) {
+      case 'String':
+        return "''";
+      case 'int':
+      case 'num':
+        return '0';
+      case 'double':
+        return '0.0';
+      case 'bool':
+        return 'false';
+      case 'DateTime':
+        return 'DateTime.fromMillisecondsSinceEpoch(0)';
+      case 'Duration':
+        return 'Duration.zero';
+    }
+    return null;
+  }
+
   // ---------------------------------------------------------------------------
   // _prefillControllers method generation
   // ---------------------------------------------------------------------------
 
   void _writePrefillControllers(EntityManifest manifest, StringBuffer buffer) {
     final entity = manifest.entityName;
-    final fields = manifest.formFields;
+    final fields = manifest.updateFormFields;
 
     buffer.writeln('  void _prefillControllers($entity item) {');
     buffer.writeln('    _item = item;');

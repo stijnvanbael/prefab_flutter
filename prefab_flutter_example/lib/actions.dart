@@ -21,7 +21,8 @@ Future<void> duplicateProduct(
   await ref.read(productsProvider.notifier).create(Product(
       name: '${product.name} (copy)',
       price: product.price,
-      inStock: product.inStock));
+      inStock: product.inStock,
+      createdAt: product.createdAt));
 }
 
 @EntityAction(Product, label: 'Refresh', icon: 'refresh', on: {Place.list})

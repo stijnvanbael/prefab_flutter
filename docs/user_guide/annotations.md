@@ -96,6 +96,7 @@ ignored by every generator. Display and listing settings sit directly on
 | `searchable` | `bool` | `false` | The list screen shows a search bar (once any field is searchable); the text is sent to the server as `q` (see [Search, sorting and pagination](rest-contract.md#search-sorting-and-pagination)) |
 | `sortable` | `bool` | `false` | The list screen's sort menu offers this field ascending and descending |
 | `displayBuilder` | `Function?` | `null` | A hand-written widget (`ColorSwatch.new`) that shows the value in the detail screen and list tile (see [Custom widgets](field-widgets.md#custom-widgets-for-one-field)) |
+| `readOnly` | `bool` | `false` | The server owns the value (timestamps, status, totals): shown in the list and detail screens, never in a form or a request body (see [Request bodies](#request-bodies)) |
 | `form` | `FormOptions` | `FormOptions()` | Form-only settings, below |
 
 `FormOptions` parameters:
@@ -105,10 +106,45 @@ ignored by every generator. Display and listing settings sit directly on
 | `widget` | `FieldWidget` | `FieldWidget.auto` | Which input widget the form uses (see [Field widgets](field-widgets.md#field-widgets)) |
 | `validators` | `List<Validator>` | `[]` | Checks run when the form is submitted (see [Validators](validators.md#validators)) |
 | `builder` | `Function?` | `null` | A hand-written form widget (`ColorField.new`) that replaces the generated one; `widget` is then ignored (see [Custom widgets](field-widgets.md#custom-widgets-for-one-field)) |
+| `on` | `Set<FormMode>?` | `null` (both forms) | `{FormMode.create}` limits the field to the create form, `{FormMode.update}` to the edit form (see [Request bodies](#request-bodies)) |
 
 The **first** visible `@Field` in source order is used as the item title in
 the list screen (unless a field names its places, see below) and as the item name in
 the delete dialog.
+
+#### Request bodies
+
+The create and the update request carry only the fields that belong to them.
+Prefab Flutter infers this; the annotations only say where the model differs:
+
+| Field | Create form and body | Edit form | Update body |
+|---|---|---|---|
+| the id | never | never | sent (it is also in the URL) |
+| the `@Parent` field | sent | never | sent |
+| a `@Field` | yes | yes | yes |
+| `FormOptions(on: {FormMode.create})` | yes | no | **no** |
+| `FormOptions(on: {FormMode.update})` | no | yes | yes |
+| `@Field(readOnly: true)` | no | no | **no** |
+| a field outside the form (`on` without `Place.form`) | no | no | yes (the loaded value) |
+| un-annotated | no | no | yes (the loaded value) |
+
+The create body is a whitelist: a field that no form of the create screen
+shows (including every un-annotated one) is not sent. The names in the body are
+the JSON names (`@JsonKey`, `fieldRename`). A required constructor parameter
+that the create form does not fill, such as a server-set timestamp, gets a
+placeholder in the generated create screen (`''`, `0`, `0.0`, `false`,
+`DateTime.fromMillisecondsSinceEpoch(0)`, `Duration.zero` or the first enum
+value) so you need no dummy values; the placeholder is never sent. Other types
+still fail the build; make such a parameter nullable. The id of a
+version-checked entity is planned in PF-52.
+
+```dart
+@Field(form: FormOptions(on: {FormMode.create}))
+final String sku;          // set once at creation
+
+@Field(readOnly: true)
+final DateTime createdAt;  // shown, never sent
+```
 
 #### Places
 

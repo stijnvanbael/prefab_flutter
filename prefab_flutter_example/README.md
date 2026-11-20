@@ -8,7 +8,9 @@ entities and an in-memory mock backend, so no server is needed.
 - `lib/product.dart`: a top-level `Product` entity (`@Entity`, `@Create`, `@Update`, `@Delete`, `@Field`) showing
   search and sort, validators (`required`, `positive`, `maxLength`), an enum
   dropdown, a multi-line text field kept out of the list (`on: {Place.detail, Place.form}`) and a
-  date picker.
+  date picker. `sku` is create-only (`FormOptions(on: {FormMode.create})`) and
+  `createdAt` is server-set (`@Field(readOnly: true)`): neither is in the other
+  form or in the wrong request body (`test/request_shapes_test.dart`).
 - `lib/review.dart`: a nested `Review` entity (`@Parent(Product)`), served under
   `/products/:productId/reviews`, with a `numberInput` rating validated with
   `Validator.min` / `Validator.max`.

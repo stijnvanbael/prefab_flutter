@@ -66,6 +66,13 @@ class FieldManifest {
   /// Used as the `sort` value of list requests.
   final String jsonName;
 
+  /// Whether the server owns the value (`@Field.readOnly`): never in a form
+  /// or a request body.
+  final bool readOnly;
+
+  /// The forms the field is limited to (`FormOptions.on`), or `null` for both.
+  final Set<FormMode>? formModes;
+
   const FieldManifest({
     required this.name,
     required this.label,
@@ -78,6 +85,8 @@ class FieldManifest {
     this.customForm,
     this.customDisplay,
     this.places,
+    this.readOnly = false,
+    this.formModes,
     this.searchable = false,
     this.sortable = false,
     String? jsonName,
@@ -85,6 +94,15 @@ class FieldManifest {
 
   /// Whether the field appears in [place].
   bool isOn(Place place) => places == null || places!.contains(place);
+
+  /// Whether the field is allowed in the [mode] request (not read-only).
+  bool isOnMode(FormMode mode) =>
+      !readOnly && (formModes == null || formModes!.contains(mode));
+
+  /// Whether the field is in the form of [mode]: in [Place.form], not
+  /// read-only and not limited to the other mode.
+  bool inForm(FormMode mode) =>
+      !isParent && !isShownNowhere && isOn(Place.form) && isOnMode(mode);
 
   /// Whether the field appears in no place at all (`@Field(on: {})`).
   bool get isShownNowhere => places != null && places!.isEmpty;

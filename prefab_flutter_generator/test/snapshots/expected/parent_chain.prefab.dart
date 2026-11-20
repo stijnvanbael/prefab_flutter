@@ -99,9 +99,16 @@ class OrderLineApiClient {
 
   Future<OrderLine> create(OrderLine orderLine, {required int orderId}) async {
     final response =
-        await _dio.post('/orders/$orderId/lines', data: orderLine.toJson());
+        await _dio.post('/orders/$orderId/lines', data: _createBody(orderLine));
     return OrderLine.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// Only the fields of the create form (and the parent id).
+  Map<String, dynamic> _createBody(OrderLine orderLine) => {
+        for (final e in orderLine.toJson().entries)
+          if (const <String>{'orderId', 'product'}.contains(e.key))
+            e.key: e.value,
+      };
 
   Future<OrderLine> update(OrderLine orderLine, {required int orderId}) async {
     final response = await _dio.put(
@@ -159,9 +166,16 @@ class OrderLineNoteApiClient {
       {required int orderId, required int orderLineId}) async {
     final response = await _dio.post(
         '/orders/$orderId/lines/$orderLineId/notes',
-        data: orderLineNote.toJson());
+        data: _createBody(orderLineNote));
     return OrderLineNote.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// Only the fields of the create form (and the parent id).
+  Map<String, dynamic> _createBody(OrderLineNote orderLineNote) => {
+        for (final e in orderLineNote.toJson().entries)
+          if (const <String>{'orderLineId', 'text'}.contains(e.key))
+            e.key: e.value,
+      };
 
   Future<OrderLineNote> update(OrderLineNote orderLineNote,
       {required int orderId, required int orderLineId}) async {

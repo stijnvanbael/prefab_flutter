@@ -56,9 +56,16 @@ class AppThemeApiClient {
   }
 
   Future<AppTheme> create(AppTheme appTheme) async {
-    final response = await _dio.post('/themes', data: appTheme.toJson());
+    final response = await _dio.post('/themes', data: _createBody(appTheme));
     return AppTheme.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// Only the fields of the create form (and the parent id).
+  Map<String, dynamic> _createBody(AppTheme appTheme) => {
+        for (final e in appTheme.toJson().entries)
+          if (const <String>{'name', 'accent', 'highlight'}.contains(e.key))
+            e.key: e.value,
+      };
 
   Future<AppTheme> update(AppTheme appTheme) async {
     final response = await _dio.put('/themes/${_adapter.encodeId(appTheme.id)}',

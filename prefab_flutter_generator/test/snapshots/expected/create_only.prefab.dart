@@ -56,9 +56,15 @@ class BetaApiClient {
   }
 
   Future<Beta> create(Beta beta) async {
-    final response = await _dio.post('/betas', data: beta.toJson());
+    final response = await _dio.post('/betas', data: _createBody(beta));
     return Beta.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// Only the fields of the create form (and the parent id).
+  Map<String, dynamic> _createBody(Beta beta) => {
+        for (final e in beta.toJson().entries)
+          if (const <String>{'name'}.contains(e.key)) e.key: e.value,
+      };
 
   Future<void> delete(Beta beta) async {
     await _dio.delete('/betas/${_adapter.encodeId(beta.id)}');

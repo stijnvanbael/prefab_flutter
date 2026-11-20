@@ -102,6 +102,15 @@ Set<Place>? _readFieldPlaces(
   return places;
 }
 
+/// Reads `FormOptions.on`: `null` for both forms, otherwise the set of modes.
+Set<FormMode>? _readFormModes(ConstantReader form) {
+  final on = form.peek('on');
+  if (on == null || on.isNull) return null;
+  return {
+    for (final o in on.setValue) FormMode.values.byName(o.variable!.name!)
+  };
+}
+
 String _readFieldRename(ClassElement element) {
   for (final meta in element.metadata.annotations) {
     final value = meta.computeConstantValue();
@@ -160,12 +169,20 @@ class ConstructorParam {
   /// Whether the parameter declares a default value.
   final bool hasDefault;
 
+  /// The Dart type without nullability (`String`, `int`, `Status`).
+  final String typeName;
+
+  /// Whether the type is an enum.
+  final bool isEnum;
+
   const ConstructorParam({
     required this.name,
     required this.isNamed,
     required this.isRequired,
     required this.isNullable,
     required this.hasDefault,
+    this.typeName = 'Object',
+    this.isEnum = false,
   });
 
   /// Whether the parameter may be left out (or passed `null`) on create.
@@ -321,9 +338,33 @@ class EntityManifest {
   List<FieldManifest> get visibleFields =>
       fields.where((f) => !f.isShownNowhere && !f.isParent).toList();
 
-  /// All fields that appear in the create and edit forms ([Place.form]).
+  /// All fields that appear in the create or the edit form: in
+  /// [Place.form], not read-only and in at least one [FormMode].
   List<FieldManifest> get formFields =>
-      visibleFields.where((f) => f.isOn(Place.form)).toList();
+      visibleFields.where((f) => f.inForm(FormMode.create) || f.inForm(FormMode.update)).toList();
+
+  /// The fields of the create form, which are also the fields of the create
+  /// request body (with the parent field).
+  List<FieldManifest> get createFormFields =>
+      visibleFields.where((f) => f.inForm(FormMode.create)).toList();
+
+  /// The fields of the edit form.
+  List<FieldManifest> get updateFormFields =>
+      visibleFields.where((f) => f.inForm(FormMode.update)).toList();
+
+  /// The JSON names the create request carries: the create form fields and
+  /// the parent field. The id and the other fields are never sent.
+  List<String> get createJsonNames => [
+        for (final f in fields)
+          if (f.isParent || f.inForm(FormMode.create)) f.jsonName,
+      ];
+
+  /// The JSON names the update request leaves out of `toJson()`: read-only
+  /// and create-only fields.
+  List<String> get updateExcludedJsonNames => [
+        for (final f in fields)
+          if (f.readOnly || !f.isOnMode(FormMode.update)) f.jsonName,
+      ];
 
   /// Name of the first visible field, used as the item label in delete dialogs.
   /// Falls back to the id field when no visible fields are declared.
@@ -550,6 +591,8 @@ class EntityManifest {
           isNullable:
               field.type.nullabilitySuffix == NullabilitySuffix.question,
           places: places,
+          readOnly: reader.peek('readOnly')?.boolValue ?? false,
+          formModes: _readFormModes(formReader),
           // peek: tolerate older annotation sources without these flags.
           searchable: reader.peek('searchable')?.boolValue ?? false,
           sortable: reader.peek('sortable')?.boolValue ?? false,
@@ -588,6 +631,8 @@ class EntityManifest {
                 isNullable:
                     p.type.nullabilitySuffix == NullabilitySuffix.question,
                 hasDefault: p.hasDefaultValue,
+                typeName: _plainType(p.type)!,
+                isEnum: p.type.element is EnumElement,
               ))
           .toList(),
     );

@@ -58,9 +58,26 @@ class WidgetDemoApiClient {
 
   Future<WidgetDemo> create(WidgetDemo widgetDemo) async {
     final response =
-        await _dio.post('/widget-demos', data: widgetDemo.toJson());
+        await _dio.post('/widget-demos', data: _createBody(widgetDemo));
     return WidgetDemo.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// Only the fields of the create form (and the parent id).
+  Map<String, dynamic> _createBody(WidgetDemo widgetDemo) => {
+        for (final e in widgetDemo.toJson().entries)
+          if (const <String>{
+            'auto',
+            'notes',
+            'secret',
+            'quantity',
+            'day',
+            'at',
+            'moment',
+            'status',
+            'active'
+          }.contains(e.key))
+            e.key: e.value,
+      };
 
   Future<WidgetDemo> update(WidgetDemo widgetDemo) async {
     final response = await _dio.put(

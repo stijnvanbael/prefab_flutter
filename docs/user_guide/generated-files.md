@@ -13,7 +13,7 @@ contains:
 | `ProductCreateScreen` | Only with `@Create` |
 | `ProductEditScreen(id:)` | Only with `@Update` |
 | `productDetailProvider`, `productsProvider`, `ProductsNotifier`, `productApiClientProvider` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `setSearch`, `setSort`, `goToPage`, `setPageSize`, `create` (with `@Create`), `updateEntity` (with `@Update`) and `delete` (with `@Delete`) (`updateEntity` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
-| `ProductApiClient` | `list` (returns a `PrefabPage<Product>`), `getById`, `delete`, plus `create` (with `@Create`) and `update` (with `@Update`); responses are read with `Product.fromJson` and request bodies are sent as `product.toJson()` |
+| `ProductApiClient` | `list` (returns a `PrefabPage<Product>`), `getById`, `delete`, plus `create` (with `@Create`) and `update` (with `@Update`); responses are read with `Product.fromJson` and the create body holds the fields of the create form and the update body everything but the read-only and create-only fields, both taken from `product.toJson()` (see [Request bodies](annotations.md#request-bodies)) |
 | `$productRoutes` | Named after the source file; a `List<RouteBase>` with the routes of every entity in the file |
 
 A file without `@Entity` classes produces no output. The previous layout of six

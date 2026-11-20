@@ -8,9 +8,23 @@ The generated client expects this API, relative to the Dio base URL. Query param
 |---|---|---|---|
 | `list(search:, sort:, descending:, page:, pageSize:)` | `GET /{path}?q=&sort=&page=&size=` | — | a page (see below; a bare JSON array is accepted as a single page) |
 | `getById(id)` | `GET /{path}/{id}` | — | entity |
-| `create(e)` | `POST /{path}` | entity | entity |
-| `update(e)` | `PUT /{path}/{e.id}` | entity | entity |
+| `create(e)` | `POST /{path}` | the create fields (below) | entity |
+| `update(e)` | `PUT /{path}/{e.id}` | the entity without read-only and create-only fields | entity |
 | `delete(e)` | `DELETE /{path}/{e.id}` | — | ignored |
+
+### Request bodies
+
+The bodies are the JSON of the entity (`toJson()`), filtered by the model:
+
+- **Create** sends only the fields of the create form and the `@Parent` field.
+  The id, `@Field(readOnly: true)` fields, edit-only fields
+  (`FormOptions(on: {FormMode.update})`) and un-annotated fields are not in it.
+- **Update** sends everything except `@Field(readOnly: true)` fields and
+  create-only fields (`FormOptions(on: {FormMode.create})`); the id stays in.
+
+A field in the body is named by its JSON name (`@JsonKey(name:)` or
+`fieldRename`). See [Request bodies](annotations.md#request-bodies) for the
+full table.
 
 After `create`, `update` or `delete` the list notifier reloads the current page
 with the current search and sort.

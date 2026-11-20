@@ -1,4 +1,5 @@
 import '../enums/field_widget.dart';
+import '../enums/form_mode.dart';
 import '../enums/place.dart';
 import '../enums/validator.dart';
 
@@ -26,10 +27,17 @@ class FormOptions {
   /// combined with it.
   final Function? builder;
 
+  /// The forms the field appears in: `{FormMode.create}` for a field that can
+  /// only be set at creation, `{FormMode.update}` for one that can only be
+  /// changed afterwards. `null` (the default) means both. The create and the
+  /// update request carry the field only in the modes it is in.
+  final Set<FormMode>? on;
+
   const FormOptions({
     this.widget = FieldWidget.auto,
     this.validators = const [],
     this.builder,
+    this.on,
   });
 }
 
@@ -71,6 +79,11 @@ class Field {
   /// contract of `prefab_flutter_widgets`).
   final Function? displayBuilder;
 
+  /// A value the server computes or owns (timestamps, status, totals). The
+  /// field is shown in the list and detail screens but is never in a form and
+  /// never in the body of a create or update request.
+  final bool readOnly;
+
   const Field({
     this.label,
     this.on,
@@ -78,5 +91,6 @@ class Field {
     this.sortable = false,
     this.form = const FormOptions(),
     this.displayBuilder,
+    this.readOnly = false,
   });
 }

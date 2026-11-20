@@ -371,14 +371,14 @@ void main() {
       );
     });
 
-    test('PF-12 create and update send toJson() as the body', () async {
+    test('PF-12 create sends the create fields, update sends toJson()', () async {
       await testBuilder(
         apiClientBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
           'a|lib/product.api_client.dart': decodedMatches(
             allOf(
-              contains("_dio.post('/products', data: product.toJson())"),
+              contains("_dio.post('/products', data: _createBody(product))"),
               contains('data: product.toJson())'),
               isNot(contains('data: product)')),
             ),

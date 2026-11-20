@@ -15,5 +15,6 @@ export 'src/annotations/parent.dart';
 export 'src/annotations/promoted.dart';
 export 'src/annotations/update.dart';
 export 'src/enums/field_widget.dart';
+export 'src/enums/form_mode.dart';
 export 'src/enums/place.dart';
 export 'src/enums/validator.dart';

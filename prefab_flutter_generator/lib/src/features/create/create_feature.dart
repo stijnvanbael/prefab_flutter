@@ -42,9 +42,15 @@ class CreateFeature extends Feature {
         () => Code(
           [
             'Future<$type> create($type $lower${client.parentParamTrailing}) async {',
-            "  final response = await _dio.post('${client.urlBase}', data: $lower.toJson());",
+            "  final response = await _dio.post('${client.urlBase}', data: _createBody($lower));",
             '  return $type.fromJson(response.data as Map<String, dynamic>);',
             '}',
+            '',
+            '/// Only the fields of the create form (and the parent id).',
+            'Map<String, dynamic> _createBody($type $lower) => {',
+            '  for (final e in $lower.toJson().entries)',
+            '    if (const <String>{${manifest.createJsonNames.map((n) => "'$n'").join(', ')}}.contains(e.key)) e.key: e.value,',
+            '};',
           ].join('\n'),
         ),
         order: 10,

@@ -1,0 +1,37 @@
+class TicketApiClient
+  TicketApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Ticket>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Ticket> getById(int id);
+  Future<Ticket> create(Ticket ticket);
+  Future<Ticket> update(Ticket ticket);
+  Future<void> delete(Ticket ticket);
+final ticketDetailProvider = FutureProvider.autoDispose.family<Ticket, int>;
+final ticketsProvider = AsyncNotifierProvider.autoDispose<TicketsNotifier, PrefabPage<Ticket>>;
+class TicketsNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Ticket>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Ticket>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> create(Ticket ticket);
+  Future<void> updateEntity(Ticket ticket);
+final ticketApiClientProvider = Provider.autoDispose<TicketApiClient>;
+class TicketDetailScreen extends ConsumerWidget
+  final int id;
+  const TicketDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class TicketListScreen extends ConsumerWidget
+  const TicketListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class TicketCreateScreen extends ConsumerStatefulWidget
+  const TicketCreateScreen({super.key});
+  ConsumerState<TicketCreateScreen> createState();
+class TicketEditScreen extends ConsumerStatefulWidget
+  final int id;
+  const TicketEditScreen({super.key, required this.id});
+  ConsumerState<TicketEditScreen> createState();
+List<RouteBase> get $requestShapesRoutes;
