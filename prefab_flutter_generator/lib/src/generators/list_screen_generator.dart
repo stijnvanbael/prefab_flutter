@@ -38,7 +38,8 @@ class ListScreenArtifact extends Artifact {
   /// Widgets of the app bar `actions` (indent 10). Orders in use: 10 sort.
   final appBarActions = ExtensionPoint('listScreen.appBarActions');
 
-  /// Widgets in the body column above the list (indent 10). Orders: 10 search.
+  /// Widgets in the body column above the list (indent 10); `{{providerRef}}`
+  /// stands for the list provider. Orders: 10 search, 20 streaming.
   final aboveList = ExtensionPoint('listScreen.aboveList');
 
   /// Widgets in the body column below the list (indent 10). Orders: 10 paging.
@@ -189,7 +190,11 @@ class ListScreenArtifact extends Artifact {
     }
     buffer.writeln('      body: Column(');
     buffer.writeln('        children: [');
-    if (!aboveList.isEmpty) buffer.writeln(aboveList.render(10));
+    if (!aboveList.isEmpty) {
+      buffer.writeln(aboveList
+          .render(10)
+          .replaceAll(ListScreenArtifact.providerRef, providerRef));
+    }
     buffer.writeln('          Expanded(');
     buffer.writeln('            child: ${entityLower}sAsync.when(');
     buffer.writeln('        skipLoadingOnReload: true,');

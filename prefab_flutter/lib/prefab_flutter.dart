@@ -13,6 +13,7 @@ export 'src/annotations/field.dart';
 export 'src/annotations/id.dart';
 export 'src/annotations/parent.dart';
 export 'src/annotations/promoted.dart';
+export 'src/annotations/streaming.dart';
 export 'src/annotations/update.dart';
 export 'src/annotations/version.dart';
 export 'src/enums/field_widget.dart';

@@ -46,6 +46,18 @@ class MockBackendAdapter implements HttpClientAdapter {
   };
   int _nextId = 100;
 
+  /// The open `/products/stream` connections. Every change of a product is
+  /// sent to them as a server-sent event, as a `@Streaming` Prefab backend
+  /// does.
+  final _productEvents = StreamController<List<int>>.broadcast();
+
+  /// Sends a server-sent event to every open product stream, as if another
+  /// client had changed a product: [name] is `created`, `updated` or
+  /// `deleted`, [data] the product JSON.
+  void emitProductEvent(String name, Map<String, dynamic> data) =>
+      _productEvents
+          .add(utf8.encode('event: $name\ndata: ${jsonEncode(data)}\n\n'));
+
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
@@ -56,6 +68,16 @@ class MockBackendAdapter implements HttpClientAdapter {
     final parts = segments.toList();
     Object? body = options.data;
     if (body is String) body = jsonDecode(body);
+
+    if (options.method == 'GET' && options.uri.path == '/products/stream') {
+      return ResponseBody(
+        _productEvents.stream.map(Uint8List.fromList),
+        200,
+        headers: {
+          Headers.contentTypeHeader: ['text/event-stream'],
+        },
+      );
+    }
 
     // Resolve to a table key and optional id. Paths alternate collection and
     // id segments: /products/1/reviews/2/replies/3.
@@ -113,6 +135,7 @@ class MockBackendAdapter implements HttpClientAdapter {
           row[parentField] = int.parse(parts[parts.length - 2]);
         }
         rows.add(row);
+        if (table == 'products') emitProductEvent('created', row);
         return _json(201, row);
       case 'PUT':
         final invalid =
@@ -134,9 +157,13 @@ class MockBackendAdapter implements HttpClientAdapter {
           ..['id'] = rows[index]['id']
           ..['version'] = current == null ? null : (current as int) + 1;
         rows[index] = row;
+        if (table == 'products') emitProductEvent('updated', row);
         return _json(200, row);
       case 'DELETE':
         rows.removeWhere((r) => '${r['id']}' == id);
+        if (table == 'products') {
+          emitProductEvent('deleted', {'id': int.parse(id!)});
+        }
         return _json(204, {});
     }
     return _json(405, {});
@@ -297,6 +324,8 @@ class MockBackendAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-/// Creates a [Dio] instance wired to the in-memory backend.
-Dio createMockDio() => Dio(BaseOptions(baseUrl: 'http://mock.local'))
-  ..httpClientAdapter = MockBackendAdapter();
+/// Creates a [Dio] instance wired to the in-memory backend. Pass [adapter] to
+/// keep a handle on the backend, e.g. to emit live events in a test.
+Dio createMockDio([MockBackendAdapter? adapter]) =>
+    Dio(BaseOptions(baseUrl: 'http://mock.local'))
+      ..httpClientAdapter = adapter ?? MockBackendAdapter();

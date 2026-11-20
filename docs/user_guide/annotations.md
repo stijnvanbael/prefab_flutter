@@ -155,6 +155,28 @@ confirmation dialog (`showPrefabDeleteDialog`), calls the notifier's
 `delete()` and pops back to the list. It also adds `delete()` to the list
 notifier.
 
+### `@Streaming` (class)
+
+Opts the entity in to **live updates**: the backend streams its changes as
+server-sent events and the generated providers apply them, so list and detail
+screens update without a refresh. Mirrors Prefab's `@Streaming`. Without the
+annotation nothing changes. The URL and the event format are described in
+[Live updates](rest-contract.md#live-updates-streaming).
+
+* The **detail provider** becomes a `StreamProvider` (still read with
+  `ref.watch(productDetailProvider(id))`): it loads the entity, then follows
+  its `created` and `updated` events. A `deleted` event fails the provider
+  with `PrefabEntityDeleted`.
+* The **list notifier** applies the events to the page it holds and has a
+  `reload()` method. Events for items that do not belong on the page are not
+  inserted, see [Live updates](rest-contract.md#live-updates-streaming).
+* The **list screen** shows a `PrefabNewItemsBanner` ("2 new items", with a
+  Refresh button) while `PrefabPage.newItems` is above 0.
+* The **API client** gets `eventsUrl()` (with the ancestor ids of a nested
+  entity).
+
+The stream is open only while a screen listens to one of these providers.
+
 ### `@Field` (field)
 
 Includes a field in the generated screens. Fields without `@Field` are

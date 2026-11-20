@@ -280,6 +280,9 @@ class EntityManifest {
   /// Name of the identifier field (the [@Id] field, or `id`).
   final String idFieldName;
 
+  /// JSON key of the identifier field (`id` unless renamed).
+  final String idJsonName;
+
   /// Dart type of the identifier field (e.g. `'String'` or `'int'`).
   final String idType;
 
@@ -330,6 +333,7 @@ class EntityManifest {
     required this.hasDelete,
     required this.fields,
     this.idFieldName = 'id',
+    this.idJsonName = 'id',
     this.idType = 'String',
     this.idIsNullable = false,
     this.versionFieldName,
@@ -588,6 +592,7 @@ class EntityManifest {
       hasDelete: hasDelete,
       fields: fields,
       idFieldName: idField.name!,
+      idJsonName: _readJsonName(idField, fieldRename),
       idType: idType,
       idIsNullable:
           idField.type.nullabilitySuffix == NullabilitySuffix.question,

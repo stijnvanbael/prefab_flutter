@@ -2,6 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'prefab_api_error.dart';
+import 'dart:convert';
+
+import 'prefab_event.dart';
 import 'prefab_page.dart';
 
 /// How the sort field and direction are written into the `sort` parameter.
@@ -149,6 +152,14 @@ class PrefabBackend {
 
   /// Query parameter of the autocomplete request naming the field.
   final String autocompleteFieldParam;
+  /// Path segment appended to the collection URL to open the event stream of
+  /// a `@Streaming` entity (`/products` -> `/products/stream`).
+  final String streamPath;
+
+  /// SSE event names of the three event types.
+  final String createdEvent;
+  final String updatedEvent;
+  final String deletedEvent;
 
   /// The Prefab preset (see the class documentation).
   const PrefabBackend({
@@ -172,6 +183,10 @@ class PrefabBackend {
     this.filterToSuffix = 'To',
     this.autocompletePath,
     this.autocompleteFieldParam = 'field',
+    this.streamPath = 'stream',
+    this.createdEvent = 'created',
+    this.updatedEvent = 'updated',
+    this.deletedEvent = 'deleted',
   });
 
   /// The Simple preset: `sort=-field` and `{ "items": [...], "total": n }`.
@@ -196,7 +211,36 @@ class PrefabBackend {
     this.filterToSuffix = 'To',
     this.autocompletePath,
     this.autocompleteFieldParam = 'field',
+    this.streamPath = 'stream',
+    this.createdEvent = 'created',
+    this.updatedEvent = 'updated',
+    this.deletedEvent = 'deleted',
   });
+
+  /// The URL of the event stream of the collection at [collectionUrl].
+  String eventsUrl(String collectionUrl) => '$collectionUrl/$streamPath';
+
+  /// Converts one server-sent event into a [PrefabEvent], or `null` for
+  /// events that are not created, updated or deleted (heartbeats, unknown
+  /// names) and for data that is not a JSON object.
+  PrefabEvent? parseEvent(String? eventName, String data) {
+    final PrefabEventType type;
+    if (eventName == createdEvent) {
+      type = PrefabEventType.created;
+    } else if (eventName == updatedEvent) {
+      type = PrefabEventType.updated;
+    } else if (eventName == deletedEvent) {
+      type = PrefabEventType.deleted;
+    } else {
+      return null;
+    }
+    try {
+      final json = jsonDecode(data);
+      return json is Map<String, dynamic> ? PrefabEvent(type, json) : null;
+    } on FormatException {
+      return null;
+    }
+  }
 
   /// Builds the query parameters for a list request. Empty search and absent
   /// sort/page values are left out, as are [filters] without a value. A `null`

@@ -16,12 +16,32 @@ class PrefabPage<T> {
   /// Maximum number of items per page.
   final int pageSize;
 
+  /// Number of items created on the server (reported by a live event) that
+  /// are not part of this page: shown as a "new items" indicator. Reloading
+  /// the list resets it to 0.
+  final int newItems;
+
   const PrefabPage({
     required this.items,
     required this.totalItems,
     required this.page,
     required this.pageSize,
+    this.newItems = 0,
   });
+
+  /// A copy with the given values replaced.
+  PrefabPage<T> copyWith({
+    List<T>? items,
+    int? totalItems,
+    int? newItems,
+  }) =>
+      PrefabPage<T>(
+        items: items ?? this.items,
+        totalItems: totalItems ?? this.totalItems,
+        page: page,
+        pageSize: pageSize,
+        newItems: newItems ?? this.newItems,
+      );
 
   /// Total number of pages, rounded up.
   int get totalPages => pageSize > 0 ? (totalItems / pageSize).ceil() : 0;
@@ -40,10 +60,11 @@ class PrefabPage<T> {
           listEquals(items, other.items) &&
           totalItems == other.totalItems &&
           page == other.page &&
-          pageSize == other.pageSize;
+          pageSize == other.pageSize &&
+          newItems == other.newItems;
 
   @override
-  int get hashCode => Object.hash(items, totalItems, page, pageSize);
+  int get hashCode => Object.hash(items, totalItems, page, pageSize, newItems);
 }
 
 /// A [ChangeNotifier] that holds the current page index and page size,
