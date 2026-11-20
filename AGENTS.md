@@ -67,6 +67,18 @@ New generator behaviour goes into a feature module under
 templates in `lib/src/generators/`. Follow "Adding a feature" in
 `docs/developer_guide.md`.
 
+## KEEP THE EXAMPLE APP UP TO DATE
+
+`prefab_flutter_example` is the showcase of Prefab Flutter and the compile check
+for generated code. When you add or change a user-facing feature (annotation,
+annotation parameter, field widget, validator, generated screen or route,
+runtime widget, hand-written extension point), use it in the example app in the
+same pull request: extend an existing entity or add one, add a widget test under
+`prefab_flutter_example/test/`, and update the example README. A feature that
+cannot be shown there needs a note in the implementation notes of its task.
+Keep `lib/product_stats_screen.dart` working as the reference for hand-written
+code on generated parts.
+
 ## AVOIDING MERGE CONFLICTS
 
 Several agents work on backlog tasks at the same time, each on its own branch.
@@ -115,7 +127,8 @@ item:
 4. Known limitations: rows fixed by this change are removed; new limitations
    are added with an open task id.
 5. A changelog fragment exists for every published package you changed.
-6. The task file has status `Done`, is moved to `backlog/completed/`, and
+6. The example app uses the new feature (see "Keep the example app up to date").
+7. The task file has status `Done`, is moved to `backlog/completed/`, and
    `tool/check_backlog.sh` passes.
 
 ## DOCUMENTATION MUST STAY UP TO DATE

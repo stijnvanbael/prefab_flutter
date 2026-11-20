@@ -159,7 +159,7 @@ cd prefab_flutter_generator && dart pub get && dart test
 cd prefab_flutter_widgets && flutter pub get && flutter test
 ```
 
-To run the example app, see [`prefab_flutter_example`](prefab_flutter_example/README.md).
+To run the example app, see [`prefab_flutter_example`](prefab_flutter_example/README.md). Its `lib/product_stats_screen.dart` is the reference for a hand-written screen built on generated providers, runtime widgets and navigation.
 
 CI (`.github/workflows/ci.yml`) runs `analyze --fatal-infos` and the tests for
 all packages. For the example app it also runs `build_runner` and analyses the
