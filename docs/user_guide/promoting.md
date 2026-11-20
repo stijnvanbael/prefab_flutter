@@ -6,6 +6,8 @@ When one screen, provider or client has to be special, take it over as
 ordinary code. The generator stops producing that one artifact and everything
 else keeps working with your version; the other artifacts stay generated.
 
+The quickest way is the `promote` command (next section). To do it by hand:
+
 1. Copy the artifact from the generated `*.prefab.dart` file into a file of
    your own anywhere under `lib/` (together with the imports it needs).
 2. Annotate the declaration with `@Promoted()` from
@@ -38,6 +40,30 @@ artifact; did you mean ProductDetailScreen?`. Promoting an artifact promotes
 everything it declares (the notifier of a list provider, the private state
 class of a form screen).
 
+## The promote command
+
+```sh
+dart run prefab_flutter_generator:promote ProductDetailScreen
+dart run build_runner build
+```
+
+Run it in the package root. It writes the generated code of that one artifact
+to `lib/<folder of the entity>/<snake_name>.dart` (here
+`lib/product_detail_screen.dart`), with its imports, the import of the
+`.prefab.dart` library, `package:prefab_flutter/prefab_flutter.dart` and
+`@Promoted()`. The code is formatted and carries no generated-file banner. The
+next `build_runner build` stops generating the artifact and re-exports your
+file, so the app compiles and behaves the same.
+
+- `--to lib/screens/product_detail.dart` chooses another file (relative to the
+  package root); relative imports are rewritten for the new folder.
+- The command refuses to overwrite an existing file.
+- The name is the artifact's primary name (table below). An unknown name fails
+  with the closest one: `ProductDetailScren is not a generated artifact; did
+  you mean ProductDetailScreen?`.
+- The command reads the `@View` classes under `lib/`, not the generated file,
+  so it works before the first `build_runner build` too.
+
 ## Artifacts and the signature to keep
 
 Generated code refers to your declaration exactly as to the generated one, so
@@ -63,4 +89,3 @@ The `id` parameter has the type of the entity's id (`int` or `String`).
 - Promotion is per artifact, not per entity; promote each artifact you want.
 - The name must be declared at the top level of a file under `lib/` of the
   same package.
-- A command that writes an artifact into a file for you is planned in PF-49.

@@ -1,4 +1,5 @@
 import '../core/artifact_generator.dart';
+import '../core/library_emitter.dart';
 import '../features/features.dart';
 import 'api_client_generator.dart';
 import 'detail_screen_generator.dart';
@@ -6,6 +7,16 @@ import 'form_screen_generator.dart';
 import 'list_screen_generator.dart';
 import 'provider_generator.dart';
 import 'routes_generator.dart';
+
+/// The artifact factories of the combined `.prefab.dart` library.
+const List<ArtifactFactory> prefabArtifactFactories = [
+  ApiClientArtifact.create,
+  createProviderArtifacts,
+  DetailScreenArtifact.create,
+  ListScreenArtifact.create,
+  createFormScreenArtifacts,
+  RoutesArtifact.create,
+];
 
 /// Generates everything for a source file into one `.prefab.dart` library.
 ///
@@ -15,12 +26,6 @@ import 'routes_generator.dart';
 /// from text.
 class PrefabGenerator extends ArtifactGenerator {
   PrefabGenerator()
-      : super('PrefabGenerator', const [
-          ApiClientArtifact.create,
-          createProviderArtifacts,
-          DetailScreenArtifact.create,
-          ListScreenArtifact.create,
-          createFormScreenArtifacts,
-          RoutesArtifact.create,
-        ], features: registeredFeatures);
+      : super('PrefabGenerator', prefabArtifactFactories,
+            features: registeredFeatures);
 }
