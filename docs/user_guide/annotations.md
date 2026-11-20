@@ -142,6 +142,12 @@ final String description;
 > widget. Migrate by renaming it and moving `widget` and `validators` into
 > `form: FormOptions(...)`.
 
+### `@Promoted` (class or variable)
+
+Takes over one generated artifact as hand-written code: the generator stops
+producing the artifact named like the annotated top-level declaration. See
+[Promoting generated code](promoting.md).
+
 ### `@Parent` (field)
 
 Marks the field that holds the id of the owning entity, making this entity a

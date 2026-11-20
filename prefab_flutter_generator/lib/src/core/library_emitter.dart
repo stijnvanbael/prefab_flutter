@@ -7,8 +7,8 @@ import 'feature.dart';
 /// not have that artifact, e.g. no edit screen without `@Update`).
 typedef ArtifactFactory = Iterable<Artifact> Function(EntityContext entity);
 
-/// A hand-written declaration that replaces a generated artifact. Not yet
-/// user-facing: promotion is planned in PF-42.
+/// A hand-written declaration (annotated with `@Promoted`) that replaces a
+/// generated artifact.
 class PromotedDeclaration {
   const PromotedDeclaration(this.name, this.libraryUri);
 
@@ -34,6 +34,16 @@ class LibraryEmitter {
   /// and re-exported so the other artifacts keep compiling.
   final List<PromotedDeclaration> promoted;
 
+  /// The primary names of all artifacts of [entities], promoted or not.
+  List<String> artifactNames(List<EntityContext> entities) => [
+        for (final factory in [
+          ...artifactFactories,
+          for (final f in features) ...f.artifacts,
+        ])
+          for (final entity in entities)
+            for (final artifact in factory(entity)) artifact.primaryName,
+      ];
+
   /// Returns the whole library, or `''` when nothing is generated.
   String emit(List<EntityContext> entities, {required String header}) {
     final promotedByName = {for (final p in promoted) p.name: p};
@@ -51,15 +61,10 @@ class LibraryEmitter {
     for (final factory in factories) {
       for (final entity in entities) {
         for (final artifact in factory(entity)) {
-          final replacement = [
-            for (final name in artifact.declaredNames) promotedByName[name],
-          ].whereType<PromotedDeclaration>().firstOrNull;
+          final replacement = promotedByName[artifact.primaryName];
           if (replacement != null) {
             imports.add(replacement.libraryUri);
-            for (final name in artifact.declaredNames) {
-              final p = promotedByName[name];
-              if (p != null) imports.export(p.libraryUri, p.name);
-            }
+            imports.export(replacement.libraryUri, replacement.name);
             replaced++;
           } else {
             created.add(artifact);

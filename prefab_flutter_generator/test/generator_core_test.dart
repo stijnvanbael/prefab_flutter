@@ -110,11 +110,11 @@ class OrderThing {}
               "export 'package:shop/product_thing.dart' show ProductThing;"));
     });
 
-    test('skips an artifact by any name it declares', () {
+    test('ignores a promoted name that is not a primary name', () {
       final out = _emitter(promoted: const [
         PromotedDeclaration('OrderState', 'package:shop/order_state.dart'),
       ]).emit([_context('a')], header: '// header\n');
-      expect(out, isNot(contains('class OrderThing')));
+      expect(out, contains('class OrderThing {}'));
       expect(out, contains('class ProductThing {}'));
     });
 
