@@ -173,7 +173,7 @@ class NotAScreen {}
           generateFor: {'a|lib/site.dart'},
           outputs: {},
           onLog: (r) {
-            if (r.level >= Level.SEVERE) logs.add('${r.message}');
+            if (r.level >= Level.SEVERE) logs.add(r.message);
           },
         );
       } catch (e) {
