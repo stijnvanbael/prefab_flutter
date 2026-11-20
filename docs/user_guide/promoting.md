@@ -89,3 +89,8 @@ The `id` parameter has the type of the entity's id (`int` or `String`).
 - Promotion is per artifact, not per entity; promote each artifact you want.
 - The name must be declared at the top level of a file under `lib/` of the
   same package.
+- A wrong signature is not reported by the generator; it is a compile error
+  in the generated file that calls the promoted artifact (build-time checks
+  are planned in PF-70).
+- A promoted list or detail screen does not show actions or `@EntityScreen`
+  links (planned in PF-68).

@@ -43,6 +43,6 @@ Named domain operations from Prefab (`@Update(path = ...)`, M2, PF-54) will appe
 - `@EntityAction(Entity, label:, icon:, on:, order:)` and `ActionPlace` (`detail`, `list`, `item`) live in `prefab_flutter`. `icon` is the name of a member of `Icons` as a string, because `prefab_flutter` is a pure Dart package and cannot reference `IconData` (principle: keep the annotation package free of Flutter). `order` is an addition to the task text so that ordering across files is deterministic: sorted by order, label, function name.
 - Discovery follows PF-42: the `prefab_actions` builder scans the unresolved syntax tree and writes `<file>.prefab_actions.json` only for files with `@EntityAction`; `prefab_builder` requires them. Signature errors (AC#5) are raised by that builder; an unknown entity is raised by the generator.
 - New feature module `features/actions/` with the shared rendering (`action_rendering.dart`: two icon buttons, the rest in an overflow menu), which PF-54 can reuse for named operations. New extension points: `detailScreen.appBarActions`, `listScreen.itemActions`.
-- The `promote` command does not copy actions into the promoted file; documented on the Actions page.
+- The `promote` command does not copy actions into the promoted file; documented on the Actions page; task PF-68.
 - Example app: `prefab_flutter_example/lib/actions.dart` with widget tests in `test/crud_flow_test.dart`.
 <!-- SECTION:NOTES:END -->

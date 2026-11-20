@@ -63,7 +63,7 @@ parameters (the `PrefabFieldBuilder<T>` typedef in `prefab_flutter_widgets`;
 | `key` | `Key?` | optional, never passed |
 
 Only `Validator.required` can be combined with a custom widget (the other
-validators check text); check other rules inside the widget. Create and
+validators check text; others are planned in PF-69); check other rules inside the widget. Create and
 edit screens share the widget; it is built after the edit screen has loaded
 the entity, so `initialValue` is already the stored value.
 
