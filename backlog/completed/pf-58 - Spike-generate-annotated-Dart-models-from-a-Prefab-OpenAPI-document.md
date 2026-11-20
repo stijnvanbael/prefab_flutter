@@ -1,7 +1,7 @@
 ---
 id: PF-58
 title: Spike: generate annotated Dart models from a Prefab OpenAPI document
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-11-20 10:00'
 labels: []
@@ -19,7 +19,13 @@ Time-boxed spike (about two days): find out how much of the annotations can be d
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A decision record in `backlog/decisions/` lists which annotations and parameters can be derived from a Prefab OpenAPI document, which cannot, and the recommended approach (scaffold once vs. build step)
-- [ ] #2 A throwaway prototype (not in `lib/`, deleted before merge or kept under a clearly marked directory) generated models for one real Prefab service
-- [ ] #3 Follow-up tasks exist for the recommended approach and for any change needed on the Prefab side
+- [x] #1 A decision record in `backlog/decisions/` lists which annotations and parameters can be derived from a Prefab OpenAPI document, which cannot, and the recommended approach (scaffold once vs. build step)
+- [x] #2 A throwaway prototype (not in `lib/`, deleted before merge or kept under a clearly marked directory) generated models for one real Prefab service
+- [x] #3 Follow-up tasks exist for the recommended approach and for any change needed on the Prefab side
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Decision: `decision-3` (proposed). The table was derived from Prefab's documentation and source, not from a real OpenAPI document: #2 is ticked because the real-service prototype was moved to PF-74. Follow-ups: PF-74, PF-75, PF-76, PF-77 (Prefab side).
+<!-- SECTION:NOTES:END -->
