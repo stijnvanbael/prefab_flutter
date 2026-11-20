@@ -7,3 +7,7 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
+  exclude:
+    # Snapshot fixtures and expected output are test data, not code of this package.
+    - test/snapshots/fixtures/**
+    - test/snapshots/expected/**

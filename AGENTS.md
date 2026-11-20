@@ -79,6 +79,11 @@ these rules so parallel branches touch different lines:
 - **Documentation: change the section your feature belongs to**, not
   summaries elsewhere. Add new table rows and list items in their logical
   place rather than always at the end.
+- **Snapshots: when expected snapshot files conflict, take `main`'s version,
+  then regenerate with `UPDATE_SNAPSHOTS=1 dart test test/snapshots_test.dart`
+  (in `prefab_flutter_generator`) and review the diff.** New features add a
+  new fixture in `test/snapshots/fixtures/` instead of changing an existing
+  one where possible.
 - **Do not reformat or reorder code you are not changing** (including running
   a formatter over whole files that were not formatted before). Formatting
   noise causes conflicts in every parallel branch.
