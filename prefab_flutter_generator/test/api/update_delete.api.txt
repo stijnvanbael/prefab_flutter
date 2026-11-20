@@ -1,0 +1,33 @@
+class GammaApiClient
+  GammaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<Gamma>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Gamma> getById(int id);
+  Future<Gamma> update(Gamma gamma);
+  Future<void> delete(Gamma gamma);
+final gammaDetailProvider = FutureProvider.autoDispose.family<Gamma, int>;
+final gammasProvider = AsyncNotifierProvider.autoDispose<GammasNotifier, PrefabPage<Gamma>>;
+class GammasNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Gamma>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Gamma>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> updateEntity(Gamma gamma);
+  Future<void> delete(Gamma gamma);
+final gammaApiClientProvider = Provider.autoDispose<GammaApiClient>;
+class GammaDetailScreen extends ConsumerWidget
+  final int id;
+  const GammaDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class GammaListScreen extends ConsumerWidget
+  const GammaListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class GammaEditScreen extends ConsumerStatefulWidget
+  final int id;
+  const GammaEditScreen({super.key, required this.id});
+  ConsumerState<GammaEditScreen> createState();
+List<RouteBase> get $updateDeleteRoutes;

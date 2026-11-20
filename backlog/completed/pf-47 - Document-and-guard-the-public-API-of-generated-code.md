@@ -1,7 +1,7 @@
 ---
 id: PF-47
 title: Document and guard the public API of generated code
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-11-20 10:00'
 labels: []
@@ -22,8 +22,8 @@ Guard it with a test: extract the public declarations and their signatures from 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 `docs/user_guide/` has a page on using generated code from hand-written code, listing every public generated name and signature per artifact kind, linked from the user guide index
-- [ ] #2 A test extracts the public API of the snapshot outputs into checked-in summary files and fails on any difference; `UPDATE_SNAPSHOTS=1` (or a similar switch) regenerates them
-- [ ] #3 `docs/developer_guide.md` explains that a change to the API summary is a breaking change that needs a changelog entry
-- [ ] #4 Names that are internal (private classes, helper functions) are either made private or listed as not part of the public API
+- [x] #1 `docs/user_guide/` has a page on using generated code from hand-written code, listing every public generated name and signature per artifact kind, linked from the user guide index
+- [x] #2 A test extracts the public API of the snapshot outputs into checked-in summary files and fails on any difference; `UPDATE_SNAPSHOTS=1` (or a similar switch) regenerates them
+- [x] #3 `docs/developer_guide.md` explains that a change to the API summary is a breaking change that needs a changelog entry
+- [x] #4 Names that are internal (private classes, helper functions) are either made private or listed as not part of the public API
 <!-- AC:END -->

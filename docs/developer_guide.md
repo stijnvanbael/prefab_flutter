@@ -249,6 +249,23 @@ refactoring the generator: output must not change by accident.
   the command above, and review the diff.
 - Fixtures and expected files are excluded from `dart analyze`.
 
+### Public API summary
+
+`test/api_summary_test.dart` extracts the public declarations and signatures
+(no bodies, no private names) from the generated output of every fixture and
+compares them with `test/api/<fixture>.api.txt`. These summaries are the
+public API that hand-written code builds on (see the user guide page "Using
+generated code"). A change to them is a **breaking change**: regenerate with
+
+```bash
+cd prefab_flutter_generator
+UPDATE_SNAPSHOTS=1 dart test test/api_summary_test.dart
+```
+
+review `git diff test/api`, update the user guide page, and add a changelog
+fragment that names the change as breaking. Output changes that leave the
+summaries untouched (layout, private members) need none of this.
+
 ## Running tests
 
 Run these from the repository root. All packages must be green before a pull

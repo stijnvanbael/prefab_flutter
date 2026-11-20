@@ -1,0 +1,115 @@
+class OrderApiClient
+  OrderApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<Order>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Order> getById(int id);
+  Future<void> delete(Order order);
+class OrderLineApiClient
+  OrderLineApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<OrderLine>> list( {required int orderId, String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<OrderLine> getById(int id, {required int orderId});
+  Future<OrderLine> create(OrderLine orderLine, {required int orderId});
+  Future<OrderLine> update(OrderLine orderLine, {required int orderId});
+  Future<void> delete(OrderLine orderLine, {required int orderId});
+class OrderLineNoteApiClient
+  OrderLineNoteApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<OrderLineNote>> list( {required int orderId, required int orderLineId, String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<OrderLineNote> getById(int id, {required int orderId, required int orderLineId});
+  Future<OrderLineNote> create(OrderLineNote orderLineNote, {required int orderId, required int orderLineId});
+  Future<OrderLineNote> update(OrderLineNote orderLineNote, {required int orderId, required int orderLineId});
+  Future<void> delete(OrderLineNote orderLineNote, {required int orderId, required int orderLineId});
+final orderDetailProvider = FutureProvider.autoDispose.family<Order, int>;
+final ordersProvider = AsyncNotifierProvider.autoDispose<OrdersNotifier, PrefabPage<Order>>;
+class OrdersNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Order>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Order>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+final orderApiClientProvider = Provider.autoDispose<OrderApiClient>;
+final orderLineDetailProvider = FutureProvider.autoDispose.family<OrderLine, (int, int)>;
+final orderLinesProvider = AsyncNotifierProvider.autoDispose.family<OrderLinesNotifier, PrefabPage<OrderLine>, int>;
+class OrderLinesNotifier extends AutoDisposeFamilyAsyncNotifier<PrefabPage<OrderLine>, int>
+  int get orderId;
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<OrderLine>> build(int arg);
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> create(OrderLine orderLine);
+  Future<void> updateEntity(OrderLine orderLine);
+  Future<void> delete(OrderLine orderLine);
+final orderLineApiClientProvider = Provider.autoDispose<OrderLineApiClient>;
+final orderLineNoteDetailProvider = FutureProvider.autoDispose.family<OrderLineNote, (int, int, int)>;
+final orderLineNotesProvider = AsyncNotifierProvider.autoDispose.family<OrderLineNotesNotifier, PrefabPage<OrderLineNote>, (int, int)>;
+class OrderLineNotesNotifier extends AutoDisposeFamilyAsyncNotifier< PrefabPage<OrderLineNote>, (int, int)>
+  int get orderId;
+  int get orderLineId;
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<OrderLineNote>> build((int, int) arg);
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> create(OrderLineNote orderLineNote);
+  Future<void> updateEntity(OrderLineNote orderLineNote);
+  Future<void> delete(OrderLineNote orderLineNote);
+final orderLineNoteApiClientProvider = Provider.autoDispose<OrderLineNoteApiClient>;
+class OrderDetailScreen extends ConsumerWidget
+  final int id;
+  const OrderDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class OrderLineDetailScreen extends ConsumerWidget
+  final int id;
+  final int orderId;
+  const OrderLineDetailScreen( {super.key, required this.id, required this.orderId});
+  Widget build(BuildContext context, WidgetRef ref);
+class OrderLineNoteDetailScreen extends ConsumerWidget
+  final int id;
+  final int orderId;
+  final int orderLineId;
+  const OrderLineNoteDetailScreen( {super.key, required this.id, required this.orderId, required this.orderLineId});
+  Widget build(BuildContext context, WidgetRef ref);
+class OrderListScreen extends ConsumerWidget
+  const OrderListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class OrderLineListScreen extends ConsumerWidget
+  final int orderId;
+  const OrderLineListScreen({super.key, required this.orderId});
+  Widget build(BuildContext context, WidgetRef ref);
+class OrderLineNoteListScreen extends ConsumerWidget
+  final int orderId;
+  final int orderLineId;
+  const OrderLineNoteListScreen( {super.key, required this.orderId, required this.orderLineId});
+  Widget build(BuildContext context, WidgetRef ref);
+class OrderLineCreateScreen extends ConsumerStatefulWidget
+  final int orderId;
+  const OrderLineCreateScreen({super.key, required this.orderId});
+  ConsumerState<OrderLineCreateScreen> createState();
+class OrderLineEditScreen extends ConsumerStatefulWidget
+  final int id;
+  final int orderId;
+  const OrderLineEditScreen( {super.key, required this.id, required this.orderId});
+  ConsumerState<OrderLineEditScreen> createState();
+class OrderLineNoteCreateScreen extends ConsumerStatefulWidget
+  final int orderId;
+  final int orderLineId;
+  const OrderLineNoteCreateScreen( {super.key, required this.orderId, required this.orderLineId});
+  ConsumerState<OrderLineNoteCreateScreen> createState();
+class OrderLineNoteEditScreen extends ConsumerStatefulWidget
+  final int id;
+  final int orderId;
+  final int orderLineId;
+  const OrderLineNoteEditScreen( {super.key, required this.id, required this.orderId, required this.orderLineId});
+  ConsumerState<OrderLineNoteEditScreen> createState();
+List<RouteBase> get $parentChainRoutes;

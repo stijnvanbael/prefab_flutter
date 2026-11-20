@@ -1,0 +1,37 @@
+class AccountApiClient
+  AccountApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<Account>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Account> getById(int id);
+  Future<Account> create(Account account);
+  Future<Account> update(Account account);
+  Future<void> delete(Account account);
+final accountDetailProvider = FutureProvider.autoDispose.family<Account, int>;
+final accountsProvider = AsyncNotifierProvider.autoDispose<AccountsNotifier, PrefabPage<Account>>;
+class AccountsNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Account>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Account>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> create(Account account);
+  Future<void> updateEntity(Account account);
+final accountApiClientProvider = Provider.autoDispose<AccountApiClient>;
+class AccountDetailScreen extends ConsumerWidget
+  final int id;
+  const AccountDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class AccountListScreen extends ConsumerWidget
+  const AccountListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class AccountCreateScreen extends ConsumerStatefulWidget
+  const AccountCreateScreen({super.key});
+  ConsumerState<AccountCreateScreen> createState();
+class AccountEditScreen extends ConsumerStatefulWidget
+  final int id;
+  const AccountEditScreen({super.key, required this.id});
+  ConsumerState<AccountEditScreen> createState();
+List<RouteBase> get $parameterisedValidatorsRoutes;
