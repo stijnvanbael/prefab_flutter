@@ -1,11 +1,8 @@
-import 'package:analyzer/dart/element/element.dart';
-import 'package:build/build.dart';
-import 'package:prefab_flutter/prefab_flutter.dart';
-import 'package:source_gen/source_gen.dart';
-
+import '../core/artifact.dart';
+import '../core/artifact_generator.dart';
+import '../core/code.dart';
+import '../core/entity_context.dart';
 import '../manifest/entity_manifest.dart';
-
-const _viewChecker = TypeChecker.fromRuntime(View);
 
 /// Generates GoRouter [GoRoute] declarations for every class annotated with
 /// [@View] in a source library.
@@ -41,68 +38,35 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 /// ```dart
 /// GoRouter(routes: $productRoutes)
 /// ```
-class RoutesGenerator extends Generator {
+class RoutesGenerator extends ArtifactGenerator {
+  RoutesGenerator()
+      : super('RoutesGenerator', const [RoutesArtifact.create]);
+}
+
+/// The `$<file>Routes` list of one source file (one artifact per library).
+class RoutesArtifact extends Artifact {
+  RoutesArtifact(this.entity);
+
+  /// The first entity of the library.
+  final EntityContext entity;
+
+  static Iterable<Artifact> create(EntityContext entity) =>
+      entity.manifest == entity.libraryManifests.first
+          ? [RoutesArtifact(entity)]
+          : const [];
+
   @override
-  String generate(LibraryReader library, BuildStep buildStep) {
-    final annotated = library.annotatedWith(_viewChecker).toList();
-    if (annotated.isEmpty) return '';
+  ArtifactId get id =>
+      ArtifactId(ArtifactKind.routes, entity.manifest.entityName);
 
-    final manifests = <EntityManifest>[];
-    for (final a in annotated) {
-      final element = a.element;
-      if (element is! ClassElement) {
-        throw InvalidGenerationSourceError(
-          '@View can only be applied to classes.',
-          element: element,
-        );
-      }
-      manifests.add(EntityManifest.from(element, a.annotation));
-    }
+  @override
+  String get primaryName => routesGetterName(entity.sourceFileName);
 
-    final sourceFileName = buildStep.inputId.path.split('/').last;
+  @override
+  Code emit() {
     final buffer = StringBuffer();
-
-    _writeHeader(buffer);
-    _writeImports(manifests, sourceFileName, buffer);
-    buffer.writeln();
-    _writeRoutesList(manifests, routesGetterName(sourceFileName), buffer);
-
-    return buffer.toString();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Header
-  // ---------------------------------------------------------------------------
-
-  void _writeHeader(StringBuffer buffer) {
-    const sep =
-        '// **************************************************************************';
-    buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('//');
-    buffer.writeln(sep);
-    buffer.writeln('// RoutesGenerator');
-    buffer.writeln(sep);
-    buffer.writeln();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Imports
-  // ---------------------------------------------------------------------------
-
-  void _writeImports(
-    List<EntityManifest> manifests,
-    String sourceFileName,
-    StringBuffer buffer,
-  ) {
-    buffer.writeln("import 'package:go_router/go_router.dart';");
-    buffer.writeln();
-
-    final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
-    buffer.writeln("import '$base.detail_screen.dart';");
-    buffer.writeln("import '$base.list_screen.dart';");
-    if (manifests.any((m) => m.hasCreate || m.hasUpdate)) {
-      buffer.writeln("import '$base.form_screen.dart';");
-    }
+    _writeRoutesList(entity.libraryManifests, primaryName, buffer);
+    return Code(buffer.toString().trim(), imports: {Libs.goRouter});
   }
 
   // ---------------------------------------------------------------------------

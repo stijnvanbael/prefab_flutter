@@ -344,35 +344,17 @@ void main() {
       );
     });
 
-    test('generated file imports detail and list screen files', () async {
+    test('PF-38 — does not import the other generators\' output', () async {
       await testBuilder(
         routesBuilder(BuilderOptions.empty),
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
           'a|lib/product.routes.dart': decodedMatches(
-            allOf(
-              contains("import 'product.detail_screen.dart'"),
-              contains("import 'product.list_screen.dart'"),
-            ),
+            isNot(contains("import 'product.")),
           ),
         },
       );
     });
-
-    test(
-      'generated file imports form screen file when @Update is present',
-      () async {
-        await testBuilder(
-          routesBuilder(BuilderOptions.empty),
-          _assets('a', 'lib/product.dart', _productSource),
-          outputs: {
-            'a|lib/product.routes.dart': decodedMatches(
-              contains("import 'product.form_screen.dart'"),
-            ),
-          },
-        );
-      },
-    );
 
     test(
         'generated file does NOT import form screen file when @Update is '

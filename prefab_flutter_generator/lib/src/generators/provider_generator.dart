@@ -1,11 +1,8 @@
-import 'package:analyzer/dart/element/element.dart';
-import 'package:build/build.dart';
-import 'package:prefab_flutter/prefab_flutter.dart';
-import 'package:source_gen/source_gen.dart';
-
+import '../core/artifact.dart';
+import '../core/artifact_generator.dart';
+import '../core/code.dart';
+import '../core/entity_context.dart';
 import '../manifest/entity_manifest.dart';
-
-const _viewChecker = TypeChecker.fromRuntime(View);
 
 /// Generates Riverpod providers for every class annotated with [@View].
 ///
@@ -22,74 +19,41 @@ const _viewChecker = TypeChecker.fromRuntime(View);
 /// - `{entity}sProvider` becomes a `family` (`AutoDisposeFamilyAsyncNotifier`)
 ///   keyed on the parent id, or on a record of the ancestor ids when the
 ///   entity is nested more than one level deep.
-class ProviderGenerator extends Generator {
-  @override
-  String generate(LibraryReader library, BuildStep buildStep) {
-    final annotated = library.annotatedWith(_viewChecker).toList();
-    if (annotated.isEmpty) return '';
+class ProviderGenerator extends ArtifactGenerator {
+  ProviderGenerator()
+      : super('ProviderGenerator', const [createProviderArtifacts]);
+}
 
-    final manifests = <EntityManifest>[];
-    for (final a in annotated) {
-      final element = a.element;
-      if (element is! ClassElement) continue;
-      manifests.add(EntityManifest.from(element, a.annotation));
-    }
+/// The provider artifacts of one entity: its detail provider, list provider
+/// and API client provider, in this order. They share one factory so that the
+/// providers of an entity stay together in the generated file.
+Iterable<Artifact> createProviderArtifacts(EntityContext entity) => [
+      DetailProviderArtifact(entity),
+      ListProviderArtifact(entity),
+      ApiClientProviderArtifact(entity),
+    ];
 
-    final sourceFileName = buildStep.inputId.path.split('/').last;
+/// The templates shared by the provider artifacts of one entity.
+abstract class _ProviderArtifact extends Artifact {
+  _ProviderArtifact(this.entity);
 
-    final buffer = StringBuffer();
-    _writeHeader(buffer);
-    _writeImports(sourceFileName, buffer);
-    buffer.writeln();
+  final EntityContext entity;
 
-    for (final manifest in manifests) {
-      _writeProviders(manifest, buffer);
-      buffer.writeln();
-    }
+  EntityManifest get manifest => entity.manifest;
 
-    return buffer.toString();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Header
-  // ---------------------------------------------------------------------------
-
-  void _writeHeader(StringBuffer buffer) {
-    const sep =
-        '// **************************************************************************';
-    buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('//');
-    buffer.writeln(sep);
-    buffer.writeln('// ProviderGenerator');
-    buffer.writeln(sep);
-    buffer.writeln();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Imports
-  // ---------------------------------------------------------------------------
-
-  void _writeImports(String sourceFileName, StringBuffer buffer) {
-    buffer.writeln("import 'dart:async';");
-    buffer.writeln();
-    buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
-    buffer.writeln(
-        "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';");
-    buffer.writeln();
-    final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
-    buffer.writeln("import '$base.dart';");
-    buffer.writeln("import '$base.api_client.dart';");
-  }
+  Code _code(StringBuffer buffer, Set<String> imports) => Code(
+        buffer.toString().trim(),
+        imports: {...imports, Libs.riverpod, entity.sourceFileName},
+      );
 
   // ---------------------------------------------------------------------------
   // Provider declarations
   // ---------------------------------------------------------------------------
 
-  void _writeProviders(EntityManifest manifest, StringBuffer buffer) {
+  void _writeDetailProvider(StringBuffer buffer) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
     final hasParent = manifest.hasParent;
-    final parentParamType = hasParent ? manifest.parentKeyType : null;
 
     if (hasParent) {
       // Detail provider keyed on (id, ancestor ids...), outermost first.
@@ -102,8 +66,23 @@ class ProviderGenerator extends Generator {
           '.family<$entity, ${manifest.detailKeyType}>((ref, args) =>');
       buffer.writeln(
           '    ref.watch(${entityLower}ApiClientProvider).getById(args.\$1, $named));');
-      buffer.writeln();
+    } else {
+      // Detail provider keyed on the typed id.
+      buffer.writeln(
+          'final ${entityLower}DetailProvider = FutureProvider.autoDispose'
+          '.family<$entity, ${manifest.idType}>((ref, id) =>');
+      buffer.writeln(
+          '    ref.watch(${entityLower}ApiClientProvider).getById(id));');
+    }
+  }
 
+  void _writeListProvider(StringBuffer buffer) {
+    final entity = manifest.entityName;
+    final entityLower = manifest.entityNameLower;
+    final hasParent = manifest.hasParent;
+    final parentParamType = hasParent ? manifest.parentKeyType : null;
+
+    if (hasParent) {
       // List provider keyed on parentType parentId.
       buffer.writeln(
           'final ${entityLower}sProvider = AsyncNotifierProvider.autoDispose'
@@ -125,14 +104,6 @@ class ProviderGenerator extends Generator {
           parentArg: manifest.ancestorNamedArgs());
       buffer.writeln('}');
     } else {
-      // Detail provider keyed on the typed id.
-      buffer.writeln(
-          'final ${entityLower}DetailProvider = FutureProvider.autoDispose'
-          '.family<$entity, ${manifest.idType}>((ref, id) =>');
-      buffer.writeln(
-          '    ref.watch(${entityLower}ApiClientProvider).getById(id));');
-      buffer.writeln();
-
       // List provider (no family arg).
       buffer.writeln(
           'final ${entityLower}sProvider = AsyncNotifierProvider.autoDispose'
@@ -145,8 +116,11 @@ class ProviderGenerator extends Generator {
       _writeNotifierBody(manifest, buffer, buildSignature: '', parentArg: '');
       buffer.writeln('}');
     }
+  }
 
-    buffer.writeln();
+  void _writeApiClientProvider(StringBuffer buffer) {
+    final entity = manifest.entityName;
+    final entityLower = manifest.entityNameLower;
     buffer.writeln(
         'final ${entityLower}ApiClientProvider = Provider.autoDispose<${entity}ApiClient>(');
     buffer.writeln(
@@ -280,5 +254,66 @@ class ProviderGenerator extends Generator {
       buffer.writeln('    await _load();');
       buffer.writeln('  }');
     }
+  }
+}
+
+/// The `{entity}DetailProvider` of one entity.
+class DetailProviderArtifact extends _ProviderArtifact {
+  DetailProviderArtifact(super.entity);
+
+  @override
+  ArtifactId get id =>
+      ArtifactId(ArtifactKind.detailProvider, manifest.entityName);
+
+  @override
+  String get primaryName => '${manifest.entityNameLower}DetailProvider';
+
+  @override
+  Code emit() {
+    final buffer = StringBuffer();
+    _writeDetailProvider(buffer);
+    return _code(buffer, const {});
+  }
+}
+
+/// The `{entity}sProvider` and its notifier of one entity.
+class ListProviderArtifact extends _ProviderArtifact {
+  ListProviderArtifact(super.entity);
+
+  @override
+  ArtifactId get id =>
+      ArtifactId(ArtifactKind.listProvider, manifest.entityName);
+
+  @override
+  String get primaryName => '${manifest.entityNameLower}sProvider';
+
+  @override
+  List<String> get declaredNames =>
+      [primaryName, '${manifest.entityName}sNotifier'];
+
+  @override
+  Code emit() {
+    final buffer = StringBuffer();
+    _writeListProvider(buffer);
+    return _code(buffer, {Libs.dartAsync, Libs.widgets});
+  }
+}
+
+/// The `{entity}ApiClientProvider` of one entity.
+class ApiClientProviderArtifact extends _ProviderArtifact {
+  ApiClientProviderArtifact(super.entity);
+
+  @override
+  ArtifactId get id =>
+      ArtifactId(ArtifactKind.apiClientProvider, manifest.entityName);
+
+  @override
+  String get primaryName => '${manifest.entityNameLower}ApiClientProvider';
+
+  @override
+  Code emit() {
+    final buffer = StringBuffer();
+    _writeApiClientProvider(buffer);
+    return _code(buffer, {Libs.widgets});
   }
 }

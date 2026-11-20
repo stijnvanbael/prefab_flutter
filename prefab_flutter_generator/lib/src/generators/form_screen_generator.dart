@@ -1,12 +1,13 @@
-import 'package:analyzer/dart/element/element.dart';
-import 'package:build/build.dart';
 import 'package:prefab_flutter/prefab_flutter.dart';
 import 'package:source_gen/source_gen.dart';
 
+import '../core/artifact.dart';
+import '../core/artifact_generator.dart';
+import '../core/code.dart';
+import '../core/entity_context.dart';
+import '../core/field_registries.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/field_manifest.dart';
-
-const _viewChecker = TypeChecker.fromRuntime(View);
 
 /// Resolved widget kind after applying [FieldWidget.auto] type inference.
 enum _WidgetKind {
@@ -23,120 +24,148 @@ enum _WidgetKind {
 
 /// Generates `{Entity}CreateScreen` and `{Entity}EditScreen` [ConsumerWidget]s
 /// for every class annotated with [@View] that also carries [@Create] (create screen) and/or [@Update] (edit screen).
-class FormScreenGenerator extends Generator {
-  @override
-  String generate(LibraryReader library, BuildStep buildStep) {
-    final manifests = <EntityManifest>[];
-    final all = <EntityManifest>[];
-    for (final a in library.annotatedWith(_viewChecker)) {
-      final element = a.element;
-      if (element is! ClassElement) {
-        throw InvalidGenerationSourceError(
-          '@View can only be applied to classes.',
-          element: element,
-        );
-      }
-      final manifest = EntityManifest.from(element, a.annotation);
-      all.add(manifest);
-      // Create screen needs @Create, edit screen needs @Update.
-      if (manifest.hasCreate || manifest.hasUpdate) manifests.add(manifest);
-    }
-    if (manifests.isEmpty) return '';
+class FormScreenGenerator extends ArtifactGenerator {
+  FormScreenGenerator()
+      : super('FormScreenGenerator', const [createFormScreenArtifacts]);
+}
 
-    final sourceFileName = buildStep.inputId.path.split('/').last;
-    final buffer = StringBuffer();
-    _writeHeader(buffer);
-    final usesNumberInput = manifests.any((m) => m.formFields
-        .any((f) => _resolveWidgetKind(f) == _WidgetKind.numberInput));
-    _writeImports(sourceFileName, buffer, usesNumberInput);
-    for (final manifest in manifests) {
-      if (manifest.hasCreate) {
-        buffer.writeln();
-        _writeCreateScreen(manifest, buffer);
-      }
-      if (manifest.hasUpdate) {
-        buffer.writeln();
-        _writeEditScreen(manifest, buffer);
-      }
-    }
-    return buffer.toString();
-  }
+/// The create screen (with `@Create`) and the edit screen (with `@Update`) of
+/// one entity, in this order. They share one factory so that the two screens of
+/// an entity stay together in the generated file.
+Iterable<Artifact> createFormScreenArtifacts(EntityContext entity) => [
+      if (entity.manifest.hasCreate) CreateScreenArtifact(entity),
+      if (entity.manifest.hasUpdate) EditScreenArtifact(entity),
+    ];
+
+/// The templates shared by the create and the edit screen of one entity.
+abstract class _FormScreenArtifact extends Artifact {
+  _FormScreenArtifact(this.entity);
+
+  final EntityContext entity;
+
+  EntityManifest get manifest => entity.manifest;
+
+  /// The libraries the fragments written so far need.
+  final _imports = <String>{
+    Libs.materialUi,
+    Libs.riverpod,
+    Libs.goRouter,
+  };
+
+  Code _code(StringBuffer buffer) => Code(
+        buffer.toString().trim(),
+        imports: {..._imports, entity.sourceFileName},
+      );
+
+  /// The form widget and value expression of every [FieldWidget]; for
+  /// [FieldWidget.auto] the first emitter that accepts the field's type wins.
+  late final fieldEmitters = FieldEmitters<_LegacyFieldEmitter>([
+    _LegacyFieldEmitter(
+      kind: _WidgetKind.toggle,
+      widget: FieldWidget.toggle,
+      accepts: (f) => f.dartType == 'bool',
+      write: _writeSwitchField,
+      valueExpression: _formValueExpression,
+    ),
+    _LegacyFieldEmitter(
+      kind: _WidgetKind.datePicker,
+      widget: FieldWidget.datePicker,
+      accepts: (f) => f.dartType == 'DateTime',
+      write: _writeDatePickerField,
+      valueExpression: _formValueExpression,
+    ),
+    _LegacyFieldEmitter(
+      kind: _WidgetKind.numberInput,
+      widget: FieldWidget.numberInput,
+      accepts: (f) => const {'int', 'double', 'num'}.contains(f.dartType),
+      write: _writeNumberField,
+      valueExpression: _formValueExpression,
+    ),
+    _LegacyFieldEmitter(
+      kind: _WidgetKind.dropdown,
+      widget: FieldWidget.dropdown,
+      accepts: (f) => f.isEnum,
+      write: _writeDropdownField,
+      valueExpression: _formValueExpression,
+    ),
+    _LegacyFieldEmitter(
+      kind: _WidgetKind.timePicker,
+      widget: FieldWidget.timePicker,
+      accepts: (f) => false,
+      check: (f) {
+        if (f.dartType != 'Duration' && f.dartType != 'String') {
+          throw InvalidGenerationSourceError(
+            'Field "${f.name}" uses FieldWidget.timePicker but has type '
+            '${f.dartType}. timePicker supports Duration (time since '
+            'midnight) and String in HH:mm format.',
+          );
+        }
+      },
+      write: _writeTimePickerField,
+      valueExpression: _formValueExpression,
+    ),
+    _LegacyFieldEmitter(
+      kind: _WidgetKind.dateTimePicker,
+      widget: FieldWidget.dateTimePicker,
+      accepts: (f) => false,
+      check: (f) {
+        if (f.dartType != 'DateTime') {
+          throw InvalidGenerationSourceError(
+            'Field "${f.name}" uses FieldWidget.dateTimePicker but has type '
+            '${f.dartType}. dateTimePicker supports DateTime.',
+          );
+        }
+      },
+      write: _writeDateTimePickerField,
+      valueExpression: _formValueExpression,
+    ),
+    _LegacyFieldEmitter(
+      kind: _WidgetKind.multilineText,
+      widget: FieldWidget.multilineText,
+      accepts: (f) => false,
+      write: _writeMultilineTextField,
+      valueExpression: _formValueExpression,
+    ),
+    _LegacyFieldEmitter(
+      kind: _WidgetKind.password,
+      widget: FieldWidget.password,
+      accepts: (f) => false,
+      write: _writePasswordField,
+      valueExpression: _formValueExpression,
+    ),
+    // Plain text accepts every other type; it has no explicit FieldWidget.
+    _LegacyFieldEmitter(
+      kind: _WidgetKind.text,
+      widget: FieldWidget.auto,
+      accepts: (f) => true,
+      write: _writeTextField,
+      valueExpression: _formValueExpression,
+    ),
+  ]);
+
+  /// The checks every [Validator] adds to a field's `validator:` callback.
+  late final validatorEmitters = ValidatorEmitters({
+    for (final type in const [
+      RequiredValidator,
+      EmailValidator,
+      UrlValidator,
+      PositiveValidator,
+      NonNegativeValidator,
+      MinValidator,
+      MaxValidator,
+      MinLengthValidator,
+      MaxLengthValidator,
+      PatternValidator,
+    ])
+      type: _LegacyValidatorEmitter(_writeValidatorCheck),
+  });
 
   // ---------------------------------------------------------------------------
   // Widget kind resolution
   // ---------------------------------------------------------------------------
 
-  _WidgetKind _resolveWidgetKind(FieldManifest field) {
-    if (field.fieldWidget == FieldWidget.timePicker &&
-        field.dartType != 'Duration' &&
-        field.dartType != 'String') {
-      throw InvalidGenerationSourceError(
-        'Field "${field.name}" uses FieldWidget.timePicker but has type '
-        '${field.dartType}. timePicker supports Duration (time since '
-        'midnight) and String in HH:mm format.',
-      );
-    }
-    if (field.fieldWidget == FieldWidget.dateTimePicker &&
-        field.dartType != 'DateTime') {
-      throw InvalidGenerationSourceError(
-        'Field "${field.name}" uses FieldWidget.dateTimePicker but has type '
-        '${field.dartType}. dateTimePicker supports DateTime.',
-      );
-    }
-    return switch (field.fieldWidget) {
-      FieldWidget.multilineText => _WidgetKind.multilineText,
-      FieldWidget.password => _WidgetKind.password,
-      FieldWidget.numberInput => _WidgetKind.numberInput,
-      FieldWidget.datePicker => _WidgetKind.datePicker,
-      FieldWidget.timePicker => _WidgetKind.timePicker,
-      FieldWidget.dateTimePicker => _WidgetKind.dateTimePicker,
-      FieldWidget.dropdown => _WidgetKind.dropdown,
-      FieldWidget.toggle => _WidgetKind.toggle,
-      FieldWidget.auto => switch (field.dartType) {
-          'bool' => _WidgetKind.toggle,
-          'DateTime' => _WidgetKind.datePicker,
-          'int' || 'double' || 'num' => _WidgetKind.numberInput,
-          _ => field.isEnum ? _WidgetKind.dropdown : _WidgetKind.text,
-        },
-    };
-  }
-
-  // ---------------------------------------------------------------------------
-  // Header
-  // ---------------------------------------------------------------------------
-
-  void _writeHeader(StringBuffer buffer) {
-    const separator =
-        '// **************************************************************************';
-    buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
-    buffer.writeln('//');
-    buffer.writeln(separator);
-    buffer.writeln('// FormScreenGenerator');
-    buffer.writeln(separator);
-    buffer.writeln();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Imports
-  // ---------------------------------------------------------------------------
-
-  void _writeImports(
-    String sourceFileName,
-    StringBuffer buffer,
-    bool usesNumberInput,
-  ) {
-    final base = sourceFileName.replaceFirst(RegExp(r'\.dart$'), '');
-    // FilteringTextInputFormatter lives in services, which material_ui does
-    // not re-export.
-    if (usesNumberInput) {
-      buffer.writeln("import 'package:flutter/services.dart';");
-    }
-    buffer.writeln("import 'package:material_ui/material_ui.dart';");
-    buffer.writeln("import 'package:flutter_riverpod/flutter_riverpod.dart';");
-    buffer.writeln("import 'package:go_router/go_router.dart';");
-    buffer.writeln("import '$sourceFileName';");
-    buffer.writeln("import '$base.provider.dart';");
-  }
+  _WidgetKind _resolveWidgetKind(FieldManifest field) =>
+      fieldEmitters.resolve(field).kind;
 
   // ---------------------------------------------------------------------------
   // Create screen
@@ -470,7 +499,9 @@ class FormScreenGenerator extends Generator {
       } else if (param.name == manifest.parentParamName) {
         expression = 'widget.${param.name}';
       } else if (formFields.containsKey(param.name)) {
-        expression = _formValueExpression(formFields[param.name]!);
+        expression = fieldEmitters
+            .resolve(formFields[param.name]!)
+            .valueExpression(formFields[param.name]!);
       } else {
         expression = isEdit ? '_item!.${param.name}' : null;
       }
@@ -586,26 +617,7 @@ class FormScreenGenerator extends Generator {
   // ---------------------------------------------------------------------------
 
   void _writeFormField(FieldManifest field, StringBuffer buffer) {
-    switch (_resolveWidgetKind(field)) {
-      case _WidgetKind.toggle:
-        _writeSwitchField(field, buffer);
-      case _WidgetKind.datePicker:
-        _writeDatePickerField(field, buffer);
-      case _WidgetKind.timePicker:
-        _writeTimePickerField(field, buffer);
-      case _WidgetKind.dateTimePicker:
-        _writeDateTimePickerField(field, buffer);
-      case _WidgetKind.dropdown:
-        _writeDropdownField(field, buffer);
-      case _WidgetKind.multilineText:
-        _writeMultilineTextField(field, buffer);
-      case _WidgetKind.password:
-        _writePasswordField(field, buffer);
-      case _WidgetKind.numberInput:
-        _writeNumberField(field, buffer);
-      case _WidgetKind.text:
-        _writeTextField(field, buffer);
-    }
+    buffer.write(fieldEmitters.resolve(field).formField(field).text);
   }
 
   void _writeTextField(FieldManifest field, StringBuffer buffer) {
@@ -631,6 +643,9 @@ class FormScreenGenerator extends Generator {
   }
 
   void _writeNumberField(FieldManifest field, StringBuffer buffer) {
+    // FilteringTextInputFormatter lives in services, which material_ui does
+    // not re-export.
+    _imports.add(Libs.flutterServices);
     final isInt = field.dartType == 'int';
     final keyboard = isInt
         ? 'const TextInputType.numberWithOptions(signed: true)'
@@ -935,7 +950,9 @@ class FormScreenGenerator extends Generator {
       );
     }
     for (final validator in others) {
-      _writeValidatorCheck(validator, buffer);
+      buffer.write(
+        validatorEmitters.resolve(validator).check(field, validator, 'value').text,
+      );
     }
     buffer.writeln('                return null;');
     buffer.writeln('              },');
@@ -992,5 +1009,107 @@ class FormScreenGenerator extends Generator {
     buffer.writeln('$i  final n = double.tryParse(value);');
     buffer.writeln('$i  if (n == null || n $failWhen) return $message;');
     buffer.writeln('$i}');
+  }
+}
+
+/// The `{Entity}CreateScreen` widget of one entity with `@Create`.
+class CreateScreenArtifact extends _FormScreenArtifact {
+  CreateScreenArtifact(super.entity);
+
+  @override
+  ArtifactId get id => ArtifactId(ArtifactKind.createScreen, manifest.entityName);
+
+  @override
+  String get primaryName => '${manifest.entityName}CreateScreen';
+
+  @override
+  List<String> get declaredNames =>
+      [primaryName, '_${manifest.entityName}CreateScreenState'];
+
+  @override
+  Code emit() {
+    final buffer = StringBuffer();
+    _writeCreateScreen(manifest, buffer);
+    return _code(buffer);
+  }
+}
+
+/// The `{Entity}EditScreen` widget of one entity with `@Update`.
+class EditScreenArtifact extends _FormScreenArtifact {
+  EditScreenArtifact(super.entity);
+
+  @override
+  ArtifactId get id => ArtifactId(ArtifactKind.editScreen, manifest.entityName);
+
+  @override
+  String get primaryName => '${manifest.entityName}EditScreen';
+
+  @override
+  List<String> get declaredNames =>
+      [primaryName, '_${manifest.entityName}EditScreenState'];
+
+  @override
+  Code emit() {
+    final buffer = StringBuffer();
+    _writeEditScreen(manifest, buffer);
+    return _code(buffer);
+  }
+}
+
+/// A [FieldEmitter] wrapping the form writers that used to live in the form
+/// screen generator. Their text keeps the indentation of the generated screen
+/// and a trailing newline.
+class _LegacyFieldEmitter extends FieldEmitter {
+  const _LegacyFieldEmitter({
+    required this.kind,
+    required this.widget,
+    required bool Function(FieldManifest) accepts,
+    void Function(FieldManifest)? check,
+    required void Function(FieldManifest, StringBuffer) write,
+    required String Function(FieldManifest) valueExpression,
+  })  : _accepts = accepts,
+        _check = check,
+        _write = write,
+        _valueExpression = valueExpression;
+
+  final _WidgetKind kind;
+
+  @override
+  final FieldWidget widget;
+
+  final bool Function(FieldManifest) _accepts;
+  final void Function(FieldManifest)? _check;
+  final void Function(FieldManifest, StringBuffer) _write;
+  final String Function(FieldManifest) _valueExpression;
+
+  @override
+  bool accepts(FieldManifest field) => _accepts(field);
+
+  @override
+  void check(FieldManifest field) => _check?.call(field);
+
+  @override
+  Code formField(FieldManifest field) {
+    final buffer = StringBuffer();
+    _write(field, buffer);
+    return Code(buffer.toString());
+  }
+
+  @override
+  String valueExpression(FieldManifest field) => _valueExpression(field);
+}
+
+/// A [ValidatorEmitter] wrapping the check writer that used to live in the
+/// form screen generator.
+class _LegacyValidatorEmitter extends ValidatorEmitter<Validator> {
+  const _LegacyValidatorEmitter(this._write);
+
+  final void Function(Validator, StringBuffer) _write;
+
+  @override
+  Code check(FieldManifest field, Validator validator, String value) {
+    final buffer = StringBuffer();
+    _write(validator, buffer);
+    return Code(buffer.toString());
   }
 }

@@ -1,12 +1,11 @@
-// PF-37 prototype - not part of the published generator.
-
 import 'code.dart';
 
 /// A place in an artifact template that feature modules contribute code to.
 ///
-/// Contributions are rendered by ascending [Contribution.order] (ties broken
-/// by feature name), so the output does not depend on the order in which
-/// features are registered.
+/// Contributions are rendered by ascending order (ties broken by feature
+/// name), so the output does not depend on the order in which features are
+/// registered. A single-valued point ([maxContributions] set) fails with both
+/// feature names when a feature claims it twice.
 class ExtensionPoint {
   ExtensionPoint(this.name, {this.maxContributions});
 
@@ -14,7 +13,7 @@ class ExtensionPoint {
   /// `detailScreen.appBarActions`.
   final String name;
 
-  /// Upper bound for single-valued points such as `appBar.bottom`.
+  /// Upper bound for single-valued points such as `appBarBottom`.
   final int? maxContributions;
 
   final _contributions = <Contribution>[];
