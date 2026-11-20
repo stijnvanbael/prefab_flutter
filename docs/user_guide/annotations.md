@@ -168,6 +168,7 @@ ignored by every generator. Display and listing settings sit directly on
 | `on` | `Set<Place>?` | `null` (every place) | Places the field appears in: `Place.item`, `Place.detail`, `Place.form`; `{}` shows it nowhere (see [Places](#places)) |
 | `searchable` | `bool` | `false` | The list screen shows a search bar (once any field is searchable); the text is sent to the server as `q` (see [Search, sorting and pagination](rest-contract.md#search-sorting-and-pagination)) |
 | `sortable` | `bool` | `false` | The list screen's sort menu offers this field ascending and descending |
+| `filterable` | `bool` | `false` | The list screen shows a filter control for the field, chosen from its type: enum chips, Yes / No chips for `bool`, a date range for `DateTime`, a text field (with suggestions when the backend has an autocomplete endpoint) for other types. The value is sent as a query parameter named by the JSON name (see [Filters](rest-contract.md#filters)) |
 | `displayBuilder` | `Function?` | `null` | A hand-written widget (`ColorSwatch.new`) that shows the value in the detail screen and list tile (see [Custom widgets](field-widgets.md#custom-widgets-for-one-field)) |
 | `readOnly` | `bool` | `false` | The server owns the value (timestamps, status, totals): shown in the list and detail screens, never in a form or a request body (see [Request bodies](#request-bodies)) |
 | `form` | `FormOptions` | `FormOptions()` | Form-only settings, below |

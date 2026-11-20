@@ -29,14 +29,14 @@ void main() {
     expect(find.byType(PrefabPaginationBar), findsOneWidget);
 
     // Search is sent to the server (debounced) and filters the list.
-    await tester.enterText(find.byType(TextField), 'mon');
+    await tester.enterText(find.descendant(of: find.byType(PrefabSearchBar), matching: find.byType(TextField)), 'mon');
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
     expect(find.text('Monitor'), findsOneWidget);
     expect(find.text('Keyboard'), findsNothing);
 
     // Clearing the search brings everything back; sort descending by name.
-    await tester.enterText(find.byType(TextField), '');
+    await tester.enterText(find.descendant(of: find.byType(PrefabSearchBar), matching: find.byType(TextField)), '');
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Sort'));

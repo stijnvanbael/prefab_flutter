@@ -52,7 +52,7 @@ void main() {
     expect(find.text('Keyboard'), findsOneWidget);
     expect(find.text('Nothing here'), findsNothing);
 
-    await tester.enterText(find.byType(TextField), 'zzzz');
+    await tester.enterText(find.descendant(of: find.byType(PrefabSearchBar), matching: find.byType(TextField)), 'zzzz');
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
     expect(find.text('Nothing here'), findsOneWidget);

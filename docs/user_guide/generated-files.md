@@ -8,7 +8,7 @@ contains:
 
 | Generated code | Contents |
 |---|---|
-| `ProductListScreen` | A `ListView` of items (or the `PrefabTheme` empty state, "No items found" by default); tapping one opens its detail screen. With a `searchable` field it has a `PrefabSearchBar`, with `sortable` fields a `PrefabSortMenu` in the AppBar, and (unless `@Entity(paged: false)`) a `PrefabPaginationBar` footer. With `@Create`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
+| `ProductListScreen` | A `ListView` of items (or the `PrefabTheme` empty state, "No items found" by default); tapping one opens its detail screen. With a `searchable` field it has a `PrefabSearchBar`, with `sortable` fields a `PrefabSortMenu` in the AppBar, and (unless `@Entity(paged: false)`) a `PrefabPaginationBar` footer. With `filterable` fields it shows a filter control per field above the list. With `@Create`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
 | `ProductDetailScreen(id:)` | One `ListTile` per visible field, plus Edit/Delete actions and your [`@EntityAction`s](actions.md) |
 | `ProductCreateScreen` | Only with `@Create` |
 | `ProductEditScreen(id:)` | Only with `@Update` |

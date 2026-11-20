@@ -1,0 +1,29 @@
+class NovelApiClient
+  NovelApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Novel>> list( {String? search, String? sort, Map<String, Object?> filters = const {}, bool descending = false, int page = 0, int? pageSize});
+  Future<Novel> getById(int id);
+  Future<void> delete(Novel novel);
+  Future<List<String>> autocomplete(String field, String text);
+final novelDetailProvider = FutureProvider.autoDispose.family<Novel, int>;
+final novelsProvider = AsyncNotifierProvider.autoDispose<NovelsNotifier, PrefabPage<Novel>>;
+class NovelsNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Novel>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Map<String, Object?> get filters;
+  Future<PrefabPage<Novel>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> setFilter(String field, Object? value);
+  Future<void> clearFilters();
+  Future<List<String>> suggest(String field, String text);
+final novelApiClientProvider = Provider.autoDispose<NovelApiClient>;
+class NovelDetailScreen extends ConsumerWidget
+  final int id;
+  const NovelDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class NovelListScreen extends ConsumerWidget
+  const NovelListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+List<RouteBase> get $listFiltersRoutes;

@@ -6,6 +6,7 @@ import 'custom_field/custom_field_feature.dart';
 import 'delete/delete_feature.dart';
 import 'entity_screens/entity_screens_feature.dart';
 import 'field_widgets/field_widgets_feature.dart';
+import 'filters/filters_feature.dart';
 import 'list_query/list_query_feature.dart';
 import 'nested_resources/nested_resources_feature.dart';
 import 'nullable_fields/nullable_fields_feature.dart';
@@ -26,6 +27,7 @@ const registeredFeatures = <Feature>[
   DeleteFeature(),
   EntityScreensFeature(),
   FieldWidgetsFeature(),
+  FiltersFeature(),
   ListQueryFeature(),
   NestedResourcesFeature(),
   NullableFieldsFeature(),

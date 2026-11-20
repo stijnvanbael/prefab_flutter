@@ -23,6 +23,24 @@ enum PrefabVersionTransport {
   ifMatch,
 }
 
+/// A filter on a date field: both ends are inclusive and either may be open.
+class PrefabDateRange {
+  const PrefabDateRange({this.start, this.end});
+
+  /// First day of the range, or `null` for no lower bound.
+  final DateTime? start;
+
+  /// Last day of the range, or `null` for no upper bound.
+  final DateTime? end;
+
+  @override
+  bool operator ==(Object other) =>
+      other is PrefabDateRange && other.start == start && other.end == end;
+
+  @override
+  int get hashCode => Object.hash(start, end);
+}
+
 /// Maps the requests of generated API clients onto a REST backend and the
 /// backend's responses back onto Prefab types: the list query parameters, the
 /// page response shape, the sort encoding and the id encoding in URLs.
@@ -37,6 +55,14 @@ enum PrefabVersionTransport {
 /// * ids (`Reference<T>` strings or numbers) are URL-encoded path segments;
 /// * named operations are `POST {collection}/{id}/{operation}` with the
 ///   parameters as the JSON body.
+///
+/// Filters (`@Field(filterable: true)`) are sent as one parameter per field,
+/// named by the field's JSON name (`category=office`, `inStock=true`); a
+/// [PrefabDateRange] becomes `releasedOnFrom` and `releasedOnTo`
+/// (`yyyy-MM-dd`). Text filters offer suggestions only when
+/// [autocompletePath] is set: `GET {collection}/{autocompletePath}?field=name&q=ke`
+/// answers a JSON array of strings (or an object with the array under
+/// [itemsKey]).
 ///
 /// [PrefabBackend.simple] is the **Simple preset** for plain backends:
 /// `sort=-field` and `{ "items": [...], "total": n }`.
@@ -106,6 +132,24 @@ class PrefabBackend {
   /// `{collection}/{id}/{operation}`.
   final String operationMethod;
 
+  /// Prepended to the name of every filter parameter (`filter.` gives
+  /// `filter.category=office`).
+  final String filterPrefix;
+
+  /// Appended to a date filter's name for the lower bound.
+  final String filterFromSuffix;
+
+  /// Appended to a date filter's name for the upper bound.
+  final String filterToSuffix;
+
+  /// Path below the collection of the autocomplete endpoint for text
+  /// filters, e.g. `autocomplete`. `null` (the default) means the backend has
+  /// none and text filters show no suggestions.
+  final String? autocompletePath;
+
+  /// Query parameter of the autocomplete request naming the field.
+  final String autocompleteFieldParam;
+
   /// The Prefab preset (see the class documentation).
   const PrefabBackend({
     this.versionTransport = PrefabVersionTransport.body,
@@ -123,6 +167,11 @@ class PrefabBackend {
     this.errorsKey = 'errors',
     this.errorFieldKey = 'field',
     this.errorFieldMessageKey = 'message',
+    this.filterPrefix = '',
+    this.filterFromSuffix = 'From',
+    this.filterToSuffix = 'To',
+    this.autocompletePath,
+    this.autocompleteFieldParam = 'field',
   });
 
   /// The Simple preset: `sort=-field` and `{ "items": [...], "total": n }`.
@@ -142,12 +191,20 @@ class PrefabBackend {
     this.errorsKey = 'errors',
     this.errorFieldKey = 'field',
     this.errorFieldMessageKey = 'message',
+    this.filterPrefix = '',
+    this.filterFromSuffix = 'From',
+    this.filterToSuffix = 'To',
+    this.autocompletePath,
+    this.autocompleteFieldParam = 'field',
   });
 
   /// Builds the query parameters for a list request. Empty search and absent
-  /// sort/page values are left out. A `null` [page] requests an unpaged list.
+  /// sort/page values are left out, as are [filters] without a value. A `null`
+  /// [page] requests an unpaged list. [filters] maps JSON field names to a
+  /// `String`, `bool`, enum name or [PrefabDateRange].
   Map<String, dynamic> queryParameters({
     String? search,
+    Map<String, Object?> filters = const {},
     String? sort,
     bool descending = false,
     int? page,
@@ -155,12 +212,52 @@ class PrefabBackend {
   }) {
     return {
       if (search != null && search.isNotEmpty) searchParam: search,
+      ...encodeFilters(filters),
       if (sort != null) sortParam: encodeSort(sort, descending),
       if (page != null) ...{
         pageParam: page,
         sizeParam: pageSize ?? defaultPageSize,
       },
     };
+  }
+
+  /// Encodes the filter values as query parameters (see the class
+  /// documentation).
+  Map<String, String> encodeFilters(Map<String, Object?> filters) {
+    final result = <String, String>{};
+    filters.forEach((field, value) {
+      final name = '$filterPrefix$field';
+      if (value == null) return;
+      if (value is PrefabDateRange) {
+        if (value.start != null) {
+          result['$name$filterFromSuffix'] = _date(value.start!);
+        }
+        if (value.end != null) result['$name$filterToSuffix'] = _date(value.end!);
+      } else if ('$value'.isNotEmpty) {
+        result[name] = '$value';
+      }
+    });
+    return result;
+  }
+
+  static String _date(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
+  /// The URL of the autocomplete endpoint below [collectionUrl], or `null`
+  /// when the backend has none.
+  String? autocompleteUrl(String collectionUrl) =>
+      autocompletePath == null ? null : '$collectionUrl/$autocompletePath';
+
+  /// Query parameters of an autocomplete request for [field] and [text].
+  Map<String, dynamic> autocompleteQueryParameters(String field, String text) =>
+      {autocompleteFieldParam: field, searchParam: text};
+
+  /// Reads the suggestions from an autocomplete response.
+  List<String> parseSuggestions(Object? data) {
+    final raw = data is Map ? data[itemsKey] : data;
+    return raw is List ? [for (final e in raw) '$e'] : const [];
   }
 
   /// Encodes a sort field and direction as the value of [sortParam].

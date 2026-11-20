@@ -6,7 +6,7 @@ A runnable example for [prefab_flutter](../README.md). It has three annotated
 entities and an in-memory mock backend, so no server is needed.
 
 - `lib/product.dart`: a top-level `Product` entity (`@Entity`, `@Create`, `@Update`, `@Delete`, `@Field`) showing
-  search and sort, validators (`required`, `positive`, `maxLength`), an enum
+  search, sort and filters (enum chips, bool, date range, text with autocomplete), validators (`required`, `positive`, `maxLength`), an enum
   dropdown, a multi-line text field kept out of the list (`on: {Place.detail, Place.form}`) and a
   date picker. `sku` is create-only (`FormOptions(on: {FormMode.create})`) and
   `createdAt` is server-set (`@Field(readOnly: true)`): neither is in the other
