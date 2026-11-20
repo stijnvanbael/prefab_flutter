@@ -59,7 +59,25 @@ class ProductDetailScreen extends ConsumerWidget {
         ],
       ),
       body: product.when(
-        data: (p) => ListTile(title: Text(p.name), subtitle: Text('${p.price}')),
+        data: (p) => ListView(
+          children: [
+            ListTile(title: Text(p.name), subtitle: Text('${p.price}')),
+            if (p.description != null) ListTile(title: Text(p.description!)),
+            // Hand-written navigation to the @EntityScreen route.
+            ListTile(
+              leading: const Icon(Icons.bar_chart),
+              title: const Text('Statistics'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/products/$id/stats'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.rate_review),
+              title: const Text('Reviews'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/products/$id/reviews'),
+            ),
+          ],
+        ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
       ),

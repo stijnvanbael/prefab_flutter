@@ -10,11 +10,25 @@ import 'package:dio/dio.dart';
 class MockBackendAdapter implements HttpClientAdapter {
   final Map<String, List<Map<String, dynamic>>> _tables = {
     'products': [
-      {'id': 1, 'name': 'Keyboard', 'price': 49.9, 'inStock': true},
-      {'id': 2, 'name': 'Monitor', 'price': 199.0, 'inStock': false},
+      {
+        'id': 1,
+        'name': 'Keyboard',
+        'price': 49.9,
+        'inStock': true,
+        'category': 'accessories',
+        'description': 'Mechanical keyboard with tactile switches.',
+        'releasedOn': '2024-03-01T00:00:00.000',
+      },
+      {
+        'id': 2,
+        'name': 'Monitor',
+        'price': 199.0,
+        'inStock': false,
+        'category': 'electronics',
+      },
     ],
     'products/2/reviews': [
-      {'id': 10, 'productId': 2, 'comment': 'Sharp picture'},
+      {'id': 10, 'productId': 2, 'comment': 'Sharp picture', 'rating': 4},
     ],
     'products/2/reviews/10/replies': [
       {'id': 20, 'reviewId': 10, 'text': 'Agreed'},

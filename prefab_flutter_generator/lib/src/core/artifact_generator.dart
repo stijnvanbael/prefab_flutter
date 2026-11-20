@@ -166,6 +166,7 @@ class ArtifactGenerator extends Generator {
     return [
       '// GENERATED CODE - DO NOT MODIFY BY HAND',
       '//',
+      '// ignore_for_file: curly_braces_in_flow_control_structures, deprecated_member_use',
       sep,
       '// $generatorName',
       sep,
