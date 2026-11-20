@@ -23,9 +23,9 @@ import 'parameterised_validators.dart';
 
 class AccountApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  AccountApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  AccountApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<Account>> list(
       {String? search,
@@ -52,7 +52,7 @@ class AccountApiClient {
   }
 
   Future<Account> getById(int id) async {
-    final response = await _dio.get('/accounts/$id');
+    final response = await _dio.get('/accounts/${_adapter.encodeId(id)}');
     return Account.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -62,13 +62,14 @@ class AccountApiClient {
   }
 
   Future<Account> update(Account account) async {
-    final response =
-        await _dio.put('/accounts/${account.id}', data: account.toJson());
+    final response = await _dio.put(
+        '/accounts/${_adapter.encodeId(account.id)}',
+        data: account.toJson());
     return Account.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(Account account) async {
-    await _dio.delete('/accounts/${account.id}');
+    await _dio.delete('/accounts/${_adapter.encodeId(account.id)}');
   }
 }
 
@@ -169,7 +170,7 @@ class AccountsNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Account>> {
 
 final accountApiClientProvider = Provider.autoDispose<AccountApiClient>((ref) =>
     AccountApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 class AccountDetailScreen extends ConsumerWidget {
   final int id;

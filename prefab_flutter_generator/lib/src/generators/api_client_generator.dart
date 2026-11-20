@@ -129,14 +129,14 @@ class ApiClientArtifact extends Artifact {
 
     buffer.writeln('class ${entity}ApiClient {');
     buffer.writeln('  final Dio _dio;');
-    buffer.writeln('  final PrefabListAdapter _adapter;');
+    buffer.writeln('  final PrefabBackend _adapter;');
     buffer.writeln();
     buffer.writeln(
-        '  ${entity}ApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);');
+        '  ${entity}ApiClient(this._dio, [this._adapter = const PrefabBackend()]);');
     buffer.writeln();
 
     // list: search, sort and pagination go to the server as query parameters
-    // (names and response shape come from the PrefabListAdapter).
+    // (names and response shape come from the PrefabBackend).
     final listParams = [
       if (hasParent) requiredAncestors,
       for (final p in listQueryParameters.values) p.declaration,
@@ -163,7 +163,7 @@ class ApiClientArtifact extends Artifact {
     // getById
     buffer.writeln(
         '  Future<$entity> getById(${manifest.idType} id$parentParamTrailing) async {');
-    buffer.writeln("    final response = await _dio.get('$urlBase/\$id');");
+    buffer.writeln("    final response = await _dio.get('$urlBase/\${_adapter.encodeId(id)}');");
     buffer.writeln(
         '    return $entity.fromJson(response.data as Map<String, dynamic>);');
     buffer.writeln('  }');

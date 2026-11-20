@@ -15,7 +15,10 @@ GoRouter createRouter({String initialLocation = '/products'}) => GoRouter(
 
 void main() => runApp(
       ProviderScope(
-        overrides: [prefabDioProvider.overrideWithValue(createMockDio())],
+        overrides: [
+          prefabDioProvider.overrideWithValue(createMockDio()),
+          prefabBackendProvider.overrideWithValue(exampleBackend),
+        ],
         child: const ExampleApp(),
       ),
     );

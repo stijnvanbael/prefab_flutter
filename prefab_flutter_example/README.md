@@ -28,7 +28,10 @@ entities and an in-memory mock backend, so no server is needed.
   detail screens show breadcrumbs back to the review and product.
 - `lib/mock_backend.dart`: a Dio `HttpClientAdapter` implementing the REST
   contract of the generated clients in memory. `main.dart` installs it through
-  `prefabDioProvider`; replace it with a real `Dio` to talk to a server.
+  `prefabDioProvider`; replace it with a real `Dio` to talk to a server. It
+  speaks the Prefab preset of `PrefabBackend` (Spring paging, `sort=field,desc`),
+  which `main.dart` selects explicitly through `prefabBackendProvider`.
+- `test/backend_preset_test.dart`: runs the app against that explicit preset.
 - `test/crud_flow_test.dart`: widget tests that create, edit and delete
   products and reviews through the generated screens.
 

@@ -13,7 +13,7 @@
 | `PrefabPaginationBar` / `PrefabPageNotifier` | yes (list screen, via `PrefabPaginationBar.controlled`) | First/previous/next/last page controls |
 | `PrefabPage<T>` | yes (API client, notifier, list screen) | A page of items with total count and page metadata |
 | `PrefabTheme` | yes (list, detail and form screens) | `ThemeExtension` with the layout decisions of generated screens, see [Theming](#theming) |
-| `PrefabListAdapter` / `prefabListAdapterProvider` | yes (API client) | Query parameter names and response shape of list requests |
+| `PrefabBackend` / `prefabBackendProvider` | yes (API client) | Query parameters, page response, sort and id encoding of REST requests; Prefab and Simple presets |
 
 You can use these widgets in hand-written screens too.
 

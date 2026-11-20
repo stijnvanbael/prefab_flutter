@@ -1,5 +1,5 @@
 class BetaApiClient
-  BetaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  BetaApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<Beta>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<Beta> getById(int id);
   Future<Beta> create(Beta beta);

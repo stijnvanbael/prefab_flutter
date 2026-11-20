@@ -1,5 +1,5 @@
 class AppThemeApiClient
-  AppThemeApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  AppThemeApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<AppTheme>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<AppTheme> getById(int id);
   Future<AppTheme> create(AppTheme appTheme);

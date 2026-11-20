@@ -1,6 +1,7 @@
 /// Runtime widgets library for prefab_flutter generated code.
 library prefab_flutter_widgets;
 
+export 'src/models/prefab_backend.dart';
 export 'src/models/prefab_list_adapter.dart';
 export 'src/models/prefab_page.dart';
 export 'src/providers/prefab_dio_provider.dart';

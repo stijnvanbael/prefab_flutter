@@ -1,5 +1,5 @@
 class AccountApiClient
-  AccountApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  AccountApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<Account>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<Account> getById(int id);
   Future<Account> create(Account account);

@@ -23,9 +23,9 @@ import 'dart:async';
 
 class WidgetDemoApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  WidgetDemoApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  WidgetDemoApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<WidgetDemo>> list(
       {String? search,
@@ -52,7 +52,7 @@ class WidgetDemoApiClient {
   }
 
   Future<WidgetDemo> getById(int id) async {
-    final response = await _dio.get('/widget-demos/$id');
+    final response = await _dio.get('/widget-demos/${_adapter.encodeId(id)}');
     return WidgetDemo.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -63,13 +63,14 @@ class WidgetDemoApiClient {
   }
 
   Future<WidgetDemo> update(WidgetDemo widgetDemo) async {
-    final response = await _dio.put('/widget-demos/${widgetDemo.id}',
+    final response = await _dio.put(
+        '/widget-demos/${_adapter.encodeId(widgetDemo.id)}',
         data: widgetDemo.toJson());
     return WidgetDemo.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(WidgetDemo widgetDemo) async {
-    await _dio.delete('/widget-demos/${widgetDemo.id}');
+    await _dio.delete('/widget-demos/${_adapter.encodeId(widgetDemo.id)}');
   }
 }
 
@@ -172,7 +173,7 @@ class WidgetDemosNotifier
 
 final widgetDemoApiClientProvider = Provider.autoDispose<WidgetDemoApiClient>(
     (ref) => WidgetDemoApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 class WidgetDemoDetailScreen extends ConsumerWidget {
   final int id;

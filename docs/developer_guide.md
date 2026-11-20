@@ -12,7 +12,7 @@ analysed and tested on its own.
 |---|---|---|
 | `prefab_flutter` | Pure Dart | The public annotations (`@Entity`, `@Field`, `@Update`, `@Delete`, `@Parent`, `@Id`) and the `FieldWidget`/`Validator` types. It has no dependencies, so generator and app can both import it. |
 | `prefab_flutter_generator` | Pure Dart, `dev_dependency` of apps | The `build_runner` builder. It reads the annotations with the analyzer and `source_gen`, and writes one `<file>.prefab.dart` per annotated source file. |
-| `prefab_flutter_widgets` | Flutter | Runtime widgets and helpers that generated code calls (`PrefabDeleteDialog`, `PrefabSearchBar`, `PrefabSortMenu`, `PrefabPaginationBar`, `PrefabListAdapter`, `prefabDioProvider`). |
+| `prefab_flutter_widgets` | Flutter | Runtime widgets and helpers that generated code calls (`PrefabDeleteDialog`, `PrefabSearchBar`, `PrefabSortMenu`, `PrefabPaginationBar`, `PrefabBackend`, `prefabDioProvider`). |
 | `prefab_flutter_example` | Flutter app | A runnable app with an in-memory mock backend. CI runs the generator on it and analyses the output, so it proves that the generated code compiles. |
 
 Data flows in one direction: **annotations -> generator -> generated code ->

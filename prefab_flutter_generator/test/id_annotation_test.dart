@@ -90,7 +90,7 @@ void main() {
         outputs: {
           'a|lib/item.api_client.dart': decodedMatches(allOf(
             contains('getById(String id)'),
-            contains(r'${item.sku}'),
+            contains(r"${_adapter.encodeId(item.sku)}"),
           )),
         },
       );

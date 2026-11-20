@@ -1,5 +1,5 @@
 class BookApiClient
-  BookApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  BookApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<Book>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<Book> getById(int id);
   Future<void> delete(Book book);

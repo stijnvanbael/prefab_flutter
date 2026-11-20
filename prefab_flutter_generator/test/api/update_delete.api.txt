@@ -1,5 +1,5 @@
 class GammaApiClient
-  GammaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  GammaApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<Gamma>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<Gamma> getById(int id);
   Future<Gamma> update(Gamma gamma);

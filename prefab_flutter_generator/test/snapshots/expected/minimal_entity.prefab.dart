@@ -22,9 +22,9 @@ import 'minimal_entity.dart';
 
 class ItemApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  ItemApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  ItemApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<Item>> list(
       {String? search,
@@ -51,12 +51,12 @@ class ItemApiClient {
   }
 
   Future<Item> getById(int id) async {
-    final response = await _dio.get('/items/$id');
+    final response = await _dio.get('/items/${_adapter.encodeId(id)}');
     return Item.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(Item item) async {
-    await _dio.delete('/items/${item.id}');
+    await _dio.delete('/items/${_adapter.encodeId(item.id)}');
   }
 }
 
@@ -146,7 +146,7 @@ class ItemsNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Item>> {
 
 final itemApiClientProvider = Provider.autoDispose<ItemApiClient>((ref) =>
     ItemApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 class ItemDetailScreen extends ConsumerWidget {
   final int id;

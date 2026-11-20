@@ -24,9 +24,9 @@ import 'entity_screens.dart';
 
 class OrderApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  OrderApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  OrderApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<Order>> list(
       {String? search,
@@ -53,26 +53,26 @@ class OrderApiClient {
   }
 
   Future<Order> getById(int id) async {
-    final response = await _dio.get('/orders/$id');
+    final response = await _dio.get('/orders/${_adapter.encodeId(id)}');
     return Order.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<Order> update(Order order) async {
-    final response =
-        await _dio.put('/orders/${order.id}', data: order.toJson());
+    final response = await _dio.put('/orders/${_adapter.encodeId(order.id)}',
+        data: order.toJson());
     return Order.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(Order order) async {
-    await _dio.delete('/orders/${order.id}');
+    await _dio.delete('/orders/${_adapter.encodeId(order.id)}');
   }
 }
 
 class OrderLineApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  OrderLineApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  OrderLineApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<OrderLine>> list(
       {required int orderId,
@@ -100,12 +100,14 @@ class OrderLineApiClient {
   }
 
   Future<OrderLine> getById(int id, {required int orderId}) async {
-    final response = await _dio.get('/orders/$orderId/lines/$id');
+    final response =
+        await _dio.get('/orders/$orderId/lines/${_adapter.encodeId(id)}');
     return OrderLine.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(OrderLine orderLine, {required int orderId}) async {
-    await _dio.delete('/orders/$orderId/lines/${orderLine.id}');
+    await _dio
+        .delete('/orders/$orderId/lines/${_adapter.encodeId(orderLine.id)}');
   }
 }
 
@@ -201,7 +203,7 @@ class OrdersNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Order>> {
 
 final orderApiClientProvider = Provider.autoDispose<OrderApiClient>((ref) =>
     OrderApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 final orderLineDetailProvider = FutureProvider.autoDispose
     .family<OrderLine, (int, int)>((ref, args) => ref
@@ -296,7 +298,7 @@ class OrderLinesNotifier
 
 final orderLineApiClientProvider = Provider.autoDispose<OrderLineApiClient>(
     (ref) => OrderLineApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 class OrderDetailScreen extends ConsumerWidget {
   final int id;

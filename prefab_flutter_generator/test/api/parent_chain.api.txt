@@ -1,17 +1,17 @@
 class OrderApiClient
-  OrderApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  OrderApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<Order>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<Order> getById(int id);
   Future<void> delete(Order order);
 class OrderLineApiClient
-  OrderLineApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  OrderLineApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<OrderLine>> list( {required int orderId, String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<OrderLine> getById(int id, {required int orderId});
   Future<OrderLine> create(OrderLine orderLine, {required int orderId});
   Future<OrderLine> update(OrderLine orderLine, {required int orderId});
   Future<void> delete(OrderLine orderLine, {required int orderId});
 class OrderLineNoteApiClient
-  OrderLineNoteApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  OrderLineNoteApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<OrderLineNote>> list( {required int orderId, required int orderLineId, String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<OrderLineNote> getById(int id, {required int orderId, required int orderLineId});
   Future<OrderLineNote> create(OrderLineNote orderLineNote, {required int orderId, required int orderLineId});

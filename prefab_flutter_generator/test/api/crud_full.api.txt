@@ -1,5 +1,5 @@
 class AlphaApiClient
-  AlphaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  AlphaApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<Alpha>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<Alpha> getById(int id);
   Future<Alpha> create(Alpha alpha);

@@ -6,7 +6,7 @@ Annotate an entity class, run `build_runner`, and Prefab Flutter generates:
 
 - a **list screen**, a **detail screen** and **create / edit form screens**,
 - **Riverpod providers** that load and mutate the data,
-- a **Dio API client** for a REST backend,
+- a **Dio API client** for a REST backend (a Prefab backend works with zero configuration; other backends need only a `PrefabBackend` adapter, see the [REST contract](docs/user_guide/rest-contract.md)),
 - **GoRouter routes** that tie the screens together.
 
 > **Status: pre-release (0.1.0, not yet on pub.dev).** The generated code

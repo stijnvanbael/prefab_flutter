@@ -428,7 +428,7 @@ void main() {
               contains('_adapter.parsePage('),
               contains(
                   "import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart'"),
-              contains('final PrefabListAdapter _adapter')
+              contains('final PrefabBackend _adapter')
             ]),
           ),
         },

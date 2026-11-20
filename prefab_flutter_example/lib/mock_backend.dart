@@ -3,6 +3,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
+
+/// The backend adapter the example app uses: the Prefab preset, which is also
+/// the default. Switch to `PrefabBackend.simple()` (and change [MockBackendAdapter]
+/// to answer `{items, total}` and `sort=-field`) for a plain backend.
+const exampleBackend = PrefabBackend();
 
 /// An in-memory REST backend that implements the contract expected by the
 /// generated API clients (`/products`, `/products/{productId}/reviews` and
@@ -92,9 +98,9 @@ class MockBackendAdapter implements HttpClientAdapter {
     return _json(405, {});
   }
 
-  /// Applies the prefab list contract: `q` (search on string values),
-  /// `sort` (`field` / `-field`), `page` and `size`. Answers `{items, total}`
-  /// when paged and a bare array otherwise.
+  /// Applies the list contract of the Prefab preset of `PrefabBackend`: `q`
+  /// (search on string values), `sort=field,asc|desc`, `page` and `size`.
+  /// Answers a Spring `PagedModel` when paged and a bare array otherwise.
   Object _list(List<Map<String, dynamic>> rows, Map<String, dynamic> query) {
     var result = List<Map<String, dynamic>>.of(rows);
     final q = '${query['q'] ?? ''}'.toLowerCase();
@@ -106,8 +112,9 @@ class MockBackendAdapter implements HttpClientAdapter {
     }
     final sort = query['sort'] as String?;
     if (sort != null) {
-      final desc = sort.startsWith('-');
-      final key = desc ? sort.substring(1) : sort;
+      final parts = sort.split(',');
+      final key = parts.first;
+      final desc = parts.length > 1 && parts[1] == 'desc';
       result.sort((a, b) {
         final c = (a[key] as Comparable).compareTo(b[key]);
         return desc ? -c : c;
@@ -117,8 +124,13 @@ class MockBackendAdapter implements HttpClientAdapter {
     final size = int.parse('${query['size']}');
     final page = int.parse('${query['page']}');
     return {
-      'items': result.skip(page * size).take(size).toList(),
-      'total': result.length,
+      'content': result.skip(page * size).take(size).toList(),
+      'page': {
+        'size': size,
+        'number': page,
+        'totalElements': result.length,
+        'totalPages': (result.length / size).ceil(),
+      },
     };
   }
 
