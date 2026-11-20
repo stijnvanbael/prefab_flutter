@@ -513,7 +513,7 @@ query parameters. The defaults, implemented by `PrefabListAdapter`:
 | Query parameter | Meaning |
 |---|---|
 | `q` | Search text (left out when empty). The server decides which fields it searches; `searchable` only controls whether the list screen shows the search bar |
-| `sort` | Dart field name, `-` prefix for descending (`price`, `-price`). Left out when unsorted |
+| `sort` | JSON name of the field, `-` prefix for descending (`price`, `-price`). The JSON name is the `@JsonKey(name:)` value, else the class's `@JsonSerializable(fieldRename:)` applied to the Dart name (`unitPrice` becomes `unit_price` with `FieldRename.snake`), else the Dart name. Left out when unsorted |
 | `page` | Zero-based page index (only for `paged` lists) |
 | `size` | Page size, default 20 (only for `paged` lists) |
 
@@ -570,4 +570,3 @@ These are known gaps in the current pre-release. Each has a backlog task.
 | Limitation | Workaround | Task |
 |---|---|---|
 | Detail screens do not link to the lists of nested child entities; reach them by URL (`/products/1/reviews`) or add your own link | Navigate with `context.push` | PF-35 |
-| Sort and search use the Dart field name / free text; a `json_serializable` `fieldRename` is not applied to the `sort` value | Map names in a custom `PrefabListAdapter.queryParameters` | PF-34 |

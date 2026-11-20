@@ -147,9 +147,9 @@ class ListScreenGenerator extends Generator {
       buffer.writeln('            options: const [');
       for (final f in manifest.sortableFields) {
         buffer.writeln(
-            "              PrefabSortOption(id: '${f.name}', label: '${_escape(f.label)} ↑', icon: Icons.arrow_upward),");
+            "              PrefabSortOption(id: '${f.jsonName}', label: '${_escape(f.label)} ↑', icon: Icons.arrow_upward),");
         buffer.writeln(
-            "              PrefabSortOption(id: '-${f.name}', label: '${_escape(f.label)} ↓', icon: Icons.arrow_downward),");
+            "              PrefabSortOption(id: '-${f.jsonName}', label: '${_escape(f.label)} ↓', icon: Icons.arrow_downward),");
       }
       buffer.writeln('            ],');
       buffer.writeln(

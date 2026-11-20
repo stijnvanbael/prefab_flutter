@@ -38,6 +38,11 @@ class FieldManifest {
   /// When `true` the field is offered in the list sort menu ([@Field.sortable]).
   final bool sortable;
 
+  /// The name the server knows the field by: the `@JsonKey(name:)` value, the
+  /// class's `@JsonSerializable(fieldRename:)` applied to [name], or [name].
+  /// Used as the `sort` value of list requests.
+  final String jsonName;
+
   const FieldManifest({
     required this.name,
     required this.label,
@@ -51,7 +56,8 @@ class FieldManifest {
     this.views,
     this.searchable = false,
     this.sortable = false,
-  });
+    String? jsonName,
+  }) : jsonName = jsonName ?? name;
 
   /// Whether the field appears in the view named [viewName].
   bool inView(String viewName) => views == null || views!.contains(viewName);
