@@ -18,6 +18,7 @@ entities and an in-memory mock backend, so no server is needed.
   `productDetailProvider(id)` and `reviewsProvider(id)` and draws the generated
   `productBreadcrumbs` bar (a `PrefabBreadcrumbBar`). Tested in
   `test/product_stats_screen_test.dart`.
+- The generated product list links to the statistics screen from each item's menu (`test/entity_screen_list_link_test.dart`).
 - `lib/product_detail_screen.dart`: the promoted (`@Promoted`) detail screen,
   linking to the statistics screen and to the reviews.
 - `lib/review_summary_screen.dart`: another `@EntityScreen`, below a nested entity.

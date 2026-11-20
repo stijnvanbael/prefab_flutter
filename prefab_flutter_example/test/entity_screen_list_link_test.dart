@@ -1,0 +1,26 @@
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:prefab_flutter_example/main.dart';
+import 'package:prefab_flutter_example/mock_backend.dart';
+import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
+
+void main() {
+  testWidgets('PF-66 a list item links to the @EntityScreen of its entity',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [prefabDioProvider.overrideWithValue(createMockDio())],
+        child: const ExampleApp(initialLocation: '/products'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.more_vert).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Statistics'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Product statistics'), findsOneWidget);
+  });
+}

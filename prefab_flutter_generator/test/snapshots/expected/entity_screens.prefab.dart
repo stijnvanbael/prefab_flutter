@@ -407,6 +407,20 @@ class OrderListScreen extends ConsumerWidget {
                         final order = page.items[index];
                         return ListTile(
                           title: Text(order.number?.toString() ?? '—'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              PopupMenuButton<void>(
+                                itemBuilder: (_) => [
+                                  PopupMenuItem<void>(
+                                    onTap: () => context
+                                        .push('/orders/${order.id}/live'),
+                                    child: const Text('Live'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                           onTap: () => context.push('/orders/${order.id}'),
                         );
                       },
@@ -455,6 +469,20 @@ class OrderLineListScreen extends ConsumerWidget {
                         final orderLine = page.items[index];
                         return ListTile(
                           title: Text(orderLine.product.toString()),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              PopupMenuButton<void>(
+                                itemBuilder: (_) => [
+                                  PopupMenuItem<void>(
+                                    onTap: () => context.push(
+                                        '/orders/$orderId/lines/${orderLine.id}/picking'),
+                                    child: const Text('Picking list'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                           onTap: () => context
                               .push('/orders/$orderId/lines/${orderLine.id}'),
                         );
