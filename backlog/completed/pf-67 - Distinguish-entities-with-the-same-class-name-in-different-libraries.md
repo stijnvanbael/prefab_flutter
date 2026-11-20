@@ -1,7 +1,7 @@
 ---
 id: PF-67
 title: Distinguish entities with the same class name in different libraries
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-11-20 12:00'
 labels: []
@@ -19,8 +19,14 @@ Record the library the name was imported from (the import URI of the identifier,
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 `@EntityScreen` and `@EntityAction` targets are matched by library and class name
-- [ ] #2 An ambiguous target fails the build with a message naming the candidate libraries
-- [ ] #3 Tests cover two `@Entity` classes with the same name in different libraries
-- [ ] #4 The Known limitations row is removed
+- [x] #1 `@EntityScreen` and `@EntityAction` targets are matched by library and class name
+- [x] #2 An ambiguous target fails the build with a message naming the candidate libraries
+- [x] #3 Tests cover two `@Entity` classes with the same name in different libraries
+- [x] #4 The Known limitations row is removed
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+The summaries now record the import prefix and the imports of the declaring library (`EntityReference`). A declaration targets the entity of its own library, or of the library an import exposes (prefix, `show` and `hide` respected). Entities reached through a barrel file are matched by name when unique in the package; otherwise the build fails naming the libraries. Summaries without the new field still match by name. The example app has no same-named entities, so it is not extended.
+<!-- SECTION:NOTES:END -->

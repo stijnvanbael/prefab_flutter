@@ -42,6 +42,12 @@ class EntityContext {
   /// in the package.
   final List<ChildScreen> childScreens;
 
+  /// The class names of the `@Entity` classes of [library].
+  static Set<String> entityNames(LibraryReader library) => {
+        for (final a in library.annotatedWith(_entityChecker))
+          if (a.element.name != null) a.element.name!,
+      };
+
   /// Reads every `@Entity` class of [library] in declaration order.
   static List<EntityContext> readAll(
       LibraryReader library, String sourceFileName,
