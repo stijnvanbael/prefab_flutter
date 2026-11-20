@@ -193,7 +193,7 @@ Extension points that exist today (all contributions are at column 0):
 | API client | `listQueryParameters` | `ValuePoint<QueryParameter>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
 
 The other points sketched in decision-1 are added by the migration tasks
-PF-59, PF-60 and PF-62 to PF-64. The nullable handling of the create and edit
+PF-59 and PF-62 to PF-64. The nullable handling of the create and edit
 forms stays in the form screen until PF-59 splits it per `FieldWidget`.
 
 ### Testing a generator
