@@ -38,12 +38,23 @@ class UpdateFeature extends Feature {
 
     final client = artifacts.get<ApiClientArtifact>(ArtifactKind.apiClient, id);
     if (client != null) {
+      final putUrl =
+          "'${client.urlBase}/\${_adapter.encodeId($lower.${manifest.idFieldName})}'";
+      final versionField = manifest.versionFieldName;
+      final json =
+          excluded.isEmpty ? '$lower.toJson()' : '_updateBody($lower)';
+      final body = versionField == null
+          ? json
+          : "_adapter.updateBody($json, versionKey: '${manifest.versionJsonName}')";
+      final options = versionField == null
+          ? ''
+          : ', options: _adapter.updateOptions($lower.$versionField)';
       client.methods.addLazy(
         _name,
         () => Code(
           [
             'Future<$type> update($type $lower${client.parentParamTrailing}) async {',
-            "  final response = await _dio.put('${client.urlBase}/\${_adapter.encodeId($lower.${manifest.idFieldName})}', data: ${excluded.isEmpty ? '$lower.toJson()' : '_updateBody($lower)'});",
+            '  final response = await _dio.put($putUrl, data: $body$options);',
             '  return $type.fromJson(response.data as Map<String, dynamic>);',
             '}',
             if (excluded.isNotEmpty) ...[

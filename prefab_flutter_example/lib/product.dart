@@ -14,6 +14,11 @@ enum ProductCategory { electronics, office, accessories }
 class Product {
   final int? id;
 
+  /// Optimistic locking: the server rejects an update of an outdated version
+  /// with 409, and the edit screen offers to reload (PF-52). Never a form field.
+  @Version()
+  final int? version;
+
   @Field(
     searchable: true,
     sortable: true,
@@ -62,6 +67,7 @@ class Product {
 
   Product({
     this.id,
+    this.version,
     required this.name,
     required this.price,
     required this.inStock,

@@ -52,6 +52,28 @@ ids (`@Parent` fields) are converted the same way based on their own type. The
 id field is never shown as an editable form or detail field, and the generated
 URLs use its name (e.g. `/{path}/${entity.sku}`).
 
+### `@Version` (field)
+
+Marks the field that holds the entity's version for optimistic locking. When no
+field carries `@Version`, a field named `version` is used; an entity with
+neither is not locked. More than one `@Version` field, or one that is also the
+`@Id`, is a build-time error.
+
+```dart
+@Version()
+final int? version;
+```
+
+The version field is never shown as an editable form or detail field. The edit
+form sends the version of the item it loaded, so an update of a stale item is
+rejected by the server with `409 Conflict`. How the version travels is set by
+the [backend adapter](rest-contract.md#optimistic-locking): in the JSON body
+(the default of the Prefab preset) or in the `If-Match` header. On a 409 the
+edit screen shows a "Changed by someone else" dialog: **Reload** refreshes the
+detail provider and refills the form with the latest version (the input is
+discarded), **Cancel** keeps the form as it is. Merging the user's input into
+the latest version is not done.
+
 ### `@Create` (class)
 
 Enables creating:

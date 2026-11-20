@@ -11,6 +11,9 @@ entities and an in-memory mock backend, so no server is needed.
   date picker. `sku` is create-only (`FormOptions(on: {FormMode.create})`) and
   `createdAt` is server-set (`@Field(readOnly: true)`): neither is in the other
   form or in the wrong request body (`test/request_shapes_test.dart`).
+  Its `@Version` field makes updates optimistically locked: an update of a stale
+  version is answered with 409 and the edit screen offers to reload
+  (`test/edit_conflict_test.dart`).
 - `lib/review.dart`: a nested `Review` entity (`@Parent(Product)`), served under
   `/products/:productId/reviews`, with a `numberInput` rating validated with
   `Validator.min` / `Validator.max`.

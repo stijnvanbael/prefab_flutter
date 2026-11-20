@@ -18,6 +18,7 @@ class MockBackendAdapter implements HttpClientAdapter {
     'products': [
       {
         'id': 1,
+        'version': 0,
         'name': 'Keyboard',
         'price': 49.9,
         'inStock': true,
@@ -28,6 +29,7 @@ class MockBackendAdapter implements HttpClientAdapter {
       },
       {
         'id': 2,
+        'version': 0,
         'name': 'Monitor',
         'price': 199.0,
         'inStock': false,
@@ -84,6 +86,7 @@ class MockBackendAdapter implements HttpClientAdapter {
         if (table == 'products') {
           row['createdAt'] = DateTime.now().toIso8601String();
         }
+        if (table == 'products') row['version'] = 0;
         // The parent id field of the created row, named after the parent.
         if (parts.length >= 3) {
           final parentField = parts[parts.length - 3] == 'products'
@@ -99,10 +102,19 @@ class MockBackendAdapter implements HttpClientAdapter {
         if (invalid != null) return invalid;
         final index = rows.indexWhere((r) => '${r['id']}' == id);
         if (index < 0) return _json(404, {});
-        // The update request leaves out read-only and create-only fields; the
-        // server keeps what it already has.
+        // Optimistic locking of products: an outdated version is a conflict.
+        final current = rows[index]['version'];
+        if (current != null && (body as Map)['version'] != current) {
+          return _json(409, {
+            'type': 'about:blank',
+            'title': 'Conflict',
+            'status': 409,
+            'detail': 'The product was changed by someone else.',
+          });
+        }
         final row = {...rows[index], ...Map<String, dynamic>.from(body as Map)}
-          ..['id'] = rows[index]['id'];
+          ..['id'] = rows[index]['id']
+          ..['version'] = current == null ? null : (current as int) + 1;
         rows[index] = row;
         return _json(200, row);
       case 'DELETE':

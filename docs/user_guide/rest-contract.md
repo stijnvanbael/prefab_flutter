@@ -58,7 +58,7 @@ debounced (300 ms) and a new search or sort returns to the first page.
 A failed request is turned into a `PrefabApiError` by
 `PrefabBackend.parseError(error)`: the HTTP `status`, a general `message`, the
 `fieldErrors` by JSON field name, and the `cause` (the `DioException`). It has
-`isNotFound` (404), `isConflict` (409; the edit conflict flow is PF-52) and
+`isNotFound` (404), `isConflict` (409; see [Optimistic locking](#optimistic-locking)) and
 `isValidation` (400, 422). An error that is not an HTTP response (no network)
 has no status and the text of the error as its message.
 
@@ -141,3 +141,18 @@ the previous contract (the Simple preset), so existing overrides still work.
 The *default* changed to the Prefab preset: an app that relied on the default
 against a plain backend adds
 `prefabBackendProvider.overrideWithValue(const PrefabBackend.simple())`.
+
+### Optimistic locking
+
+An entity with a [`@Version`](annotations.md#version-field) field sends its
+version with every update, as `PrefabBackend.versionTransport` says:
+
+| `versionTransport` | Update request |
+|---|---|
+| `PrefabVersionTransport.body` (default of both presets) | The version is a field of the JSON body (the entity's `toJson`). |
+| `PrefabVersionTransport.ifMatch` | `If-Match: "<version>"` header; the version field is left out of the body. |
+
+The server answers a stale version with `409 Conflict`; the generated edit
+screen then offers to reload the latest version
+(`showPrefabConflictDialog`). The server is expected to answer the update with
+the saved entity, including its new version.
