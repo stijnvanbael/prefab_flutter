@@ -174,8 +174,8 @@ The example app is never published.
    and, once published, replace the git/path references in the README quick
    start with the pub.dev version constraints. Update the "pre-release" status
    notes.
-5. Check the documentation: root README, `docs/user_guide.md` (including the
-   Known limitations table), package READMEs, and backlog task status.
+5. Check the documentation: root README, `docs/user_guide/` (including the
+   Known limitations page), package READMEs, and backlog task status.
 6. In each package, run `dart pub publish --dry-run` (`flutter pub publish
    --dry-run` for `prefab_flutter_widgets`) and fix every warning.
 7. Publish with `dart pub publish` in the order above, wait until each package
@@ -185,9 +185,11 @@ The example app is never published.
 
 ## Documentation conventions
 
-- `README.md` and `docs/user_guide.md` describe what the code does today.
+- `README.md` and the pages in `docs/user_guide/` describe what the code does today.
   Planned behaviour is mentioned only with its backlog task id.
-- Every user-visible change updates the user guide in the same pull request.
+- Every user-visible change updates the matching user guide page in the same
+  pull request. `docs/user_guide.md` is only the index; add a page there (and
+  to the index) only for a new topic.
 - Backlog tasks live in `backlog/tasks`; move a task to `backlog/completed`
   with `git mv` once its status is `Done`.
   `tool/check_backlog.sh` (also run in CI) checks this and the other backlog

@@ -20,5 +20,5 @@ A parent's detail screen does not link to the lists of its nested (`@Parent`) ch
 - [ ] #1 The detail screen of an entity shows one navigation entry per child entity (`@Parent` pointing at it), labelled with the child's title, that pushes the nested list route
 - [ ] #2 Works for children declared in another source file and at every nesting depth
 - [ ] #3 Generator tests cover zero, one and several child entities
-- [ ] #4 The Known limitations row in docs/user_guide.md is removed
+- [ ] #4 The Known limitations row in docs/user_guide/known-limitations.md is removed
 <!-- AC:END -->

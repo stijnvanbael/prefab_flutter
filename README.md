@@ -12,7 +12,7 @@ Annotate an entity class, run `build_runner`, and Prefab Flutter generates:
 > **Status: pre-release (0.1.0, not yet on pub.dev).** The generated code
 > compiles and runs end to end in the [example app](prefab_flutter_example), but
 > some features are still missing; see
-> [Known limitations](docs/user_guide.md#known-limitations). Work is tracked in
+> [Known limitations](docs/user_guide/known-limitations.md). Work is tracked in
 > [`backlog/tasks`](backlog/tasks).
 
 ## Packages
@@ -135,7 +135,7 @@ void main() => runApp(
 Generated API clients read their Dio instance from `prefabDioProvider`
 (exported by `prefab_flutter_widgets`). Override it in the root `ProviderScope`
 to set the base URL, authentication and interceptors; see
-[Configuring the HTTP client](docs/user_guide.md#configuring-the-http-client).
+[Configuring the HTTP client](docs/user_guide/http-client.md).
 
 ## Documentation
 
