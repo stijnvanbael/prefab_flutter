@@ -18,7 +18,11 @@ class FormScreenGenerator extends ArtifactGenerator {
   FormScreenGenerator()
       : super('FormScreenGenerator', const [],
             features: registeredFeatures,
-            kinds: {ArtifactKind.createScreen, ArtifactKind.editScreen});
+            kinds: {
+              ArtifactKind.createScreen,
+              ArtifactKind.editScreen,
+              ArtifactKind.operationScreen,
+            });
 }
 
 /// The templates shared by the create and the edit screen of one entity.

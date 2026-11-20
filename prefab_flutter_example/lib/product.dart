@@ -6,11 +6,46 @@ part 'product.g.dart';
 /// An enum field: the form uses a dropdown, the detail screen shows its name.
 enum ProductCategory { electronics, office, accessories }
 
+/// The parameters of the `discount` operation of [Product] (PF-54): a form
+/// with these fields opens, and its JSON is the request body. It is a plain
+/// class: only `toJson()` is needed.
+class DiscountParameters {
+  @Field(
+    label: 'Percent',
+    form: FormOptions(validators: [Validator.min(1), Validator.max(90)]),
+  )
+  final int percent;
+
+  @Field(label: 'Reason')
+  final String? reason;
+
+  const DiscountParameters({required this.percent, this.reason});
+
+  Map<String, dynamic> toJson() => {'percent': percent, 'reason': reason};
+}
+
 @JsonSerializable()
 @Entity(title: 'Product', path: 'products')
 @Create()
 @Update()
 @Delete()
+// Named operations (PF-54): `POST /products/{id}/discontinue` and
+// `POST /products/{id}/discount`, in the menu of each list item. The first has
+// no parameters and runs after a confirmation, the second opens a form.
+@Update(
+  path: 'discontinue',
+  label: 'Discontinue',
+  icon: 'block',
+  confirm: 'Mark this product as out of stock?',
+  on: {Place.item},
+)
+@Update(
+  path: 'discount',
+  label: 'Discount',
+  icon: 'percent',
+  parameters: DiscountParameters,
+  on: {Place.item},
+)
 class Product {
   final int? id;
 

@@ -1,0 +1,70 @@
+class ChargerApiClient
+  ChargerApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Charger>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Charger> getById(int id);
+  Future<Charger> update(Charger charger);
+  Future<void> delete(Charger charger);
+  Future<void> start(int id, StartParameters parameters);
+  Future<void> stop(int id);
+class SessionApiClient
+  SessionApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Session>> list( {required int chargerId, String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Session> getById(int id, {required int chargerId});
+  Future<void> delete(Session session, {required int chargerId});
+  Future<void> markPaid(int id, {required int chargerId});
+final chargerDetailProvider = FutureProvider.autoDispose.family<Charger, int>;
+final chargersProvider = AsyncNotifierProvider.autoDispose<ChargersNotifier, PrefabPage<Charger>>;
+class ChargersNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Charger>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Charger>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> updateEntity(Charger charger);
+  Future<void> start(int id, StartParameters parameters);
+  Future<void> stop(int id);
+final chargerApiClientProvider = Provider.autoDispose<ChargerApiClient>;
+final sessionDetailProvider = FutureProvider.autoDispose.family<Session, (int, int)>;
+final sessionsProvider = AsyncNotifierProvider.autoDispose.family<SessionsNotifier, PrefabPage<Session>, int>;
+class SessionsNotifier extends AutoDisposeFamilyAsyncNotifier<PrefabPage<Session>, int>
+  int get chargerId;
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Session>> build(int arg);
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> markPaid(int id);
+final sessionApiClientProvider = Provider.autoDispose<SessionApiClient>;
+class ChargerDetailScreen extends ConsumerWidget
+  final int id;
+  const ChargerDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class SessionDetailScreen extends ConsumerWidget
+  final int id;
+  final int chargerId;
+  const SessionDetailScreen( {super.key, required this.id, required this.chargerId});
+  Widget build(BuildContext context, WidgetRef ref);
+class ChargerListScreen extends ConsumerWidget
+  const ChargerListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class SessionListScreen extends ConsumerWidget
+  final int chargerId;
+  const SessionListScreen({super.key, required this.chargerId});
+  Widget build(BuildContext context, WidgetRef ref);
+class ChargerStartScreen extends ConsumerStatefulWidget
+  final int id;
+  const ChargerStartScreen({super.key, required this.id});
+  ConsumerState<ChargerStartScreen> createState();
+class ChargerEditScreen extends ConsumerStatefulWidget
+  final int id;
+  const ChargerEditScreen({super.key, required this.id});
+  ConsumerState<ChargerEditScreen> createState();
+List<RouteBase> get $namedOperationsRoutes;

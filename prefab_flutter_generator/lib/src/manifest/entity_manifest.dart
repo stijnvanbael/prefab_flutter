@@ -467,7 +467,9 @@ class EntityManifest {
     final paged = viewAnnotation.peek('paged')?.boolValue ?? true;
 
     final hasCreate = _createChecker.hasAnnotationOf(element);
-    final hasUpdate = _updateChecker.hasAnnotationOf(element);
+    final hasUpdate = _updateChecker
+        .annotationsOf(element)
+        .any((a) => a.getField('path')?.isNull ?? true);
     final hasDelete = _deleteChecker.hasAnnotationOf(element);
 
     // Resolve the identifier field: @Id, otherwise a field named `id`.
@@ -528,15 +530,6 @@ class EntityManifest {
       final annotation = _fieldChecker.firstAnnotationOf(field);
       if (annotation == null) continue;
 
-      final reader = ConstantReader(annotation);
-      final formReader = reader.read('form');
-
-      final labelReader = reader.read('label');
-      final label = labelReader.isNull
-          ? _fieldNameToLabel(field.name!)
-          : labelReader.stringValue;
-
-      final places = _readFieldPlaces(reader, element.name!, field.name!);
       final parentAnnotation = _parentChecker.firstAnnotationOf(field);
       final isParent = parentAnnotation != null;
       if (isParent) {
@@ -582,57 +575,8 @@ class EntityManifest {
         parentParamName = field.name;
       }
 
-      final validators = formReader
-          .read('validators')
-          .listValue
-          .map((obj) => _readValidator(obj, field))
-          .toList();
-
-      final widgetName = formReader.read('widget').objectValue.variable?.name;
-      final fieldWidget = widgetName != null
-          ? FieldWidget.values.byName(widgetName)
-          : FieldWidget.auto;
-
-      final isEnum = field.type.element is EnumElement;
-      final customForm = _readCustomWidget(
-        formReader.peek('builder'),
-        field,
-        element,
-        'FormOptions.builder',
-        required: const {'initialValue', 'onChanged', 'label'},
-        optional: const {'key', 'validator'},
-      );
-      final customDisplay = _readCustomWidget(
-        reader.peek('displayBuilder'),
-        field,
-        element,
-        'Field.displayBuilder',
-        required: const {'value'},
-        optional: const {'key'},
-      );
-
-      fields.add(
-        FieldManifest(
-          name: field.name!,
-          label: label,
-          isParent: isParent,
-          dartType: _plainType(field.type)!,
-          validators: validators,
-          fieldWidget: fieldWidget,
-          customForm: customForm,
-          customDisplay: customDisplay,
-          isEnum: isEnum,
-          isNullable:
-              field.type.nullabilitySuffix == NullabilitySuffix.question,
-          places: places,
-          readOnly: reader.peek('readOnly')?.boolValue ?? false,
-          formModes: _readFormModes(formReader),
-          // peek: tolerate older annotation sources without these flags.
-          searchable: reader.peek('searchable')?.boolValue ?? false,
-          sortable: reader.peek('sortable')?.boolValue ?? false,
-          jsonName: _readJsonName(field, fieldRename),
-        ),
-      );
+      fields.add(_readField(field, annotation, element, fieldRename,
+          isParent: isParent));
     }
 
     return EntityManifest(
@@ -678,6 +622,101 @@ class EntityManifest {
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
+
+  /// Reads one `@Field` of [element] (an entity or an operation's parameters
+  /// class) with the defaults and inference of every field.
+  static FieldManifest _readField(
+    FieldElement field,
+    DartObject annotation,
+    ClassElement element,
+    String fieldRename, {
+    required bool isParent,
+  }) {
+    final reader = ConstantReader(annotation);
+    final formReader = reader.read('form');
+    final labelReader = reader.read('label');
+    final label = labelReader.isNull
+        ? _fieldNameToLabel(field.name!)
+        : labelReader.stringValue;
+    final places = _readFieldPlaces(reader, element.name!, field.name!);
+    final validators = formReader
+        .read('validators')
+        .listValue
+        .map((obj) => _readValidator(obj, field))
+        .toList();
+
+    final widgetName = formReader.read('widget').objectValue.variable?.name;
+    final fieldWidget = widgetName != null
+        ? FieldWidget.values.byName(widgetName)
+        : FieldWidget.auto;
+
+    final isEnum = field.type.element is EnumElement;
+    final customForm = _readCustomWidget(
+      formReader.peek('builder'),
+      field,
+      element,
+      'FormOptions.builder',
+      required: const {'initialValue', 'onChanged', 'label'},
+      optional: const {'key', 'validator'},
+    );
+    final customDisplay = _readCustomWidget(
+      reader.peek('displayBuilder'),
+      field,
+      element,
+      'Field.displayBuilder',
+      required: const {'value'},
+      optional: const {'key'},
+    );
+
+    return FieldManifest(
+        name: field.name!,
+        label: label,
+        isParent: isParent,
+        dartType: _plainType(field.type)!,
+        validators: validators,
+        fieldWidget: fieldWidget,
+        customForm: customForm,
+        customDisplay: customDisplay,
+        isEnum: isEnum,
+        isNullable:
+            field.type.nullabilitySuffix == NullabilitySuffix.question,
+        places: places,
+        readOnly: reader.peek('readOnly')?.boolValue ?? false,
+        formModes: _readFormModes(formReader),
+        // peek: tolerate older annotation sources without these flags.
+        searchable: reader.peek('searchable')?.boolValue ?? false,
+        sortable: reader.peek('sortable')?.boolValue ?? false,
+        jsonName: _readJsonName(field, fieldRename),
+    );
+  }
+
+  /// The form fields of an operation's parameters class (`@Update.parameters`):
+  /// its `@Field` fields, read like the fields of an entity.
+  static List<FieldManifest> readParameterFields(ClassElement element) {
+    final fieldRename = _readFieldRename(element);
+    return [
+      for (final field in element.fields)
+        if (!field.isStatic && !field.isSynthetic)
+          if (_fieldChecker.firstAnnotationOf(field) case final annotation?)
+            _readField(field, annotation, element, fieldRename,
+                isParent: false),
+    ];
+  }
+
+  /// The unnamed constructor of [element] as [ConstructorParam]s, or `null`.
+  static List<ConstructorParam>? readConstructorParams(ClassElement element) =>
+      element.unnamedConstructor?.formalParameters
+          .map((p) => ConstructorParam(
+                name: p.name!,
+                isNamed: p.isNamed,
+                isRequired: p.isRequiredNamed || p.isRequiredPositional,
+                isNullable:
+                    p.type.nullabilitySuffix == NullabilitySuffix.question,
+                hasDefault: p.hasDefaultValue,
+                typeName: _plainType(p.type)!,
+                isEnum: p.type.element is EnumElement,
+              ))
+          .toList();
 
   /// The identifier field of [cls]: the [@Id] field, otherwise a field `id`.
   static FieldElement? _findIdField(ClassElement cls) {

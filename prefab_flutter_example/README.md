@@ -62,6 +62,14 @@ on **Price** plus one for a field the form does not have, shown above the
 form). Open `/products/2/reviews/999` for the not-found state.
 See `test/server_errors_test.dart`.
 
+Named operations (PF-54): the menu of each product in the list has
+**Discontinue** (`@Update(path: 'discontinue', confirm: ...)`, runs after a
+confirmation; a second call shows the server's 409 problem in a snack bar) and
+**Discount** (`@Update(path: 'discount', parameters: DiscountParameters)`, opens
+`/products/:id/discount`, a form with a percent validator; the mock backend
+rejects more than 50 percent on an expensive product under the **Percent**
+field). See `test/named_operations_test.dart`.
+
 The generated files (`*.g.dart`, `*.prefab.dart`) are not committed.
 
 ## Test it

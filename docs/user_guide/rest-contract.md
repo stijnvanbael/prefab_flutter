@@ -11,6 +11,7 @@ The generated client expects this API, relative to the Dio base URL. Query param
 | `create(e)` | `POST /{path}` | the create fields (below) | entity |
 | `update(e)` | `PUT /{path}/{e.id}` | the entity without read-only and create-only fields | entity |
 | `delete(e)` | `DELETE /{path}/{e.id}` | — | ignored |
+| `send(id)`, `schedule(id, parameters)` (a [named operation](annotations.md#named-operations-update-path-)) | `POST /{path}/{id}/send` | the JSON of the parameters, none without | ignored |
 
 ### Request bodies
 
@@ -28,6 +29,16 @@ full table.
 
 After `create`, `update` or `delete` the list notifier reloads the current page
 with the current search and sort.
+
+### Named operations
+
+An operation (`@Update(path: 'send')`) calls `{collection}/{id}/{path}` with
+the HTTP method `PrefabBackend.operationMethod` (`POST` in both presets) and
+the body `PrefabBackend.operationBody(parameters.toJson())` (the JSON as it is;
+`null` for an operation without parameters). Override `operationBody` to wrap
+the parameters, or pass another `operationMethod` (for example `'PUT'`).
+Errors use the [Problem Details handling](#server-validation-errors) of every
+other request.
 
 ### Search, sorting and pagination
 

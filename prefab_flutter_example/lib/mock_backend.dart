@@ -60,6 +60,12 @@ class MockBackendAdapter implements HttpClientAdapter {
     // Resolve to a table key and optional id. Paths alternate collection and
     // id segments: /products/1/reviews/2/replies/3.
     const collections = {'products', 'reviews', 'replies'};
+    // Named operations (PF-54): POST /products/{id}/{operation}.
+    if (parts.length == 3 &&
+        parts[0] == 'products' &&
+        !collections.contains(parts[2])) {
+      return _operation(parts[1], parts[2], body);
+    }
     if (parts.isEmpty ||
         [for (var i = 0; i < parts.length; i += 2) parts[i]]
             .any((c) => !collections.contains(c)) ||
@@ -122,6 +128,44 @@ class MockBackendAdapter implements HttpClientAdapter {
         return _json(204, {});
     }
     return _json(405, {});
+  }
+
+  /// `POST /products/{id}/discontinue` takes the product out of stock;
+  /// `POST /products/{id}/discount` (body `{percent, reason}`) lowers the
+  /// price, up to 90 percent.
+  ResponseBody _operation(String id, String operation, Object? body) {
+    final row = _find(_tables['products']!, id);
+    if (row == null) return _json(404, {'detail': 'Product not found'});
+    switch (operation) {
+      case 'discontinue':
+        if (row['inStock'] == false) {
+          return _json(409, {
+            'title': 'Conflict',
+            'status': 409,
+            'detail': 'The product is already out of stock.',
+          });
+        }
+        row['inStock'] = false;
+        return _json(200, row);
+      case 'discount':
+        final percent = (body as Map)['percent'] as int;
+        if (percent > 50 && (row['price'] as num) > 100) {
+          return _json(422, {
+            'title': 'Invalid request',
+            'status': 422,
+            'detail': 'The discount is too high.',
+            'errors': [
+              {
+                'field': 'percent',
+                'message': 'Expensive products take at most 50 percent',
+              },
+            ],
+          });
+        }
+        row['price'] = (row['price'] as num) * (100 - percent) / 100;
+        return _json(200, row);
+    }
+    return _json(404, {});
   }
 
   /// Server-side validation of a product, answered as RFC 9457 Problem
