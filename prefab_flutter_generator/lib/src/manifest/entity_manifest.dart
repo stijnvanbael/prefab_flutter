@@ -243,14 +243,6 @@ class EntityManifest {
   List<FieldManifest> get visibleFields =>
       fields.where((f) => !f.hidden && !f.isParent).toList();
 
-  /// Visible fields that appear in the view named [viewName]; fields without
-  /// a `views` set appear in every view.
-  List<FieldManifest> fieldsForView(String viewName) =>
-      visibleFields.where((f) => f.inView(viewName)).toList();
-
-  /// Whether any field declares a `views` set.
-  bool get hasViews => fields.any((f) => f.views != null);
-
   /// All fields that should appear in the form screen (non-hidden, non-parent).
   List<FieldManifest> get formFields => visibleFields;
 
