@@ -35,7 +35,7 @@ class FormOptions {
 /// ```
 class Field {
   /// Human-readable label shown next to the field. Defaults to the field name
-  /// converted to title case when omitted.
+  /// converted to title case when omitted (`firstName` → `First Name`).
   final String? label;
 
   /// When `true` the field is excluded from both the form and detail screens.
