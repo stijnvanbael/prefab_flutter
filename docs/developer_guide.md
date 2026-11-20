@@ -92,10 +92,10 @@ list, or add the term to the record in the same pull request.
    imports and bodies. The emitter can skip artifacts by name
    (`LibraryEmitter.promoted`); the skipped artifact is replaced by an import
    and a re-export of the hand-written declaration. The promoted names come
-   from `@Promoted` annotations through the `prefab_promoted` builder
-   (`lib/src/promoted/`), which summarises `@Promoted` declarations of each
-   file in `.prefab_promoted.json`; `prefab_builder` reads them and checks that
-   every promoted name is a generated artifact of some file.
+   from `@Promoted` annotations through the `prefab_declarations` builder
+   (see "Declarations" below), which summarises the `@Promoted` declarations of
+   each file; `prefab_builder` reads them and checks that every promoted name
+   is a generated artifact of some file.
    `ArtifactGenerator` then formats the assembled library with `dart_style`
    (`lib/src/core/format.dart`), so fragments need not be indented exactly; the
    builders in `lib/builder.dart` switch `source_gen`'s own formatting off so
@@ -153,6 +153,19 @@ Say you want to generate `{Entity}Foo` classes.
    [user guide](user_guide.md) (generated files and classes) and the root
    `README.md` if the output changes.
 
+## Declarations
+
+Hand-written declarations (`@Promoted`, `@EntityAction`, `@EntityScreen`) are
+read from the unresolved syntax tree, so the scan does not depend on generated
+code. One builder, `prefab_declarations` (`DeclarationsBuilder`,
+`lib/src/core/declarations.dart`), parses each file once, runs the
+`DeclarationScanner`s that the feature modules register and writes one
+`<file>.prefab_declarations.json` (a JSON object with the entries of each
+scanner under its `key`; no file when nothing was found). `prefab_builder`
+requires `.prefab_declarations.json` and reads all summaries with
+`Declarations.read(buildStep)`, then `declarations.of(scanner)` gives the typed
+list of one kind.
+
 ## Adding a feature
 
 A feature is behaviour declared on the model (search, sort, create, ...). It
@@ -175,12 +188,20 @@ sort and pagination (`lib/src/features/list_query/`) are the reference module.
    ids of nested resources) goes in with `point.addLazy(name, () => Code(...))`:
    features run in no fixed order, and the function runs when the artifact is
    emitted.
-3. **Register it.** Add one line to `registeredFeatures` in
+3. **Declare what it scans for** (only for a feature with a new kind of
+   hand-written declaration). Write a `DeclarationScanner<T>` (`key`, `marker`
+   (a text the file must contain, usually the annotation name), `scan`,
+   `toJson`, `fromJson`), expose it as a `static const instance`, and return it
+   from `declarationScanners` in the feature. Read the declarations with
+   `declarations.of(MyScanner.instance)` where `ArtifactGenerator` assembles
+   the entities. `build.yaml` and `DeclarationsBuilder` stay unchanged. A
+   scanner that throws fails the build with its message.
+4. **Register it.** Add one line to `registeredFeatures` in
    `lib/src/features/features.dart`, kept alphabetical. The order has no
    meaning.
-4. **Test it.** One test file per feature (`test/<feature>_test.dart`), plus a
+5. **Test it.** One test file per feature (`test/<feature>_test.dart`), plus a
    snapshot fixture for new output (see "Snapshot tests").
-5. **Document it** in the user guide page of its topic.
+6. **Document it** in the user guide page of its topic.
 
 What a module may touch: its own directory, its own test file and
 documentation, and its one registry line. It reads annotation data from the

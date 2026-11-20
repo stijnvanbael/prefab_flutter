@@ -67,8 +67,8 @@ void main() {
     final reference = await _build({});
     final out = await _build({
       'a|${promoted.path}': promoted.content,
-      'a|lib/models/alpha_detail_screen.prefab_promoted.json':
-          '[{"name":"AlphaDetailScreen","uri":"package:a/models/alpha_detail_screen.dart"}]',
+      'a|lib/models/alpha_detail_screen.prefab_declarations.json':
+          '{"promoted":[{"name":"AlphaDetailScreen","uri":"package:a/models/alpha_detail_screen.dart"}]}',
     });
     expect(out, isNot(contains('class AlphaDetailScreen')));
     expect(out, contains("export 'package:a/models/alpha_detail_screen.dart' "

@@ -62,11 +62,13 @@ Future<String> _generate(String screenSource) async {
       ...prefabSources,
       'a|lib/site.dart': _entities,
       'a|lib/site_live.dart': screenSource,
-      'a|lib/site_live.prefab_screens.json': jsonEncode([
-        for (final s
-            in scanChildScreens(screenSource, 'package:a/site_live.dart'))
-          s.toJson(),
-      ]),
+      'a|lib/site_live.prefab_declarations.json': jsonEncode({
+        'screens': [
+          for (final s
+              in scanChildScreens(screenSource, 'package:a/site_live.dart'))
+            s.toJson(),
+        ],
+      }),
     },
     generateFor: {'a|lib/site.dart'},
     outputs: {
@@ -110,14 +112,14 @@ class NotAScreen {}
   group('prefabScreensBuilder', () {
     test('PF-45 writes a summary only for files with @EntityScreen', () async {
       await testBuilder(
-        prefabScreensBuilder(BuilderOptions.empty),
+        prefabDeclarationsBuilder(BuilderOptions.empty),
         {
           'a|lib/with.dart': _screen(
               "@EntityScreen(Site, path: 'live', title: 'Live')", _goodBody),
           'a|lib/without.dart': 'class X {}',
         },
         outputs: {
-          'a|lib/with.prefab_screens.json': decodedMatches(allOf(
+          'a|lib/with.prefab_declarations.json': decodedMatches(allOf(
               contains('"className":"SiteLive"'),
               contains('"title":"Live"'))),
         },
@@ -164,11 +166,13 @@ class NotAScreen {}
             ...prefabSources,
             'a|lib/site.dart': _entities,
             'a|lib/site_live.dart': screen,
-            'a|lib/site_live.prefab_screens.json': jsonEncode([
-              for (final s
-                  in scanChildScreens(screen, 'package:a/site_live.dart'))
-                s.toJson(),
-            ]),
+            'a|lib/site_live.prefab_declarations.json': jsonEncode({
+              'screens': [
+                for (final s
+                    in scanChildScreens(screen, 'package:a/site_live.dart'))
+                  s.toJson(),
+              ],
+            }),
           },
           generateFor: {'a|lib/site.dart'},
           outputs: {},

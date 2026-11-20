@@ -1,5 +1,6 @@
 import '../../core/artifact.dart';
 import '../../core/code.dart';
+import '../../core/declarations.dart';
 import '../../core/entity_context.dart';
 import '../../core/feature.dart';
 import '../../generators/detail_screen_generator.dart';
@@ -9,7 +10,7 @@ import 'action_scanner.dart';
 
 /// Hand-written actions on the generated screens (`@EntityAction`).
 ///
-/// The functions are found by the `prefab_actions` builder (a summary per
+/// The functions are found by the `prefab_declarations` builder (a summary per
 /// file, like `@Promoted`) and arrive in [EntityContext.actions]. The feature
 /// adds them to the detail screen (`appBarActions`), the list screen
 /// (`appBarActions`) and each list item (`itemActions`), all at order 50.
@@ -24,6 +25,10 @@ class ActionsFeature extends Feature {
 
   @override
   String get name => _name;
+
+  @override
+  List<DeclarationScanner<Object>> get declarationScanners =>
+      const [ActionsScanner.instance];
 
   @override
   void contribute(EntityContext entity, ArtifactSet artifacts) {

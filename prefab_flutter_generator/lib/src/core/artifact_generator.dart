@@ -5,6 +5,7 @@ import 'package:source_gen/source_gen.dart';
 import '../features/actions/action_scanner.dart';
 import '../features/entity_screens/child_screen.dart';
 import 'artifact.dart';
+import 'declarations.dart';
 import 'entity_context.dart';
 import 'entity_reference.dart';
 import 'feature.dart';
@@ -39,9 +40,10 @@ class ArtifactGenerator extends Generator {
   @override
   Future<String> generate(LibraryReader library, BuildStep buildStep) async {
     final sourceFileName = buildStep.inputId.path.split('/').last;
-    final allActions = await readActions(buildStep);
+    final declarations = await Declarations.read(buildStep);
+    final allActions = declarations.of(ActionsScanner.instance);
     final self = buildStep.inputId.uri.toString();
-    final childScreens = await readChildScreens(buildStep);
+    final childScreens = declarations.of(ChildScreensScanner.instance);
     final own = EntityContext.entityNames(library);
     Future<Map<String, Set<String>>>? libraries;
     Future<Map<String, Set<String>>> entityLibraries() => libraries ??=
@@ -75,7 +77,7 @@ class ArtifactGenerator extends Generator {
     final entities = EntityContext.readAll(library, sourceFileName, actions: [
       for (final a in actions) a.uri == self ? a.inSameLibrary() : a,
     ], childScreens: screens);
-    final promoted = await readPromoted(buildStep);
+    final promoted = declarations.of(PromotedScanner.instance);
     await _checkChildScreens(entities, childScreens, buildStep);
     if (entities.isEmpty) return '';
     final emitter = LibraryEmitter(

@@ -74,7 +74,7 @@ class C {}
   group('prefabPromotedBuilder', () {
     test('writes a summary for a file with @Promoted', () async {
       await testBuilder(
-        prefabPromotedBuilder(BuilderOptions.empty),
+        prefabDeclarationsBuilder(BuilderOptions.empty),
         {
           'a|lib/screens/x.dart': '''
 @Promoted()
@@ -82,8 +82,8 @@ class AlphaDetailScreen {}
 '''
         },
         outputs: {
-          'a|lib/screens/x.prefab_promoted.json': decodedMatches(allOf(
-              contains('"name":"AlphaDetailScreen"'),
+          'a|lib/screens/x.prefab_declarations.json': decodedMatches(allOf(
+              contains('"promoted":[{"name":"AlphaDetailScreen"'),
               contains('"uri":"package:a/screens/x.dart"'),
               contains('"shape":{"kind":"class"'))),
         },
@@ -92,7 +92,7 @@ class AlphaDetailScreen {}
 
     test('writes nothing for a file without @Promoted', () async {
       await testBuilder(
-        prefabPromotedBuilder(BuilderOptions.empty),
+        prefabDeclarationsBuilder(BuilderOptions.empty),
         {'a|lib/x.dart': 'class AlphaDetailScreen {}'},
         outputs: {},
       );
@@ -103,8 +103,8 @@ class AlphaDetailScreen {}
     test('skips the artifact, imports and re-exports the declaration',
         () async {
       final out = await _generate({
-        'a|lib/screens/s.prefab_promoted.json':
-            '[{"name":"AlphaDetailScreen","uri":"package:a/screens/s.dart"}]',
+        'a|lib/screens/s.prefab_declarations.json':
+            '{"promoted":[{"name":"AlphaDetailScreen","uri":"package:a/screens/s.dart"}]}',
       });
       expect(out, isNot(contains('class AlphaDetailScreen')));
       expect(out, contains('class AlphaListScreen'));
@@ -115,8 +115,8 @@ class AlphaDetailScreen {}
 
     test('fails with the closest artifact name for an unknown name', () async {
       await _generate({
-        'a|lib/s.prefab_promoted.json':
-            '[{"name":"AlphaDetailScren","uri":"package:a/s.dart"}]',
+        'a|lib/s.prefab_declarations.json':
+            '{"promoted":[{"name":"AlphaDetailScren","uri":"package:a/s.dart"}]}',
       }, expectOutput: false);
       expect(_severe.join('\n'), contains('did you mean AlphaDetailScreen?'));
     });
@@ -126,8 +126,8 @@ class AlphaDetailScreen {}
         'a|lib/beta.dart': _entity
             .replaceAll('Alpha', 'Beta')
             .replaceAll('alphas', 'betas'),
-        'a|lib/s.prefab_promoted.json':
-            '[{"name":"BetaDetailScreen","uri":"package:a/s.dart"}]',
+        'a|lib/s.prefab_declarations.json':
+            '{"promoted":[{"name":"BetaDetailScreen","uri":"package:a/s.dart"}]}',
       });
       expect(out, contains('class AlphaDetailScreen'));
       expect(out, isNot(contains('BetaDetailScreen')));

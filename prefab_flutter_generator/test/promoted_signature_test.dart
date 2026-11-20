@@ -33,10 +33,10 @@ $extra
 Future<String> _severe(String source, {String extra = ''}) async {
   final summary = <String>[];
   await testBuilder(
-    prefabPromotedBuilder(BuilderOptions.empty),
+    prefabDeclarationsBuilder(BuilderOptions.empty),
     {'a|lib/p.dart': '@Promoted()\n$source'},
     outputs: {
-      'a|lib/p.prefab_promoted.json':
+      'a|lib/p.prefab_declarations.json':
           decodedMatches(predicate<String>((s) {
         summary.add(s);
         return true;
@@ -49,7 +49,7 @@ Future<String> _severe(String source, {String extra = ''}) async {
     {
       ...prefabSources,
       'a|lib/alpha.dart': _entity(extra),
-      'a|lib/p.prefab_promoted.json': summary.single,
+      'a|lib/p.prefab_declarations.json': summary.single,
     },
     generateFor: {'a|lib/alpha.dart'},
     onLog: (r) {
@@ -173,9 +173,9 @@ class A { const A({super.key, required this.id}); final int id; }''');
       final sources = {
         ...prefabSources,
         'a|lib/$fixture.dart': source,
-        'a|lib/$fixture.prefab_screens.json': File(
-                'test/snapshots/fixtures/$fixture.prefab_screens.json')
-            .let((f) => f.existsSync() ? f.readAsStringSync() : '[]'),
+        'a|lib/$fixture.prefab_declarations.json': File(
+                'test/snapshots/fixtures/$fixture.prefab_declarations.json')
+            .let((f) => f.existsSync() ? f.readAsStringSync() : '{}'),
       };
       String? generated;
       await testBuilder(
@@ -201,10 +201,12 @@ class A { const A({super.key, required this.id}); final int id; }''');
         prefabBuilder(BuilderOptions.empty),
         {
           ...sources,
-          'a|lib/p.prefab_promoted.json': jsonEncode([
-            for (final (name, shape) in found)
-              {'name': name, 'uri': 'package:a/p.dart', 'shape': shape},
-          ]),
+          'a|lib/p.prefab_declarations.json': jsonEncode({
+            'promoted': [
+              for (final (name, shape) in found)
+                {'name': name, 'uri': 'package:a/p.dart', 'shape': shape},
+            ],
+          }),
         },
         generateFor: {'a|lib/$fixture.dart'},
         onLog: (r) {

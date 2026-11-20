@@ -10,6 +10,7 @@ import 'list_query/list_query_feature.dart';
 import 'nested_resources/nested_resources_feature.dart';
 import 'nullable_fields/nullable_fields_feature.dart';
 import 'places/places_feature.dart';
+import 'promoted/promoted_feature.dart';
 import 'update/update_feature.dart';
 import 'validators/validators_feature.dart';
 
@@ -28,6 +29,7 @@ const registeredFeatures = <Feature>[
   NestedResourcesFeature(),
   NullableFieldsFeature(),
   PlacesFeature(),
+  PromotedFeature(),
   UpdateFeature(),
   ValidatorsFeature(),
 ];

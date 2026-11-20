@@ -51,7 +51,7 @@ Future<String> _generate(Map<String, String> extra,
 }
 
 String _json(List<Map<String, Object?>> actions) =>
-    '[${_summary(actions)}]';
+    '{"actions":[${_summary(actions)}]}';
 
 const _header = '''
 import 'package:prefab_flutter/prefab_flutter.dart';
@@ -145,7 +145,7 @@ void a(BuildContext context, WidgetRef ref, Product product) {}
   group('prefabActionsBuilder', () {
     test('PF-44 writes a summary only for files with @EntityAction', () async {
       await testBuilder(
-        prefabActionsBuilder(BuilderOptions.empty),
+        prefabDeclarationsBuilder(BuilderOptions.empty),
         {
           'a|lib/x.dart': '''
 @EntityAction(Alpha, label: 'Go')
@@ -154,7 +154,7 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
           'a|lib/y.dart': 'void other() {}',
         },
         outputs: {
-          'a|lib/x.prefab_actions.json': decodedMatches(allOf(
+          'a|lib/x.prefab_declarations.json': decodedMatches(allOf(
               contains('"name":"go"'), contains('"uri":"package:a/x.dart"'))),
         },
       );
@@ -165,7 +165,7 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
     test('PF-44 AC#1/#2 - detail: two icon buttons, the rest in a menu',
         () async {
       final out = await _generate({
-        'a|lib/actions.prefab_actions.json': _json([
+        'a|lib/actions.prefab_declarations.json': _json([
           {'name': 'zeta', 'label': 'Zeta', 'icon': 'copy', 'places': ['detail']},
           {'name': 'beta', 'label': 'Beta', 'places': ['detail']},
           {'name': 'alpha', 'label': 'Alpha', 'places': ['detail']},
@@ -192,7 +192,7 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
 
     test('PF-44 AC#1/#3 - list AppBar and item menu', () async {
       final out = await _generate({
-        'a|lib/actions.prefab_actions.json': _json([
+        'a|lib/actions.prefab_declarations.json': _json([
           {'name': 'exportAlphas', 'label': "Export 'all'", 'icon': 'download', 'places': ['list']},
           {'name': 'duplicateAlpha', 'label': 'Duplicate', 'icon': 'copy', 'places': ['item']},
         ]),
@@ -209,7 +209,7 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
 
     test('PF-44 - an action of another entity is not contributed', () async {
       final out = await _generate({
-        'a|lib/actions.prefab_actions.json': _json([
+        'a|lib/actions.prefab_declarations.json': _json([
           {'name': 'other', 'entity': 'Beta', 'label': 'X', 'places': ['detail']},
         ]),
         'a|lib/beta.dart':
@@ -221,7 +221,7 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
     test('PF-44 - an action in the entity library is not imported again',
         () async {
       final out = await _generate({
-        'a|lib/alpha.prefab_actions.json': _json([
+        'a|lib/alpha.prefab_declarations.json': _json([
           {'name': 'dup', 'label': 'Dup', 'places': ['detail']},
         ]).replaceAll('package:a/actions.dart', 'package:a/alpha.dart'),
       });
@@ -232,12 +232,12 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
     test('PF-44 AC#4 - promoted screens are left alone',
         () async {
       final out = await _generate({
-        'a|lib/actions.prefab_actions.json': _json([
+        'a|lib/actions.prefab_declarations.json': _json([
           {'name': 'dup', 'label': 'Dup', 'places': ['detail', 'item']},
         ]),
-        'a|lib/s.prefab_promoted.json':
-            '[{"name":"AlphaDetailScreen","uri":"package:a/s.dart"},'
-                '{"name":"AlphaListScreen","uri":"package:a/s.dart"}]',
+        'a|lib/s.prefab_declarations.json':
+            '{"promoted":[{"name":"AlphaDetailScreen","uri":"package:a/s.dart"},'
+                '{"name":"AlphaListScreen","uri":"package:a/s.dart"}]}',
       });
       expect(out, isNot(contains('dup(')));
       expect(out, isNot(contains('package:a/actions.dart')));
@@ -252,7 +252,7 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
           {
             ...prefabSources,
             'a|lib/alpha.dart': _entity,
-            'a|lib/actions.prefab_actions.json': _json([
+            'a|lib/actions.prefab_declarations.json': _json([
               {
                 'name': 'dup',
                 'entity': 'Alpa',

@@ -89,6 +89,6 @@ entity that is not an `@Entity` class (with a "did you mean" hint). Optional
 parameters such as `super.key` are fine.
 
 The declarations are found without resolving generated code, through a
-`prefab_screens` builder that writes a small `.prefab_screens.json` next to
-each file with an `@EntityScreen` (like `@Promoted`, see [Promoting generated
+`prefab_declarations` builder that writes a small `.prefab_declarations.json`
+next to each file with an `@EntityScreen` (like `@Promoted`, see [Promoting generated
 code](promoting.md)).

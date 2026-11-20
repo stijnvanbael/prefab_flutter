@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:build/build.dart';
-import 'package:glob/glob.dart';
 import 'package:source_gen/source_gen.dart';
 
+import '../../core/declarations.dart';
 import '../../core/entity_reference.dart';
 
 /// The places an action can appear in: the values of `Place` of
@@ -13,7 +10,7 @@ import '../../core/entity_reference.dart';
 const actionPlaces = ['detail', 'list', 'item'];
 
 /// A hand-written function annotated with `@EntityAction`, as summarised by
-/// the `prefab_actions` builder.
+/// the `prefab_declarations` builder.
 class ActionDeclaration {
   const ActionDeclaration({
     required this.name,
@@ -291,52 +288,31 @@ List<String>? _places(Expression e) {
   return places;
 }
 
-const actionsExtension = '.prefab_actions.json';
+/// Reads the `@EntityAction` functions.
+class ActionsScanner extends DeclarationScanner<ActionDeclaration> {
+  const ActionsScanner();
 
-/// Writes `<file>.prefab_actions.json` for every file with `@EntityAction`
-/// functions; files without any get no output, so editing them changes no
-/// summary.
-class ActionsBuilder implements Builder {
-  @override
-  Map<String, List<String>> get buildExtensions => const {
-        '.dart': [actionsExtension],
-      };
+  static const instance = ActionsScanner();
 
   @override
-  Future<void> build(BuildStep buildStep) async {
-    final id = buildStep.inputId;
-    if (id.path.endsWith('.prefab.dart') || id.path.endsWith('.g.dart')) {
-      return;
-    }
-    final source = await buildStep.readAsString(id);
-    if (!source.contains('EntityAction')) return;
-    final List<ActionDeclaration> actions;
+  String get key => 'actions';
+
+  @override
+  String get marker => 'EntityAction';
+
+  @override
+  List<ActionDeclaration> scan(String source, String uri) {
     try {
-      actions = scanActions(source, id.uri.toString());
+      return scanActions(source, uri);
     } on ActionException catch (e) {
       throw InvalidGenerationSourceError(e.message);
     }
-    if (actions.isEmpty) return;
-    await buildStep.writeAsString(
-      id.changeExtension(actionsExtension),
-      jsonEncode([for (final a in actions) a.toJson()]),
-    );
   }
-}
 
-/// Reads the summaries of all `@EntityAction` functions of the package, in
-/// file path order, then declaration order.
-Future<List<ActionDeclaration>> readActions(BuildStep buildStep) async {
-  final result = <ActionDeclaration>[];
-  final ids = await buildStep
-      .findAssets(Glob('lib/**$actionsExtension'))
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
-  for (final id in ids) {
-    final json = jsonDecode(await buildStep.readAsString(id)) as List;
-    for (final entry in json) {
-      result.add(ActionDeclaration.fromJson(entry as Map<String, dynamic>));
-    }
-  }
-  return result;
+  @override
+  Map<String, Object?> toJson(ActionDeclaration d) => d.toJson();
+
+  @override
+  ActionDeclaration fromJson(Map<String, dynamic> json) =>
+      ActionDeclaration.fromJson(json);
 }

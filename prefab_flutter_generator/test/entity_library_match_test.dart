@@ -58,10 +58,12 @@ Future<Map<String, String>> _generate(String declarations,
       'a|lib/one/site.dart': _entity('sites'),
       'a|lib/two/site.dart': _entity('locations'),
       'a|lib/declarations.dart': declarations,
-      'a|lib/declarations.prefab_actions.json': jsonEncode(
-          [for (final a in scanActions(declarations, uri)) a.toJson()]),
-      'a|lib/declarations.prefab_screens.json': jsonEncode(
-          [for (final s in scanChildScreens(declarations, uri)) s.toJson()]),
+      'a|lib/declarations.prefab_declarations.json': jsonEncode({
+        'actions': [for (final a in scanActions(declarations, uri)) a.toJson()],
+        'screens': [
+          for (final s in scanChildScreens(declarations, uri)) s.toJson()
+        ],
+      }),
       ...extra,
     },
     generateFor: {'a|lib/one/site.dart', 'a|lib/two/site.dart'},
@@ -131,12 +133,14 @@ void main() {
           'a|lib/barrel.dart': "export 'one/site.dart';",
           'a|lib/declarations.dart':
               _declarations("import 'barrel.dart';", 'Site'),
-          'a|lib/declarations.prefab_actions.json': jsonEncode([
-            for (final a in scanActions(
-                _declarations("import 'barrel.dart';", 'Site'),
-                'package:a/declarations.dart'))
-              a.toJson()
-          ]),
+          'a|lib/declarations.prefab_declarations.json': jsonEncode({
+            'actions': [
+              for (final a in scanActions(
+                  _declarations("import 'barrel.dart';", 'Site'),
+                  'package:a/declarations.dart'))
+                a.toJson()
+            ],
+          }),
         },
         generateFor: {'a|lib/one/site.dart'},
         outputs: {

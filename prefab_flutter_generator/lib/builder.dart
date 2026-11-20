@@ -9,9 +9,7 @@ import 'src/generators/list_screen_generator.dart';
 import 'src/generators/prefab_generator.dart';
 import 'src/generators/provider_generator.dart';
 import 'src/generators/routes_generator.dart';
-import 'src/features/actions/action_scanner.dart';
-import 'src/features/entity_screens/child_screen.dart';
-import 'src/promoted/promoted_scanner.dart';
+import 'src/core/declarations.dart';
 
 /// The generators format their own output (`ArtifactGenerator`, with a pinned
 /// `dart_style`), so the builder must not format it a second time.
@@ -71,11 +69,8 @@ Builder prefabBuilder(BuilderOptions options) => LibraryBuilder(
       formatOutput: _alreadyFormatted,
     );
 
-/// Summarises the `@Promoted` declarations of a file for [prefabBuilder].
-Builder prefabPromotedBuilder(BuilderOptions options) => PromotedBuilder();
-
-/// Summarises the `@EntityAction` functions of a file for [prefabBuilder].
-Builder prefabActionsBuilder(BuilderOptions options) => ActionsBuilder();
-
-/// Summarises the `@EntityScreen` declarations of a file for [prefabBuilder].
-Builder prefabScreensBuilder(BuilderOptions options) => ChildScreensBuilder();
+/// Summarises the declarations of a file (`@Promoted`, `@EntityAction`,
+/// `@EntityScreen`, ...) for [prefabBuilder], in one `.prefab_declarations.json`.
+/// The scanners are registered by the feature modules.
+Builder prefabDeclarationsBuilder(BuilderOptions options) =>
+    DeclarationsBuilder();

@@ -1,10 +1,9 @@
-import 'dart:convert';
-
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 
+import '../../core/declarations.dart';
 import '../../core/entity_reference.dart';
 
 /// A parameter of the unnamed constructor of a hand-written screen.
@@ -199,47 +198,27 @@ List<String> scanEntityNames(String source) {
   ];
 }
 
-const childScreensExtension = '.prefab_screens.json';
+/// Reads the `@EntityScreen` classes.
+class ChildScreensScanner extends DeclarationScanner<ChildScreen> {
+  const ChildScreensScanner();
 
-/// Writes `<file>.prefab_screens.json` for every file with `@EntityScreen`
-/// declarations; other files get no output.
-class ChildScreensBuilder implements Builder {
-  @override
-  Map<String, List<String>> get buildExtensions => const {
-        '.dart': [childScreensExtension],
-      };
+  static const instance = ChildScreensScanner();
 
   @override
-  Future<void> build(BuildStep buildStep) async {
-    final id = buildStep.inputId;
-    if (id.path.endsWith('.prefab.dart') || id.path.endsWith('.g.dart')) {
-      return;
-    }
-    final source = await buildStep.readAsString(id);
-    if (!source.contains('EntityScreen')) return;
-    final screens = scanChildScreens(source, id.uri.toString());
-    if (screens.isEmpty) return;
-    await buildStep.writeAsString(
-      id.changeExtension(childScreensExtension),
-      jsonEncode([for (final s in screens) s.toJson()]),
-    );
-  }
-}
+  String get key => 'screens';
 
-/// Reads the summaries of all `@EntityScreen` declarations of the package,
-/// ordered by library and class name.
-Future<List<ChildScreen>> readChildScreens(BuildStep buildStep) async {
-  final result = <ChildScreen>[];
-  final ids = await buildStep
-      .findAssets(Glob('lib/**$childScreensExtension'))
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
-  for (final id in ids) {
-    for (final entry in jsonDecode(await buildStep.readAsString(id)) as List) {
-      result.add(ChildScreen.fromJson(entry as Map<String, dynamic>));
-    }
-  }
-  return result;
+  @override
+  String get marker => 'EntityScreen';
+
+  @override
+  List<ChildScreen> scan(String source, String uri) =>
+      scanChildScreens(source, uri);
+
+  @override
+  Map<String, Object?> toJson(ChildScreen s) => s.toJson();
+
+  @override
+  ChildScreen fromJson(Map<String, dynamic> json) => ChildScreen.fromJson(json);
 }
 
 /// The names of the `@Entity` classes in the other libraries of the package.
