@@ -7,6 +7,7 @@ import '../core/family_key.dart';
 import '../core/field_registries.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
+import '../manifest/field_manifest.dart';
 import '../features/features.dart';
 
 /// Generates a `{Entity}ListScreen` [ConsumerWidget] for every class annotated
@@ -46,6 +47,10 @@ class ListScreenArtifact extends Artifact {
   /// of type `PopupMenuEntry<void>` separated by commas, written with the
   /// item in the local variable named [itemName]. Orders in use: 50 actions.
   final itemActions = ExtensionPoint('listScreen.itemActions');
+
+  /// Fields shown in the list tile slots, in the order title, subtitle,
+  /// trailing (at most three are used). Orders in use: 10 views.
+  final itemTile = ValuePoint<FieldManifest>('listScreen.itemTile');
 
   /// Name of the local variable holding the list item in `itemBuilder`.
   String get itemName => entity.manifest.entityNameLower;
@@ -187,10 +192,7 @@ class ListScreenArtifact extends Artifact {
     buffer.writeln('          itemBuilder: (context, index) {');
     buffer.writeln('            final $entityLower = page.items[index];');
     buffer.writeln('            return ListTile(');
-    // Without any declared views only the first field is shown (title).
-    final slots = manifest.hasViews
-        ? manifest.fieldsForView('list').take(3).toList()
-        : manifest.visibleFields.take(1).toList();
+    final slots = itemTile.values;
     const slotNames = ['title', 'subtitle', 'trailing'];
     for (var i = 0; i < slots.length; i++) {
       final f = slots[i];

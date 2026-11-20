@@ -53,6 +53,9 @@ class DetailScreenArtifact extends Artifact {
   /// fields.
   final fieldValue = ValuePoint<FieldValue>('detailScreen.fieldValue');
 
+  /// Fields shown as tiles, in order. Orders in use: 10 views.
+  final detailFields = ValuePoint<FieldManifest>('detailScreen.detailFields');
+
   /// Tiles after the field tiles (indent 12): links to hand-written child
   /// screens. Orders in use: 10 entity screens.
   final afterFields = ExtensionPoint('detailScreen.afterFields');
@@ -195,9 +198,7 @@ class DetailScreenArtifact extends Artifact {
 
   void _writeBody(EntityManifest manifest, StringBuffer buffer) {
     final entityLower = manifest.entityNameLower;
-    final detailFields = manifest.fieldsForView('detail');
-    final visibleFields =
-        detailFields.isEmpty ? manifest.visibleFields : detailFields;
+    final visibleFields = detailFields.values;
 
     buffer.writeln('      body: ${entityLower}Async.when(');
     buffer.writeln('        data: ($entityLower) => ListView(');

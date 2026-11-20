@@ -1,7 +1,7 @@
 ---
 id: PF-64
 title: Migrate views into a feature module
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-11-20 10:00'
 labels: []
@@ -26,8 +26,14 @@ Expected to touch:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A views module live in `lib/src/features/` and the per-artifact generators no longer contain their code
-- [ ] #2 The snapshot tests pass without changes to the expected files
-- [ ] #3 The feature has its own test file; the developer guide and the registry (`features.dart`, alphabetical) are updated; changelog fragment added
-- [ ] #4 Annotation reading only this feature uses moves out of `entity_manifest.dart`, or the implementation notes say why it stays
+- [x] #1 A views module live in `lib/src/features/` and the per-artifact generators no longer contain their code
+- [x] #2 The snapshot tests pass without changes to the expected files
+- [x] #3 The feature has its own test file; the developer guide and the registry (`features.dart`, alphabetical) are updated; changelog fragment added
+- [x] #4 Annotation reading only this feature uses moves out of `entity_manifest.dart`, or the implementation notes say why it stays
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+`hasViews`, `fieldsForView` and the tile/detail field selection moved to the `ViewsManifest` extension in `features/views/`. `FieldManifest.views`/`inView` and the annotation reading of `views` stay in `lib/src/manifest/` because they are read with the other field flags (developer guide). Snapshots unchanged.
+<!-- SECTION:NOTES:END -->
