@@ -14,6 +14,9 @@ entities and an in-memory mock backend, so no server is needed.
   Its `@Version` field makes updates optimistically locked: an update of a stale
   version is answered with 409 and the edit screen offers to reload
   (`test/edit_conflict_test.dart`).
+  `Product` is also `@Streaming`: the mock backend serves `/products/stream` and
+  sends an event for every change, so the list and detail screens update live
+  (`test/streaming_test.dart`).
 - `lib/review.dart`: a nested `Review` entity (`@Parent(Product)`), served under
   `/products/:productId/reviews`, with a `numberInput` rating validated with
   `Validator.min` / `Validator.max`.

@@ -70,6 +70,10 @@ void main() {
     await _pump(tester, dio);
     expect(find.textContaining('Oops:'), findsOneWidget);
     expect(find.byWidgetPredicate((w) => w is Text && (w.data ?? '').startsWith('Error:')), findsNothing);
+    // The live product stream retries a failed connection with a timer;
+    // unmount the app so it is closed before the test ends.
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
   });
 
   testWidgets('the generated list screen renders items as cards',

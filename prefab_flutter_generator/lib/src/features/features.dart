@@ -13,6 +13,7 @@ import 'nullable_fields/nullable_fields_feature.dart';
 import 'operations/operations_feature.dart';
 import 'places/places_feature.dart';
 import 'promoted/promoted_feature.dart';
+import 'streaming/streaming_feature.dart';
 import 'update/update_feature.dart';
 import 'validators/validators_feature.dart';
 
@@ -34,6 +35,7 @@ const registeredFeatures = <Feature>[
   OperationsFeature(),
   PlacesFeature(),
   PromotedFeature(),
+  StreamingFeature(),
   UpdateFeature(),
   ValidatorsFeature(),
 ];

@@ -29,6 +29,7 @@ class DiscountParameters {
 @Create()
 @Update()
 @Delete()
+@Streaming()
 // Named operations (PF-54): `POST /products/{id}/discontinue` and
 // `POST /products/{id}/discount`, in the menu of each list item. The first has
 // no parameters and runs after a confirmation, the second opens a form.

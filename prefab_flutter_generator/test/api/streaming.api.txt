@@ -1,0 +1,82 @@
+class DeviceApiClient
+  DeviceApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Device>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Device> getById(int id);
+  Future<void> delete(Device device);
+  String eventsUrl();
+class SiteApiClient
+  SiteApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Site>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Site> getById(int id);
+  Future<void> delete(Site site);
+class MeasurementApiClient
+  MeasurementApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Measurement>> list( {required int siteId, String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Measurement> getById(int id, {required int siteId});
+  Future<void> delete(Measurement measurement, {required int siteId});
+  String eventsUrl({required int siteId});
+final deviceDetailProvider = StreamProvider.autoDispose.family<Device, int>;
+final devicesProvider = AsyncNotifierProvider.autoDispose<DevicesNotifier, PrefabPage<Device>>;
+class DevicesNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Device>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Device>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> delete(Device device);
+  Future<void> reload();
+final deviceApiClientProvider = Provider.autoDispose<DeviceApiClient>;
+final siteDetailProvider = FutureProvider.autoDispose.family<Site, int>;
+final sitesProvider = AsyncNotifierProvider.autoDispose<SitesNotifier, PrefabPage<Site>>;
+class SitesNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Site>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Site>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+final siteApiClientProvider = Provider.autoDispose<SiteApiClient>;
+final measurementDetailProvider = StreamProvider.autoDispose.family<Measurement, (int, int)>;
+final measurementsProvider = AsyncNotifierProvider.autoDispose.family<MeasurementsNotifier, PrefabPage<Measurement>, int>;
+class MeasurementsNotifier extends AutoDisposeFamilyAsyncNotifier<PrefabPage<Measurement>, int>
+  int get siteId;
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Measurement>> build(int arg);
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> reload();
+final measurementApiClientProvider = Provider.autoDispose<MeasurementApiClient>;
+class DeviceDetailScreen extends ConsumerWidget
+  final int id;
+  const DeviceDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class SiteDetailScreen extends ConsumerWidget
+  final int id;
+  const SiteDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class MeasurementDetailScreen extends ConsumerWidget
+  final int id;
+  final int siteId;
+  const MeasurementDetailScreen( {super.key, required this.id, required this.siteId});
+  Widget build(BuildContext context, WidgetRef ref);
+class DeviceListScreen extends ConsumerWidget
+  const DeviceListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class SiteListScreen extends ConsumerWidget
+  const SiteListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class MeasurementListScreen extends ConsumerWidget
+  final int siteId;
+  const MeasurementListScreen({super.key, required this.siteId});
+  Widget build(BuildContext context, WidgetRef ref);
+List<RouteBase> get $streamingRoutes;

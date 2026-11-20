@@ -40,6 +40,7 @@ list or extend it in this record first.
 | **Id** | The field that identifies an entity. | `@Id` |
 | **Parent** | The entity another entity is nested under. | `@Parent(Entity)` |
 | **Operation** | A change the server performs on an entity: create, update, delete, or a named operation (`send`). Names as in Prefab. | `@Create`, `@Update`, `@Delete`, `@Update(path:)`; API client and notifier methods |
+| **Live update** | A change of an entity the backend pushes as a server-sent event (created, updated, deleted); the generated providers apply it. | `@Streaming`, `PrefabEvent`, `prefabEventsProvider` |
 | **Screen** | A full page. Generated: list screen, detail screen, create screen, edit screen. Hand-written: entity screen. | `{Entity}ListScreen`, `{Entity}DetailScreen`, `{Entity}CreateScreen`, `{Entity}EditScreen`, `@EntityScreen` |
 | **Place** | A part of the generated screens where a field or an action appears: `list` (the list screen's app bar), `item` (each item of the list), `detail` (the detail screen), `form` (the create and edit screens). | `Place`; the `on:` parameter |
 | **Action** | A hand-written function started from a generated screen. | `@EntityAction` |
@@ -53,7 +54,7 @@ list or extend it in this record first.
 
 1. **Mirror Prefab.** Where Prefab has an annotation for the same concept,
    use its name (`@Create`, `@Update`, `@Delete`, `@Parent`, `@Id`; later
-   `@Filter`, `@Version`, `@Streaming`, `@Autocomplete`). Never reuse a
+   `@Filter`, `@Version`, `@Autocomplete`). Never reuse a
    Prefab name with another meaning; this is why the marker is `@Entity`, not
    `@View` or `@Aggregate` (a model may mirror a Prefab view).
 2. **`@Entity<Thing>` attaches hand-written code to an entity.** It

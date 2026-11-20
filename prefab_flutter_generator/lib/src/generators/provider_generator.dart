@@ -109,8 +109,41 @@ class DetailProviderArtifact extends _ProviderArtifact {
   /// the detail provider is keyed on `(id, ids...)`.
   final familyKey = ValuePoint<FamilyId>('detailProvider.familyKey');
 
+  /// Replaces the whole provider declaration (column 0, single-valued). Use
+  /// [keyType], [argName], [idExpr] and [ancestorArgs] to write it. Orders in
+  /// use: 10 streaming.
+  final declaration =
+      ExtensionPoint('detailProvider.declaration', maxContributions: 1);
+
+  /// The family key type of the provider: the id type, or a record of the id
+  /// and the ancestor ids.
+  String get keyType {
+    final key = FamilyKey(familyKey.values);
+    return key.isEmpty ? manifest.idType : key.detailType(manifest.idType);
+  }
+
+  /// The name of the family argument of the provider callback.
+  String get argName => FamilyKey(familyKey.values).isEmpty ? 'id' : 'args';
+
+  /// The id of the entity inside the provider callback.
+  String get idExpr => FamilyKey(familyKey.values).isEmpty ? 'id' : r'args.$1';
+
+  /// The named ancestor arguments of API client calls, with a leading comma
+  /// (`, postId: args.$2`), or empty.
+  String get ancestorArgs {
+    final key = FamilyKey(familyKey.values);
+    if (key.isEmpty) return '';
+    return ', ${[
+      for (var i = 0; i < key.ids.length; i++)
+        '${key.ids[i].name}: args.\$${i + 2}',
+    ].join(', ')}';
+  }
+
   @override
   Code emit() {
+    if (!declaration.isEmpty) {
+      return _code(StringBuffer(declaration.render(0)), declaration.imports);
+    }
     final buffer = StringBuffer();
     _writeDetailProvider(buffer, FamilyKey(familyKey.values));
     return _code(buffer, const {});

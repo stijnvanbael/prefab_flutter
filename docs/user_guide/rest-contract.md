@@ -174,6 +174,62 @@ For anything the constructor parameters cannot express, subclass
 Error responses are parsed by `parseError`, see above; filters and
 autocomplete are described under [Filters](#filters).
 
+### Live updates (`@Streaming`)
+
+An entity annotated with [`@Streaming`](annotations.md#streaming-class) opens
+a server-sent events (SSE) stream next to its collection:
+
+| Request | `GET /{path}/stream` (path segment `PrefabBackend.streamPath`), `Accept: text/event-stream` |
+|---|---|
+| Event names | `created`, `updated`, `deleted` (`createdEvent`, `updatedEvent`, `deletedEvent`) |
+| Event data | the entity as JSON, on one `data:` line (or several). For `deleted` the JSON may contain only the id. Events with other names (heartbeats) and comments are ignored |
+
+```text
+event: updated
+data: {"id": 7, "name": "Heat pump", "state": "on"}
+
+event: deleted
+data: {"id": 7}
+```
+
+The stream is requested with the configured Dio (`prefabDioProvider`), so its
+base URL and authentication interceptors apply. `PrefabBackend` owns the
+format: pass other names to the constructor, or override `eventsUrl` and
+`parseEvent`.
+
+**Connection.** `PrefabEventSource` opens the connection when the first
+provider listens (`prefabEventsProvider(url)` shares one connection per URL)
+and closes it when the last one is gone. When the connection fails or ends it
+reconnects with exponential backoff (1 s, 2 s, 4 s, ... at most 30 s; a
+successful connection resets it). Events that happened while disconnected are
+not replayed (see [Known limitations](known-limitations.md)); use the
+list's Refresh or `reload()` to catch up.
+
+**What a list does with an event** (`applyPrefabEvent`):
+
+| Event | Item on the current page | Item not on the current page |
+|---|---|---|
+| `updated` | replaced | ignored |
+| `deleted` | removed, total lowered | ignored |
+| `created` | replaced (the client created it itself) | appended when the list is unpaged, or the current page is the last and has room, and no search or sort is active; otherwise **not inserted**: `PrefabPage.newItems` goes up and the list screen shows a "new items" banner whose Refresh button calls `reload()` |
+
+A search or sort is decided by the server (whether the new item matches, where
+it belongs), so with one active the client never inserts. Reloading, paging,
+searching and sorting load a fresh page and reset `newItems`.
+
+**Testing.** Override the stream with a fake:
+
+```dart
+final controller = StreamController<PrefabEvent>.broadcast();
+ProviderScope(
+  overrides: [
+    prefabEventsProvider.overrideWith((ref, url) => controller.stream),
+  ],
+  child: const MyApp(),
+);
+controller.add(const PrefabEvent(PrefabEventType.updated, {'id': 7, ...}));
+```
+
 ### Migrating from `PrefabListAdapter`
 
 `PrefabListAdapter` and `prefabListAdapterProvider` are deprecated and keep
