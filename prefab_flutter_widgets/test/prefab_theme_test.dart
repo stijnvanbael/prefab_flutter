@@ -62,8 +62,8 @@ void main() {
             title: const Text('Keyboard'),
             subtitle: const Text('49'),
             trailing: null,
-            actions: [
-              PopupMenuItem<void>(child: const Text('Send')),
+            actions: const [
+              PopupMenuItem<void>(child: Text('Send')),
             ],
             onTap: () => taps++,
           );
