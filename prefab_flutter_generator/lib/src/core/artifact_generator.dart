@@ -2,6 +2,7 @@ import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 import 'package:source_gen/source_gen.dart';
 
+import '../features/actions/action_scanner.dart';
 import 'entity_context.dart';
 import 'feature.dart';
 import '../promoted/promoted_scanner.dart';
@@ -28,7 +29,11 @@ class ArtifactGenerator extends Generator {
   @override
   Future<String> generate(LibraryReader library, BuildStep buildStep) async {
     final sourceFileName = buildStep.inputId.path.split('/').last;
-    final entities = EntityContext.readAll(library, sourceFileName);
+    final allActions = await readActions(buildStep);
+    final self = buildStep.inputId.uri.toString();
+    final entities = EntityContext.readAll(library, sourceFileName, actions: [
+      for (final a in allActions) a.uri == self ? a.inSameLibrary() : a,
+    ]);
     final promoted = await readPromoted(buildStep);
     if (entities.isEmpty) return '';
     final emitter = LibraryEmitter(
@@ -37,6 +42,7 @@ class ArtifactGenerator extends Generator {
       promoted: promoted,
     );
     await _checkPromoted(emitter, entities, promoted, buildStep);
+    await _checkActions(entities, allActions, buildStep);
     final source = emitter.emit(entities, header: banner(name));
     return formatGenerated(source, sourceFileName);
   }
@@ -79,6 +85,48 @@ class ArtifactGenerator extends Generator {
     throw InvalidGenerationSourceError(
       '@Promoted ${p.name} (${p.libraryUri}) is not a generated artifact'
       '${closest == null ? '' : '; did you mean $closest?'}',
+    );
+  }
+
+  /// Fails when an `@EntityAction` names a class that is not a `@View` entity
+  /// of the package. Entities of other libraries are looked up like in
+  /// [_checkPromoted], and only when this file does not have the entity.
+  Future<void> _checkActions(List<EntityContext> entities,
+      List<ActionDeclaration> actions, BuildStep buildStep) async {
+    if (actions.isEmpty) return;
+    final known = {for (final e in entities) e.manifest.entityName};
+    var unknown = [
+      for (final a in actions)
+        if (!known.contains(a.entity)) a,
+    ];
+    if (unknown.isEmpty) return;
+    final self = buildStep.inputId;
+    final ids = await buildStep.findAssets(Glob('lib/**.dart')).toList()
+      ..sort((a, b) => a.path.compareTo(b.path));
+    for (final id in ids) {
+      if (id == self ||
+          id.path.endsWith('.prefab.dart') ||
+          id.path.endsWith('.g.dart') ||
+          !await buildStep.resolver.isLibrary(id)) {
+        continue;
+      }
+      final other = await buildStep.resolver.libraryFor(id);
+      known.addAll([
+        for (final e in EntityContext.readAll(
+            LibraryReader(other), id.path.split('/').last))
+          e.manifest.entityName,
+      ]);
+    }
+    unknown = [
+      for (final a in unknown)
+        if (!known.contains(a.entity)) a,
+    ];
+    if (unknown.isEmpty) return;
+    final a = unknown.first;
+    final closest = closestName(a.entity, known);
+    throw InvalidGenerationSourceError(
+      '@EntityAction on ${a.name} (${a.uri}): ${a.entity} is not a @View '
+      'entity${closest == null ? '' : '; did you mean $closest?'}',
     );
   }
 

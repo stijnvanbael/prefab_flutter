@@ -186,7 +186,9 @@ Extension points that exist today (all contributions are at column 0):
 | Artifact | Point | Holds | Orders in use |
 |---|---|---|---|
 | list screen | `buildStatements` (indent 4) | `Code` | 10 list query |
-| list screen | `appBarActions`, `aboveList`, `belowList` (indent 10) | `Code` | 10 list query |
+| list screen | `appBarActions`, `aboveList`, `belowList` (indent 10) | `Code` | 10 list query (`appBarActions`), 50 actions |
+| list screen | `itemActions` (indent 14, `PopupMenuEntry<void>` expressions) | `Code` | 50 actions |
+| detail screen | `appBarActions` (indent 10, after Edit and Delete) | `Code` | 50 actions |
 | list screen, detail screen | `fieldValue` | `ValuePoint<FieldValue>` | 10 nullable fields |
 | list notifier | `state`, `onBuild`, `methods` (indent 2, 4, 2) | `Code` | 10 list query |
 | list notifier | `fetchArguments` | `ValuePoint<NamedArgument>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |

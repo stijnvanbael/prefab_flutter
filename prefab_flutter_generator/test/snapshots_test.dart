@@ -35,6 +35,7 @@ void main() {
       // A `<name>.prefab_promoted.json` fixture stands in for the summary of
       // hand-written `@Promoted` declarations.
       final summary = File(p.join(fixtures.path, '$name.prefab_promoted.json'));
+      final actions = File(p.join(fixtures.path, '$name.prefab_actions.json'));
       String? actual;
       await testBuilder(
         prefabBuilder(BuilderOptions.empty),
@@ -43,6 +44,8 @@ void main() {
           'a|lib/$name.dart': source,
           if (summary.existsSync())
             'a|lib/$name.prefab_promoted.json': summary.readAsStringSync(),
+          if (actions.existsSync())
+            'a|lib/$name.prefab_actions.json': actions.readAsStringSync(),
         },
         outputs: {
           'a|lib/$name.prefab.dart': decodedMatches(predicate<String>((s) {

@@ -19,5 +19,6 @@ For installation and a minimal example, see the [README](../README.md#quick-star
 9. [REST contract](user_guide/rest-contract.md)
 10. [Runtime widgets](user_guide/runtime-widgets.md)
 11. [Promoting generated code](user_guide/promoting.md)
-12. [Using generated code](user_guide/using-generated-code.md)
-13. [Known limitations](user_guide/known-limitations.md)
+12. [Actions](user_guide/actions.md)
+13. [Using generated code](user_guide/using-generated-code.md)
+14. [Known limitations](user_guide/known-limitations.md)

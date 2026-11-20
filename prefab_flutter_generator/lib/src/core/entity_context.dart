@@ -2,6 +2,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:prefab_flutter/prefab_flutter.dart';
 import 'package:source_gen/source_gen.dart';
 
+import '../features/actions/action_scanner.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
 import 'artifact.dart';
@@ -17,6 +18,7 @@ class EntityContext {
     required this.sourceFileName,
     required this.element,
     required this.libraryManifests,
+    this.actions = const [],
   });
 
   final EntityManifest manifest;
@@ -31,9 +33,14 @@ class EntityContext {
   /// order (for artifacts that span the library, such as the routes).
   final List<EntityManifest> libraryManifests;
 
+  /// The hand-written `@EntityAction` functions of this entity, in the order
+  /// they were found (see the `actions` feature).
+  final List<ActionDeclaration> actions;
+
   /// Reads every `@View` class of [library] in declaration order.
   static List<EntityContext> readAll(
-      LibraryReader library, String sourceFileName) {
+      LibraryReader library, String sourceFileName,
+      {List<ActionDeclaration> actions = const []}) {
     final annotated = library.annotatedWith(_viewChecker).toList();
     final classes = <(ClassElement, ConstantReader)>[];
     for (final a in annotated) {
@@ -59,6 +66,10 @@ class EntityContext {
           sourceFileName: sourceFileName,
           element: classes[i].$1,
           libraryManifests: manifests,
+          actions: [
+            for (final a in actions)
+              if (a.entity == manifests[i].entityName) a,
+          ],
         ),
     ];
   }

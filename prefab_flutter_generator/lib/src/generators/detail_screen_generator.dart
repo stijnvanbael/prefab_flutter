@@ -32,6 +32,14 @@ class DetailScreenArtifact extends Artifact {
 
   final EntityContext entity;
 
+  /// Widgets appended to the AppBar `actions`, after Edit and Delete
+  /// (indent 10). Orders in use: 50 actions.
+  final appBarActions = ExtensionPoint('detailScreen.appBarActions');
+
+  /// Name of the local variable holding the watched `AsyncValue` of the
+  /// entity.
+  String get asyncName => '${entity.manifest.entityNameLower}Async';
+
   /// How a field value is shown in its tile. Orders in use: 10 nullable
   /// fields.
   final fieldValue = ValuePoint<FieldValue>('detailScreen.fieldValue');
@@ -57,6 +65,7 @@ class DetailScreenArtifact extends Artifact {
       buffer.toString().trim(),
       imports: {
         ..._imports,
+        ...appBarActions.imports,
         entity.sourceFileName,
         ...ancestorImports([entity.manifest]),
       },
@@ -123,7 +132,9 @@ class DetailScreenArtifact extends Artifact {
 
   void _writeAppBarActions(
       EntityManifest manifest, EntityPaths paths, StringBuffer buffer) {
-    if (!manifest.hasUpdate && !manifest.hasDelete) return;
+    if (!manifest.hasUpdate && !manifest.hasDelete && appBarActions.isEmpty) {
+      return;
+    }
 
     final entityLower = manifest.entityNameLower;
     final listProviderArg = manifest.hasParent
@@ -167,6 +178,8 @@ class DetailScreenArtifact extends Artifact {
       buffer.writeln('                : null,');
       buffer.writeln('          ),');
     }
+
+    if (!appBarActions.isEmpty) buffer.writeln(appBarActions.render(10));
 
     buffer.writeln('        ],');
   }

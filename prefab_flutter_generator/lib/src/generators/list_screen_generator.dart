@@ -42,6 +42,14 @@ class ListScreenArtifact extends Artifact {
   /// Widgets in the body column below the list (indent 10). Orders: 10 paging.
   final belowList = ExtensionPoint('listScreen.belowList');
 
+  /// Entries of the trailing menu of every list item (indent 14): expressions
+  /// of type `PopupMenuEntry<void>` separated by commas, written with the
+  /// item in the local variable named [itemName]. Orders in use: 50 actions.
+  final itemActions = ExtensionPoint('listScreen.itemActions');
+
+  /// Name of the local variable holding the list item in `itemBuilder`.
+  String get itemName => entity.manifest.entityNameLower;
+
   /// How a field value is shown in a list tile. Orders in use: 10 nullable
   /// fields.
   final fieldValue = ValuePoint<FieldValue>('listScreen.fieldValue');
@@ -78,6 +86,7 @@ class ListScreenArtifact extends Artifact {
         ...appBarActions.imports,
         ...aboveList.imports,
         ...belowList.imports,
+        ...itemActions.imports,
         Libs.materialUi,
         Libs.riverpod,
         Libs.goRouter,
@@ -179,7 +188,24 @@ class ListScreenArtifact extends Artifact {
     for (var i = 0; i < slots.length; i++) {
       final f = slots[i];
       final value = fieldValueText(fieldValue, f, entityLower);
+      if (slotNames[i] == 'trailing' && !itemActions.isEmpty) continue;
       buffer.writeln('              ${slotNames[i]}: Text($value),');
+    }
+    if (!itemActions.isEmpty) {
+      final trailing = slots.length > 2
+          ? fieldValueText(fieldValue, slots[2], entityLower)
+          : null;
+      buffer.writeln('              trailing: Row(');
+      buffer.writeln('                mainAxisSize: MainAxisSize.min,');
+      buffer.writeln('                children: [');
+      if (trailing != null) buffer.writeln('                  Text($trailing),');
+      buffer.writeln('                  PopupMenuButton<void>(');
+      buffer.writeln('                    itemBuilder: (_) => [');
+      buffer.writeln(itemActions.render(14));
+      buffer.writeln('                    ],');
+      buffer.writeln('                  ),');
+      buffer.writeln('                ],');
+      buffer.writeln('              ),');
     }
     buffer.writeln("              onTap: () => context.push('$itemPath'),");
     buffer.writeln('            );');

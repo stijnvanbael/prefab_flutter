@@ -18,11 +18,14 @@ Apply these annotations to your Dart entity classes and run `build_runner` to ge
 | `@Field` | Marks a field for inclusion in generated form and detail screens |
 | `@Parent(Type)` | Marks a field as a reference to the parent entity `Type` (nested resource) |
 | `@Id` | Marks the entity's identifier field (defaults to a field named `id`) |
+| `@EntityAction(Type, label:)` | Adds a hand-written function as an action (detail AppBar, list AppBar or list item menu); see the user guide page "Actions" |
+| `@Promoted` | Replaces one generated artifact with hand-written code |
 
 ## Enums
 
 | Enum | Values |
 |---|---|
+| `ActionPlace` | `detail`, `list`, `item` (where an `@EntityAction` appears) |
 | `Validator` | `required`, `email`, `url`, `positive`, `nonNegative`, `min(n)`, `max(n)`, `minLength(n)`, `maxLength(n)`, `pattern(regex)` |
 | `FieldWidget` | `auto`, `multilineText`, `password`, `datePicker`, `timePicker`, `dateTimePicker`, `dropdown`, `toggle` |
 
