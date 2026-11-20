@@ -28,6 +28,7 @@ void main() {
       'name': 'Mouse',
       'price': 19.5,
       'inStock': true,
+      'createdAt': '2024-05-01T09:00:00.000',
     });
     await tester.pumpAndSettle();
     expect(find.text('Mouse'), findsOneWidget);
@@ -37,6 +38,7 @@ void main() {
       'name': 'Trackball',
       'price': 19.5,
       'inStock': true,
+      'createdAt': '2024-05-01T09:00:00.000',
     });
     await tester.pumpAndSettle();
     expect(find.text('Mouse'), findsNothing);
@@ -51,7 +53,11 @@ void main() {
   testWidgets('PF-56 a created product during a search shows the banner',
       (tester) async {
     final backend = await _pumpApp(tester);
-    await tester.enterText(find.byType(TextField), 'key');
+    await tester.enterText(
+        find.descendant(
+            of: find.byType(PrefabSearchBar),
+            matching: find.byType(TextField)),
+        'key');
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
     expect(find.byType(PrefabNewItemsBanner), findsNothing);
@@ -61,6 +67,7 @@ void main() {
       'name': 'Keycap',
       'price': 5.0,
       'inStock': true,
+      'createdAt': '2024-05-01T09:00:00.000',
     });
     await tester.pumpAndSettle();
     expect(find.byType(PrefabNewItemsBanner), findsOneWidget);
@@ -77,6 +84,7 @@ void main() {
       'name': 'Display',
       'price': 199.0,
       'inStock': true,
+      'createdAt': '2024-05-01T09:00:00.000',
       'category': 'electronics',
     });
     await tester.pumpAndSettle();

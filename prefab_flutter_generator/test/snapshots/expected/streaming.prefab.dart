@@ -511,8 +511,12 @@ class DeviceDetailScreen extends ConsumerWidget {
           ],
         ),
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+        error: (error, stackTrace) => ref
+                .read(prefabBackendProvider)
+                .parseError(error)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/devices'))
+            : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -543,8 +547,12 @@ class SiteDetailScreen extends ConsumerWidget {
           ],
         ),
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+        error: (error, stackTrace) => ref
+                .read(prefabBackendProvider)
+                .parseError(error)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/sites'))
+            : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -578,7 +586,10 @@ class MeasurementDetailScreen extends ConsumerWidget {
         ),
         loading: () => prefabTheme.loadingBuilder(context),
         error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+            ref.read(prefabBackendProvider).parseError(error).isNotFound
+                ? prefabTheme.notFoundBuilder(
+                    context, () => context.go('/sites/$siteId/measurements'))
+                : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
