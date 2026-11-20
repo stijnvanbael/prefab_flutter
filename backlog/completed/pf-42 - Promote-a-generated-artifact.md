@@ -41,4 +41,5 @@ Implemented as in decision-1. Deviations and notes:
 - Unknown-name detection runs in `prefab_builder`: names the file does not generate are looked up in the package's other `@View` libraries (resolved), so it costs extra resolution only when a promotion exists.
 - Signature checks with custom errors were not added; a wrong signature is a compile error at the generated call site (documented per kind in the user guide).
 - The `promote` command is not implemented; task PF-49.
+- Signature checks with build errors: task PF-70.
 <!-- SECTION:NOTES:END -->

@@ -35,6 +35,6 @@ The reference apps need this for quantities with units and time-range schedules 
 <!-- SECTION:NOTES:BEGIN -->
 - Annotation: `FormOptions.custom` and `Field.display` (type `Function?`, since `prefab_flutter` is pure Dart). The contract is `PrefabFieldBuilder<T>` / `PrefabDisplayBuilder<T>` in `prefab_flutter_widgets`.
 - Module `custom_field`: `CustomFormFieldEmitter` (claims fields through the new `FieldEmitter.claims` hook, listed first in `formFieldEmitters`) and `CustomFieldDisplay` (`FieldDisplay.widget`, used through `fieldValueWidget` by the detail screen and list tile). The reference is read and checked in the manifest (`CustomWidgetRef`).
-- Only `Validator.required` is supported with a custom widget; a required field needs a widget with a `validator` parameter. Parameter types are checked by Dart in the generated code, the generator checks parameter names.
+- Only `Validator.required` is supported with a custom widget; a required field needs a widget with a `validator` parameter. Parameter types are checked by Dart in the generated code, the generator checks parameter names. Other validators: task PF-69.
 - Example app: `Review.quality` with `RatingField` and `RatingStars`.
 <!-- SECTION:NOTES:END -->

@@ -77,4 +77,4 @@ An action is only added to a screen that is generated. If the detail or list
 screen is [promoted](promoting.md), its actions are skipped without a message;
 call the function from your own screen. The `promote` command does not copy
 actions into the promoted file (the screen then has no actions until you add
-them).
+them). Keeping actions on promotion is planned in PF-68.
