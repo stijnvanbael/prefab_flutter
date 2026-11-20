@@ -109,7 +109,7 @@ routes (a top-level getter or variable of type `List<RouteBase>`).
 
 | Artifact | Primary name (entity `Product`) | Signature to keep |
 |---|---|---|
-| API client | `ProductApiClient` | Constructor `(Dio, [PrefabListAdapter])`; `list`, `getById`, `create`, `update`, `delete` as generated (the ones the providers and screens use) |
+| API client | `ProductApiClient` | Constructor `(Dio, [PrefabBackend])`; `list`, `getById`, `create`, `update`, `delete` as generated (the ones the providers and screens use) |
 | API client provider | `productApiClientProvider` | `Provider<ProductApiClient>` |
 | Detail provider | `productDetailProvider` | `FutureProvider.autoDispose.family<Product, IdType>` keyed by the entity id |
 | List provider | `productsProvider` | `AsyncNotifierProvider<ProductsNotifier, PrefabPage<Product>>`; the notifier keeps the members the list screen uses (search, sort, paging) |

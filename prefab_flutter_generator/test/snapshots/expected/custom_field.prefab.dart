@@ -22,9 +22,9 @@ import 'dart:async';
 
 class AppThemeApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  AppThemeApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  AppThemeApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<AppTheme>> list(
       {String? search,
@@ -51,7 +51,7 @@ class AppThemeApiClient {
   }
 
   Future<AppTheme> getById(int id) async {
-    final response = await _dio.get('/themes/$id');
+    final response = await _dio.get('/themes/${_adapter.encodeId(id)}');
     return AppTheme.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -61,13 +61,13 @@ class AppThemeApiClient {
   }
 
   Future<AppTheme> update(AppTheme appTheme) async {
-    final response =
-        await _dio.put('/themes/${appTheme.id}', data: appTheme.toJson());
+    final response = await _dio.put('/themes/${_adapter.encodeId(appTheme.id)}',
+        data: appTheme.toJson());
     return AppTheme.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(AppTheme appTheme) async {
-    await _dio.delete('/themes/${appTheme.id}');
+    await _dio.delete('/themes/${_adapter.encodeId(appTheme.id)}');
   }
 }
 
@@ -168,7 +168,7 @@ class AppThemesNotifier extends AutoDisposeAsyncNotifier<PrefabPage<AppTheme>> {
 
 final appThemeApiClientProvider = Provider.autoDispose<AppThemeApiClient>(
     (ref) => AppThemeApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 class AppThemeDetailScreen extends ConsumerWidget {
   final int id;

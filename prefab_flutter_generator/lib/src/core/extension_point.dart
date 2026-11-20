@@ -109,7 +109,7 @@ class NamedArgument {
 /// A parameter of the API client's `list` method.
 ///
 /// It is always declared. With [query] it is also passed to
-/// `PrefabListAdapter.queryParameters`, with [parse] also to `parsePage`.
+/// `PrefabBackend.queryParameters`, with [parse] also to `parsePage`.
 class QueryParameter {
   const QueryParameter(
     this.name,

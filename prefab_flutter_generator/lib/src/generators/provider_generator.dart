@@ -90,7 +90,7 @@ abstract class _ProviderArtifact extends Artifact {
     buffer.writeln(
         'final ${entityLower}ApiClientProvider = Provider.autoDispose<${entity}ApiClient>(');
     buffer.writeln(
-        '  (ref) => ${entity}ApiClient(ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));');
+        '  (ref) => ${entity}ApiClient(ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));');
   }
 }
 

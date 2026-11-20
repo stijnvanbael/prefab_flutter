@@ -39,7 +39,7 @@ class DeleteFeature extends Feature {
         () => Code(
           [
             'Future<void> delete($type $lower${client.parentParamTrailing}) async {',
-            "  await _dio.delete('${client.urlBase}/\${$lower.${manifest.idFieldName}}');",
+            "  await _dio.delete('${client.urlBase}/\${_adapter.encodeId($lower.${manifest.idFieldName})}');",
             '}',
           ].join('\n'),
         ),

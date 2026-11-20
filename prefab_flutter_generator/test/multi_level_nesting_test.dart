@@ -118,7 +118,7 @@ void main() {
         r"_dio.get('/orders/$orderId/lines/$orderLineId/notes'",
         'Future<OrderLineNote> getById(int id, {required int orderId, required int orderLineId})',
         'Future<OrderLineNote> create(OrderLineNote orderLineNote, {required int orderId, required int orderLineId})',
-        r"_dio.delete('/orders/$orderId/lines/$orderLineId/notes/${orderLineNote.id}')",
+        r"_dio.delete('/orders/$orderId/lines/$orderLineId/notes/${_adapter.encodeId(orderLineNote.id)}')",
       ]);
     });
 

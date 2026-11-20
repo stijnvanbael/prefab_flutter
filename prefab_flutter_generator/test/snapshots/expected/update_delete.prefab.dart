@@ -22,9 +22,9 @@ import 'update_delete.dart';
 
 class GammaApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  GammaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  GammaApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<Gamma>> list(
       {String? search,
@@ -51,18 +51,18 @@ class GammaApiClient {
   }
 
   Future<Gamma> getById(int id) async {
-    final response = await _dio.get('/gammas/$id');
+    final response = await _dio.get('/gammas/${_adapter.encodeId(id)}');
     return Gamma.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<Gamma> update(Gamma gamma) async {
-    final response =
-        await _dio.put('/gammas/${gamma.id}', data: gamma.toJson());
+    final response = await _dio.put('/gammas/${_adapter.encodeId(gamma.id)}',
+        data: gamma.toJson());
     return Gamma.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(Gamma gamma) async {
-    await _dio.delete('/gammas/${gamma.id}');
+    await _dio.delete('/gammas/${_adapter.encodeId(gamma.id)}');
   }
 }
 
@@ -164,7 +164,7 @@ class GammasNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Gamma>> {
 
 final gammaApiClientProvider = Provider.autoDispose<GammaApiClient>((ref) =>
     GammaApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 class GammaDetailScreen extends ConsumerWidget {
   final int id;

@@ -1,5 +1,5 @@
 class WidgetDemoApiClient
-  WidgetDemoApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  WidgetDemoApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<WidgetDemo>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<WidgetDemo> getById(int id);
   Future<WidgetDemo> create(WidgetDemo widgetDemo);

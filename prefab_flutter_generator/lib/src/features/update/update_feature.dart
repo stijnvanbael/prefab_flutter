@@ -42,7 +42,7 @@ class UpdateFeature extends Feature {
         () => Code(
           [
             'Future<$type> update($type $lower${client.parentParamTrailing}) async {',
-            "  final response = await _dio.put('${client.urlBase}/\${$lower.${manifest.idFieldName}}', data: $lower.toJson());",
+            "  final response = await _dio.put('${client.urlBase}/\${_adapter.encodeId($lower.${manifest.idFieldName})}', data: $lower.toJson());",
             '  return $type.fromJson(response.data as Map<String, dynamic>);',
             '}',
           ].join('\n'),

@@ -95,7 +95,8 @@ void main() {
     });
   });
 
-  group('PrefabListAdapter', () {
+  // ignore: deprecated_member_use_from_same_package
+  group('PrefabListAdapter (deprecated)', () {
     const adapter = PrefabListAdapter();
     Map<String, dynamic> fromJson(Map<String, dynamic> j) => j;
 

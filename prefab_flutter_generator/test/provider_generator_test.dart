@@ -395,7 +395,7 @@ class Product {
       await expectProvider(
         'product',
         _productSource,
-        contains('ref.watch(prefabListAdapterProvider)'),
+        contains('ref.watch(prefabBackendProvider)'),
       );
     });
 

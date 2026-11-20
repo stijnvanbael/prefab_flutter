@@ -19,7 +19,7 @@ Collection names are plural (`productsProvider`), single-entity names singular.
 
 | Artifact | Name | Signature |
 |---|---|---|
-| API client | `ProductApiClient` | `ProductApiClient(Dio, [PrefabListAdapter])` |
+| API client | `ProductApiClient` | `ProductApiClient(Dio, [PrefabBackend])` |
 | | `list` | `Future<PrefabPage<Product>> list({String? search, String? sort, bool descending = false, int page = 0, int? pageSize})` |
 | | `getById` | `Future<Product> getById(int id)` |
 | | `create` | `Future<Product> create(Product product)` (needs `@Create`) |

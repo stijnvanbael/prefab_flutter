@@ -1,5 +1,5 @@
 class ItemApiClient
-  ItemApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  ItemApiClient(this._dio, [this._adapter = const PrefabBackend()]);
   Future<PrefabPage<Item>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
   Future<Item> getById(int id);
   Future<void> delete(Item item);

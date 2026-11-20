@@ -22,9 +22,9 @@ import 'list_search_sort.dart';
 
 class BookApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  BookApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  BookApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<Book>> list(
       {String? search,
@@ -47,12 +47,12 @@ class BookApiClient {
   }
 
   Future<Book> getById(int id) async {
-    final response = await _dio.get('/books/$id');
+    final response = await _dio.get('/books/${_adapter.encodeId(id)}');
     return Book.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(Book book) async {
-    await _dio.delete('/books/${book.id}');
+    await _dio.delete('/books/${_adapter.encodeId(book.id)}');
   }
 }
 
@@ -119,7 +119,7 @@ class BooksNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Book>> {
 
 final bookApiClientProvider = Provider.autoDispose<BookApiClient>((ref) =>
     BookApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 class BookDetailScreen extends ConsumerWidget {
   final int id;

@@ -22,9 +22,9 @@ import 'read_only.dart';
 
 class DeltaApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  DeltaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  DeltaApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<Delta>> list(
       {String? search,
@@ -51,12 +51,12 @@ class DeltaApiClient {
   }
 
   Future<Delta> getById(int id) async {
-    final response = await _dio.get('/deltas/$id');
+    final response = await _dio.get('/deltas/${_adapter.encodeId(id)}');
     return Delta.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(Delta delta) async {
-    await _dio.delete('/deltas/${delta.id}');
+    await _dio.delete('/deltas/${_adapter.encodeId(delta.id)}');
   }
 }
 
@@ -146,7 +146,7 @@ class DeltasNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Delta>> {
 
 final deltaApiClientProvider = Provider.autoDispose<DeltaApiClient>((ref) =>
     DeltaApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 class DeltaDetailScreen extends ConsumerWidget {
   final int id;

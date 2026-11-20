@@ -22,9 +22,9 @@ import 'dart:async';
 
 class AlphaApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  AlphaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  AlphaApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<Alpha>> list(
       {String? search,
@@ -51,7 +51,7 @@ class AlphaApiClient {
   }
 
   Future<Alpha> getById(int id) async {
-    final response = await _dio.get('/alphas/$id');
+    final response = await _dio.get('/alphas/${_adapter.encodeId(id)}');
     return Alpha.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -61,13 +61,13 @@ class AlphaApiClient {
   }
 
   Future<Alpha> update(Alpha alpha) async {
-    final response =
-        await _dio.put('/alphas/${alpha.id}', data: alpha.toJson());
+    final response = await _dio.put('/alphas/${_adapter.encodeId(alpha.id)}',
+        data: alpha.toJson());
     return Alpha.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(Alpha alpha) async {
-    await _dio.delete('/alphas/${alpha.id}');
+    await _dio.delete('/alphas/${_adapter.encodeId(alpha.id)}');
   }
 }
 
@@ -174,7 +174,7 @@ class AlphasNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Alpha>> {
 
 final alphaApiClientProvider = Provider.autoDispose<AlphaApiClient>((ref) =>
     AlphaApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 class AlphaDetailScreen extends ConsumerWidget {
   final int id;

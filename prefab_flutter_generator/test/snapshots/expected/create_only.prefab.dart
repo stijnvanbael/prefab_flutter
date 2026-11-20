@@ -22,9 +22,9 @@ import 'dart:async';
 
 class BetaApiClient {
   final Dio _dio;
-  final PrefabListAdapter _adapter;
+  final PrefabBackend _adapter;
 
-  BetaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  BetaApiClient(this._dio, [this._adapter = const PrefabBackend()]);
 
   Future<PrefabPage<Beta>> list(
       {String? search,
@@ -51,7 +51,7 @@ class BetaApiClient {
   }
 
   Future<Beta> getById(int id) async {
-    final response = await _dio.get('/betas/$id');
+    final response = await _dio.get('/betas/${_adapter.encodeId(id)}');
     return Beta.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -61,7 +61,7 @@ class BetaApiClient {
   }
 
   Future<void> delete(Beta beta) async {
-    await _dio.delete('/betas/${beta.id}');
+    await _dio.delete('/betas/${_adapter.encodeId(beta.id)}');
   }
 }
 
@@ -156,7 +156,7 @@ class BetasNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Beta>> {
 
 final betaApiClientProvider = Provider.autoDispose<BetaApiClient>((ref) =>
     BetaApiClient(
-        ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));
+        ref.watch(prefabDioProvider), ref.watch(prefabBackendProvider)));
 
 class BetaDetailScreen extends ConsumerWidget {
   final int id;
