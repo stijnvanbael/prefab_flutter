@@ -39,6 +39,55 @@ The generated list notifier holds the search text, sort field, sort direction
 and page. Changing any of them reloads the list; typing in the search bar is
 debounced (300 ms) and a new search or sort returns to the first page.
 
+### Server validation errors
+
+A failed request is turned into a `PrefabApiError` by
+`PrefabBackend.parseError(error)`: the HTTP `status`, a general `message`, the
+`fieldErrors` by JSON field name, and the `cause` (the `DioException`). It has
+`isNotFound` (404), `isConflict` (409; the edit conflict flow is PF-52) and
+`isValidation` (400, 422). An error that is not an HTTP response (no network)
+has no status and the text of the error as its message.
+
+The error body is RFC 9457 Problem Details. The presets read:
+
+| | **Prefab** (default) | **Simple** (`PrefabBackend.simple()`) |
+|---|---|---|
+| General message | `detail`, else `title` | `message`, else `title` |
+| Field errors | `errors`: `[{ "field": "price", "message": "must be positive" }]` | same key; both a list of objects and an object `{ "price": "must be positive" }` (a value may be a list of texts) are accepted |
+
+```json
+{
+  "type": "about:blank",
+  "title": "Invalid request",
+  "status": 422,
+  "detail": "The product is invalid.",
+  "errors": [{ "field": "unit_price", "message": "Must be positive" }]
+}
+```
+
+Other names: `PrefabBackend(errorMessageKey:, errorsKey:, errorFieldKey:,
+errorFieldMessageKey:)`, or override `parseError` for a different shape.
+
+In the generated create and edit screens:
+
+* a field error is shown under the matching form field and disappears when
+  the user edits that field; every save clears the old errors first;
+* the field is matched by its **JSON name**: the `@JsonKey(name:)` value, else
+  the `@JsonSerializable(fieldRename:)` applied name, else the Dart name (the
+  same rule as the sort parameter). An error for a name the form does not have
+  (`warehouse: No capacity`) and the general message appear in a banner above
+  the form;
+* the screen stays open. Errors without a response (network failure) appear in
+  the banner too.
+
+The detail and edit screens show `PrefabTheme.notFoundBuilder` ("Not found"
+with a **Back to list** button, which goes to the list route of the entity)
+when loading the item answers 404, instead of the raw error. Hand-written
+(promoted) screens can do the same with
+`ref.read(prefabBackendProvider).parseError(error).isNotFound`. The server
+errors widgets `PrefabFormErrors`, `PrefabFieldError` and
+`PrefabFormErrorBanner` are public for hand-written forms.
+
 ### Choosing a preset or writing a custom adapter
 
 Every generated API client reads `prefabBackendProvider`; it defaults to the
@@ -68,8 +117,8 @@ For anything the constructor parameters cannot express, subclass
 `PrefabBackend` and override `queryParameters` (request side), `parsePage`
 (response side) or `encodeId` (id in the URL).
 
-Parsing of error responses is not part of the adapter yet (planned in PF-51);
-filters (PF-55) will extend it.
+Filters (PF-55) will extend the adapter. Error responses are parsed by
+`parseError`, see below.
 
 ### Migrating from `PrefabListAdapter`
 

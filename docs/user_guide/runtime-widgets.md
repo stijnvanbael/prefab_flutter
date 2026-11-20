@@ -45,6 +45,7 @@ MaterialApp.router(
 | `emptyBuilder(context)` | Centered `No items found` | List screens without items |
 | `loadingBuilder(context)` | Centered `CircularProgressIndicator` | List, detail and edit screens while loading |
 | `errorBuilder(context, error, stackTrace)` | Centered `Error: $error` | List, detail and edit screens when loading failed |
+| `notFoundBuilder(context, onBack)` | "Not found" and a **Back to list** button | Detail and edit screens when the item does not exist (404) |
 | `listItemBuilder(context, title:, subtitle:, trailing:, actions:, onTap:)` | `ListTile` with `title`, `subtitle` and `trailing`; the `actions` open in a `PopupMenuButton` next to `trailing` | Every item of list screens |
 | `detailFieldBuilder(context, label, value)` | `ListTile` with the label as title and the value widget as subtitle | Every field of detail screens |
 | `saveButtonBuilder(context, label, onPressed, saving)` | `ElevatedButton`; a small progress indicator while `saving` (`onPressed` is then `null`) | Create and edit screens |

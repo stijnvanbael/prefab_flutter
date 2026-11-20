@@ -167,8 +167,12 @@ class ItemDetailScreen extends ConsumerWidget {
           children: [],
         ),
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+        error: (error, stackTrace) => ref
+                .read(prefabBackendProvider)
+                .parseError(error)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/items'))
+            : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }

@@ -13,6 +13,13 @@ typedef PrefabErrorBuilder = Widget Function(
   StackTrace? stackTrace,
 );
 
+/// Builds the widget shown when the requested item does not exist (404).
+/// [onBack] leads back to the list.
+typedef PrefabNotFoundBuilder = Widget Function(
+  BuildContext context,
+  VoidCallback onBack,
+);
+
 /// Builds one labelled value of a detail screen.
 typedef PrefabDetailFieldBuilder = Widget Function(
   BuildContext context,
@@ -66,6 +73,7 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
     this.emptyBuilder = defaultEmptyBuilder,
     this.loadingBuilder = defaultLoadingBuilder,
     this.errorBuilder = defaultErrorBuilder,
+    this.notFoundBuilder = defaultNotFoundBuilder,
     this.listItemBuilder = defaultListItemBuilder,
     this.detailFieldBuilder = defaultDetailFieldBuilder,
     this.saveButtonBuilder = defaultSaveButtonBuilder,
@@ -88,6 +96,9 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
 
   /// Shown by list, detail and edit screens when loading failed.
   final PrefabErrorBuilder errorBuilder;
+
+  /// Shown by detail and edit screens when the item does not exist (404).
+  final PrefabNotFoundBuilder notFoundBuilder;
 
   /// Layout of one item of list screens.
   final PrefabListItemBuilder listItemBuilder;
@@ -114,6 +125,19 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
   static Widget defaultErrorBuilder(
           BuildContext context, Object error, StackTrace? stackTrace) =>
       Center(child: Text('Error: $error'));
+
+  static Widget defaultNotFoundBuilder(
+          BuildContext context, VoidCallback onBack) =>
+      Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Not found'),
+            const SizedBox(height: 16),
+            TextButton(onPressed: onBack, child: const Text('Back to list')),
+          ],
+        ),
+      );
 
   static Widget defaultListItemBuilder(
     BuildContext context, {
@@ -163,6 +187,7 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
     PrefabEmptyBuilder? emptyBuilder,
     PrefabLoadingBuilder? loadingBuilder,
     PrefabErrorBuilder? errorBuilder,
+    PrefabNotFoundBuilder? notFoundBuilder,
     PrefabListItemBuilder? listItemBuilder,
     PrefabDetailFieldBuilder? detailFieldBuilder,
     PrefabSaveButtonBuilder? saveButtonBuilder,
@@ -174,6 +199,7 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
         emptyBuilder: emptyBuilder ?? this.emptyBuilder,
         loadingBuilder: loadingBuilder ?? this.loadingBuilder,
         errorBuilder: errorBuilder ?? this.errorBuilder,
+        notFoundBuilder: notFoundBuilder ?? this.notFoundBuilder,
         listItemBuilder: listItemBuilder ?? this.listItemBuilder,
         detailFieldBuilder: detailFieldBuilder ?? this.detailFieldBuilder,
         saveButtonBuilder: saveButtonBuilder ?? this.saveButtonBuilder,
@@ -193,6 +219,7 @@ class PrefabTheme extends ThemeExtension<PrefabTheme> {
       emptyBuilder: next.emptyBuilder,
       loadingBuilder: next.loadingBuilder,
       errorBuilder: next.errorBuilder,
+      notFoundBuilder: next.notFoundBuilder,
       listItemBuilder: next.listItemBuilder,
       detailFieldBuilder: next.detailFieldBuilder,
       saveButtonBuilder: next.saveButtonBuilder,

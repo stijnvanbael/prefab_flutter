@@ -299,13 +299,13 @@ void main() {
       );
     });
 
-    test('generated file does NOT import go_router when no actions', () async {
+    test('generated file imports go_router for the not-found state', () async {
       await testBuilder(
         detailScreenBuilder(BuilderOptions.empty),
         _assets('a', 'lib/tag.dart', _tagSource),
         outputs: {
           'a|lib/tag.detail_screen.dart': decodedMatches(
-            isNot(contains("import 'package:go_router/go_router.dart'")),
+            contains("import 'package:go_router/go_router.dart'"),
           ),
         },
       );

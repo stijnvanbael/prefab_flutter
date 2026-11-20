@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'prefab_api_error.dart';
 import 'prefab_page.dart';
 
 /// How the sort field and direction are written into the `sort` parameter.
@@ -27,9 +29,15 @@ enum PrefabSortFormat {
 /// [PrefabBackend.simple] is the **Simple preset** for plain backends:
 /// `sort=-field` and `{ "items": [...], "total": n }`.
 ///
+/// Error responses are RFC 9457 Problem Details; [parseError] reads the
+/// message and the field errors (see [errorsKey]). The Prefab preset expects
+/// `{ "detail": "...", "errors": [{ "field": "price", "message": "..." }] }`,
+/// the Simple preset `{ "message": "...", "errors": { "price": "..." } }`;
+/// both accept both shapes of `errors`.
+///
 /// Both accept a bare JSON array as a single page. Pass other names to the
-/// constructor, or subclass and override [queryParameters], [parsePage] or
-/// [encodeId], and override [prefabBackendProvider] to plug in another
+/// constructor, or subclass and override [queryParameters], [parsePage],
+/// [parseError] or [encodeId], and override [prefabBackendProvider] to plug in another
 /// backend.
 class PrefabBackend {
   /// Query parameter carrying the search text.
@@ -61,6 +69,20 @@ class PrefabBackend {
   /// Page size used when the caller does not pass one.
   final int defaultPageSize;
 
+  /// Error response key holding the general message. `title` is the fallback.
+  final String errorMessageKey;
+
+  /// Error response key holding the field errors: a list of objects (field
+  /// name under [errorFieldKey], text under [errorFieldMessageKey]) or an
+  /// object from field name to text (or list of texts).
+  final String errorsKey;
+
+  /// Key of the field name in an entry of the [errorsKey] list.
+  final String errorFieldKey;
+
+  /// Key of the text in an entry of the [errorsKey] list.
+  final String errorFieldMessageKey;
+
   /// The Prefab preset (see the class documentation).
   const PrefabBackend({
     this.searchParam = 'q',
@@ -72,6 +94,10 @@ class PrefabBackend {
     this.totalKey = 'page.totalElements',
     this.pageKey = 'page.number',
     this.defaultPageSize = 20,
+    this.errorMessageKey = 'detail',
+    this.errorsKey = 'errors',
+    this.errorFieldKey = 'field',
+    this.errorFieldMessageKey = 'message',
   });
 
   /// The Simple preset: `sort=-field` and `{ "items": [...], "total": n }`.
@@ -85,6 +111,10 @@ class PrefabBackend {
     this.totalKey = 'total',
     this.pageKey,
     this.defaultPageSize = 20,
+    this.errorMessageKey = 'message',
+    this.errorsKey = 'errors',
+    this.errorFieldKey = 'field',
+    this.errorFieldMessageKey = 'message',
   });
 
   /// Builds the query parameters for a list request. Empty search and absent
@@ -155,6 +185,54 @@ class PrefabBackend {
       page: page == null ? 0 : (responsePage ?? page),
       pageSize: page == null ? items.length : (pageSize ?? defaultPageSize),
     );
+  }
+
+  /// Converts anything thrown by a request into a [PrefabApiError]: the
+  /// status and the Problem Details of a `DioException` response, or the text
+  /// of any other error (no status).
+  PrefabApiError parseError(Object error) {
+    if (error is PrefabApiError) return error;
+    if (error is DioException) {
+      final response = error.response;
+      final data = response?.data;
+      String? message;
+      var fields = <String, String>{};
+      if (data is Map) {
+        final raw = data[errorMessageKey] ?? data['title'];
+        if (raw is String && raw.isNotEmpty) message = raw;
+        fields = _parseFieldErrors(data[errorsKey]);
+      } else if (data is String && data.isNotEmpty) {
+        message = data;
+      }
+      return PrefabApiError(
+        status: response?.statusCode,
+        message: message ?? error.message ?? '$error',
+        fieldErrors: fields,
+        cause: error,
+      );
+    }
+    return PrefabApiError(message: '$error', cause: error);
+  }
+
+  Map<String, String> _parseFieldErrors(Object? raw) {
+    final result = <String, String>{};
+    void add(Object? field, Object? text) {
+      if (field == null || text == null) return;
+      final value = text is List ? text.join('\n') : '$text';
+      final key = '$field';
+      result[key] = result.containsKey(key) ? '${result[key]}\n$value' : value;
+    }
+
+    if (raw is List) {
+      for (final entry in raw) {
+        if (entry is Map) {
+          add(entry[errorFieldKey], entry[errorFieldMessageKey]);
+        }
+      }
+    } else if (raw is Map) {
+      raw.forEach(add);
+    }
+    return result;
   }
 
   static Object? _lookup(Map data, String path) {

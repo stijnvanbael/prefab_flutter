@@ -57,7 +57,7 @@ void main() {
         allOf(
           contains('Duration? _fValue;'),
           contains('showTimePicker('),
-          contains('Duration(hours: picked.hour, minutes: picked.minute)'),
+          contains(RegExp(r'Duration\(\s*hours: picked\.hour,\s*minutes: picked\.minute,?\s*\)')),
           contains('MaterialLocalizations.of(context).formatTimeOfDay('),
           contains('_fValue!'),
           isNot(contains('toIso8601String')),

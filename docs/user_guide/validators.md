@@ -76,5 +76,7 @@ field.
 
 The entity is then passed to the list notifier's `create()` (create screen) or
 `updateEntity()` (edit screen; named to avoid clashing with `AsyncNotifier.update`) and the screen pops on success. While the request is
-in flight the button is disabled and shows a progress indicator; an error is
-shown in a `SnackBar` and the screen stays open.
+in flight the button is disabled and shows a progress indicator; an error keeps
+the screen open and is shown from the server's answer: field errors under the
+matching fields, other messages above the form (see
+[Server validation errors](rest-contract.md#server-validation-errors)).
