@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:prefab_flutter/prefab_flutter.dart';
@@ -17,7 +18,46 @@ class ProductDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final product = ref.watch(productDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Product (hand-written)')),
+      appBar: AppBar(
+        title: const Text('Product (hand-written)'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: 'Edit',
+            onPressed: () => context.push('/products/$id/edit'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            tooltip: 'Delete',
+            onPressed: product.hasValue
+                ? () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Delete product?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed != true) return;
+                    await ref
+                        .read(productApiClientProvider)
+                        .delete(product.value!);
+                    ref.invalidate(productsProvider);
+                    if (context.mounted) context.pop();
+                  }
+                : null,
+          ),
+        ],
+      ),
       body: product.when(
         data: (p) => ListTile(title: Text(p.name), subtitle: Text('${p.price}')),
         loading: () => const Center(child: CircularProgressIndicator()),
