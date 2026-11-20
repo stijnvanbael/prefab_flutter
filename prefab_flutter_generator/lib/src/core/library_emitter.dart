@@ -44,6 +44,25 @@ class LibraryEmitter {
             for (final artifact in factory(entity)) artifact.primaryName,
       ];
 
+  /// Emits every artifact separately, by primary name, with the libraries it
+  /// needs. Used by the `promote` command; `@Promoted` declarations are not
+  /// taken into account.
+  Map<String, Code> emitArtifacts(List<EntityContext> entities) {
+    final artifacts = ArtifactSet([
+      for (final factory in [
+        ...artifactFactories,
+        for (final f in features) ...f.artifacts,
+      ])
+        for (final entity in entities) ...factory(entity),
+    ]);
+    for (final entity in entities) {
+      for (final feature in features) {
+        feature.contribute(entity, artifacts);
+      }
+    }
+    return {for (final a in artifacts.all) a.primaryName: a.emit()};
+  }
+
   /// Returns the whole library, or `''` when nothing is generated.
   String emit(List<EntityContext> entities, {required String header}) {
     final promotedByName = {for (final p in promoted) p.name: p};
