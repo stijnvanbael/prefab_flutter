@@ -34,6 +34,7 @@ class UpdateFeature extends Feature {
     final id = manifest.entityName;
     final type = manifest.entityName;
     final lower = manifest.entityNameLower;
+    final excluded = manifest.updateExcludedJsonNames;
 
     final client = artifacts.get<ApiClientArtifact>(ArtifactKind.apiClient, id);
     if (client != null) {
@@ -42,9 +43,17 @@ class UpdateFeature extends Feature {
         () => Code(
           [
             'Future<$type> update($type $lower${client.parentParamTrailing}) async {',
-            "  final response = await _dio.put('${client.urlBase}/\${_adapter.encodeId($lower.${manifest.idFieldName})}', data: $lower.toJson());",
+            "  final response = await _dio.put('${client.urlBase}/\${_adapter.encodeId($lower.${manifest.idFieldName})}', data: ${excluded.isEmpty ? '$lower.toJson()' : '_updateBody($lower)'});",
             '  return $type.fromJson(response.data as Map<String, dynamic>);',
             '}',
+            if (excluded.isNotEmpty) ...[
+              '',
+              '/// Everything but the read-only and create-only fields.',
+              'Map<String, dynamic> _updateBody($type $lower) => {',
+              '  for (final e in $lower.toJson().entries)',
+              '    if (!const <String>{${excluded.map((n) => "'$n'").join(', ')}}.contains(e.key)) e.key: e.value,',
+              '};',
+            ],
           ].join('\n'),
         ),
         order: 20,

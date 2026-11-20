@@ -50,6 +50,16 @@ class Product {
   @Field(label: 'Released on')
   final DateTime? releasedOn;
 
+  /// Create-only (PF-53): set in the create form, absent from the edit form and
+  /// from the body of the update request.
+  @Field(label: 'SKU', form: FormOptions(on: {FormMode.create}))
+  final String? sku;
+
+  /// Server-set (PF-53): shown in the list and detail screens, never in a form
+  /// or in the body of a create or update request.
+  @Field(label: 'Created at', readOnly: true)
+  final DateTime createdAt;
+
   Product({
     this.id,
     required this.name,
@@ -58,6 +68,8 @@ class Product {
     this.category,
     this.description,
     this.releasedOn,
+    this.sku,
+    required this.createdAt,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) =>

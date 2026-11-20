@@ -21,6 +21,7 @@ class MockBackendAdapter implements HttpClientAdapter {
         'name': 'Keyboard',
         'price': 49.9,
         'inStock': true,
+        'createdAt': '2024-01-15T09:00:00.000',
         'category': 'accessories',
         'description': 'Mechanical keyboard with tactile switches.',
         'releasedOn': '2024-03-01T00:00:00.000',
@@ -30,6 +31,7 @@ class MockBackendAdapter implements HttpClientAdapter {
         'name': 'Monitor',
         'price': 199.0,
         'inStock': false,
+        'createdAt': '2024-02-01T09:00:00.000',
         'category': 'electronics',
       },
     ],
@@ -78,6 +80,10 @@ class MockBackendAdapter implements HttpClientAdapter {
             table == 'products' ? _validateProduct(rows, body) : null;
         if (invalid != null) return invalid;
         final row = Map<String, dynamic>.from(body as Map)..['id'] = _nextId++;
+        // Server-set fields (PF-53): the create request does not carry them.
+        if (table == 'products') {
+          row['createdAt'] = DateTime.now().toIso8601String();
+        }
         // The parent id field of the created row, named after the parent.
         if (parts.length >= 3) {
           final parentField = parts[parts.length - 3] == 'products'
@@ -93,7 +99,9 @@ class MockBackendAdapter implements HttpClientAdapter {
         if (invalid != null) return invalid;
         final index = rows.indexWhere((r) => '${r['id']}' == id);
         if (index < 0) return _json(404, {});
-        final row = Map<String, dynamic>.from(body as Map)
+        // The update request leaves out read-only and create-only fields; the
+        // server keeps what it already has.
+        final row = {...rows[index], ...Map<String, dynamic>.from(body as Map)}
           ..['id'] = rows[index]['id'];
         rows[index] = row;
         return _json(200, row);

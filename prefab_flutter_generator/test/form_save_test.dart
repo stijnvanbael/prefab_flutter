@@ -226,18 +226,28 @@ void main() {
       return '$error\n${logs.join('\n')}';
     }
 
-    test('required id without a value source is a build-time error', () async {
-      final message = await failure(
-          _bad('Item({required this.id, required this.name});', ''));
-      expect(message, contains('constructor parameter "id" is required'));
+    test('required id without a value source gets a placeholder (PF-53)', () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets(_bad('Item({required this.id, required this.name});', '')),
+        outputs: {
+          'a|lib/item.form_screen.dart': decodedMatches(contains('id: 0')),
+        },
+      );
     });
 
-    test('required field outside the form without a value source is an error', () async {
-      final message = await failure(_bad(
-              'Item({this.id, required this.name, required this.owner});',
-              'final String owner;')
-          .replaceAll('final int id;', 'final int? id;'));
-      expect(message, contains('"owner"'));
+    test('required field outside the form gets a placeholder (PF-53)', () async {
+      await testBuilder(
+        formScreenBuilder(BuilderOptions.empty),
+        _assets(_bad(
+                'Item({this.id, required this.name, required this.owner});',
+                'final String owner;')
+            .replaceAll('final int id;', 'final int? id;')),
+        outputs: {
+          'a|lib/item.form_screen.dart':
+              decodedMatches(contains("owner: ''")),
+        },
+      );
     });
 
     test('unsupported field type is an error naming the field', () async {

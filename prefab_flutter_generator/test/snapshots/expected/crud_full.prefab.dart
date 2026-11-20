@@ -56,9 +56,15 @@ class AlphaApiClient {
   }
 
   Future<Alpha> create(Alpha alpha) async {
-    final response = await _dio.post('/alphas', data: alpha.toJson());
+    final response = await _dio.post('/alphas', data: _createBody(alpha));
     return Alpha.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// Only the fields of the create form (and the parent id).
+  Map<String, dynamic> _createBody(Alpha alpha) => {
+        for (final e in alpha.toJson().entries)
+          if (const <String>{'name'}.contains(e.key)) e.key: e.value,
+      };
 
   Future<Alpha> update(Alpha alpha) async {
     final response = await _dio.put('/alphas/${_adapter.encodeId(alpha.id)}',

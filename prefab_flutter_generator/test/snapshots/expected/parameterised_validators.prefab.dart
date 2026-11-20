@@ -57,9 +57,17 @@ class AccountApiClient {
   }
 
   Future<Account> create(Account account) async {
-    final response = await _dio.post('/accounts', data: account.toJson());
+    final response = await _dio.post('/accounts', data: _createBody(account));
     return Account.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// Only the fields of the create form (and the parent id).
+  Map<String, dynamic> _createBody(Account account) => {
+        for (final e in account.toJson().entries)
+          if (const <String>{'email', 'username', 'code', 'age', 'website'}
+              .contains(e.key))
+            e.key: e.value,
+      };
 
   Future<Account> update(Account account) async {
     final response = await _dio.put(

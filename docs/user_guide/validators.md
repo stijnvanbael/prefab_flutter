@@ -59,17 +59,20 @@ entity's **unnamed constructor**. Each constructor parameter gets its value from
 |---|---|---|
 | the id (`@Id` / `id`) | omitted | `widget.id` |
 | the `@Parent` field | `widget.<parentId>` | `widget.<parentId>` |
-| a visible `@Field` | typed form state | typed form state |
-| a field outside the form (`on` without `Place.form`) or un-annotated | omitted | copied from the loaded item |
+| a `@Field` in the form of that screen | typed form state | typed form state |
+| a field outside the form (`on` without `Place.form`), `readOnly`, limited to the other [`FormMode`](annotations.md#request-bodies), or un-annotated | omitted (a placeholder if it is required) | copied from the loaded item |
 
 Form values are converted by type: `int` / `double` / `num` are parsed from the
 text field (the form rejects non-numeric input first), `DateTime`, enums and
 `bool` come from their pickers, and an **empty input for a nullable field is
 passed as `null`**.
 
-Parameters that are omitted on create must be nullable, optional or have a
-default value. Otherwise the generator fails with a build-time error naming the
-parameter (so the id must be e.g. `final int? id;` with `this.id`). A form field
+A required parameter that is omitted on create gets a placeholder of its type
+(`String`, `int`, `double`, `num`, `bool`, `DateTime`, `Duration` or an enum);
+the create request never sends it ([Request bodies](annotations.md#request-bodies)).
+For any other type the parameter must be nullable, optional or have a default
+value, otherwise the generator fails with a build-time error naming the
+parameter. A form field
 of a type the form cannot convert (anything other than `String`, `int`,
 `double`, `num`, `bool`, `DateTime` or an enum) also fails the build, naming the
 field.
