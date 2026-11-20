@@ -1,0 +1,28 @@
+---
+id: PF-45
+title: Plug hand-written screens and routes into the generated navigation
+status: To Do
+assignee: []
+created_date: '2026-11-20 10:00'
+labels: []
+milestone: m-1
+dependencies:
+  - PF-39
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+Both reference apps have a central hand-written screen (live energy flow, a study session) that belongs to an entity: `/sites/:id/live`, `/courses/:id/study`. Today a developer can append their own `GoRoute` to `$siteRoutes`, but it cannot sit under the entity's detail route with the typed id and ancestor ids, generated screens do not link to it, and breadcrumbs (PF-19) do not know it.
+
+Let the developer declare a hand-written screen as a child of an entity, e.g. `@EntityScreen(Site, path: 'live', title: 'Live')` on a widget class whose constructor takes the entity id (and ancestor ids, for nested entities). The generator adds the route under the detail route, converting the ids as it does for generated screens, and a navigation entry on the detail screen. Use the same cross-file discovery as PF-42 and PF-44.
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 A hand-written screen can be declared as a child screen of an entity; its route is generated under `/{path}/:id/{child}` and passes the typed id and ancestor ids to its constructor
+- [ ] #2 The entity's detail screen links to the child screen (sharing the navigation entries of PF-35 if that is done, otherwise as its own extension point contribution)
+- [ ] #3 The breadcrumb bar on a hand-written child screen can be built from a generated helper, so the screen looks like the generated ones
+- [ ] #4 A screen whose constructor does not match the expected id parameters fails the build with a readable error
+- [ ] #5 `docs/user_guide/routes.md` documents the declaration and the generated route; snapshot fixture and test file added; changelog fragments added
+<!-- AC:END -->
