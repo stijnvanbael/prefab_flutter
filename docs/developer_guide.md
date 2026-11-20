@@ -41,8 +41,10 @@ prefab_flutter_generator/
     field_registries.dart           #   FieldEmitter, ValidatorEmitter, FieldDisplay + registries
   lib/src/features/                 # feature modules, one directory each
     features.dart                   #   registeredFeatures (alphabetical)
+    breadcrumbs/                    #   breadcrumb row of deeply nested screens
     entity_screens/                 #   @EntityScreen: hand-written child screens
     list_query/                     #   search, sort and pagination
+    nested_resources/               #   @Parent: ancestor ids, nested routes
   lib/src/generators/               # the artifacts, one file per output kind
     api_client_generator.dart       #   ApiClientArtifact
     provider_generator.dart         #   DetailProvider-, ListProvider-, ApiClientProviderArtifact
@@ -109,7 +111,7 @@ contribute to, and an import collector. There is no `code_builder`.
    `lib/src/features/field_widgets/` (state declaration, prefill, form field,
    value expression); the registry is `formFieldEmitters`. The validators are
    one class per `Validator` in `lib/src/features/validators/` (PF-60). The
-   display code of the detail and list templates moves in PF-62 to PF-64.
+   display code of the detail and list templates moves in PF-63 and PF-64.
 7. **Tests.** The per-kind generators (`ApiClientGenerator`, ...,
    `RoutesGenerator`) are `ArtifactGenerator`s with the factories of one kind.
    They back the per-kind builders in `lib/builder.dart` that unit tests use;
@@ -192,13 +194,16 @@ Extension points that exist today (all contributions are at column 0):
 | list screen | `appBarActions`, `aboveList`, `belowList` (indent 10) | `Code` | 10 list query (`appBarActions`), 50 actions |
 | list screen | `itemActions` (indent 14, `PopupMenuEntry<void>` expressions) | `Code` | 50 actions |
 | detail screen | `appBarActions` (indent 10, after Edit and Delete) | `Code` | 50 actions |
+| list screen, detail screen | `appBarBottom` (indent 8, single-valued `bottom:` argument) | `Code` | breadcrumbs |
+| API client, detail provider, list provider, list screen, detail screen | `familyKey` (the ids of the owning resources, outermost first; `FamilyKey` renders them) | `ValuePoint<FamilyId>` | nested resources (order = depth) |
+| routes | `routes` (top-level route of an entity with `@Parent`), `childRoutes` (routes inside a parent's detail route), `screenArguments` (extra screen arguments) | `ValuePoint<RouteSpec>`, `ValuePoint<Function>` | nested resources |
 | list screen, detail screen | `fieldValue` | `ValuePoint<FieldValue>` | 10 nullable fields |
 | list notifier | `state`, `onBuild`, `methods` (indent 2, 4, 2) | `Code` | 10 list query |
 | list notifier | `fetchArguments` | `ValuePoint<NamedArgument>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
 | API client | `listQueryParameters` | `ValuePoint<QueryParameter>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
 
 The other points sketched in decision-1 are added by the migration tasks
-PF-62 to PF-64. Field widgets (PF-59) need no point: the form screens ask the
+PF-63 and PF-64. Field widgets (PF-59) need no point: the form screens ask the
 `formFieldEmitters` registry, so a new `FieldWidget` is one new emitter class
 and one line in that list.
 

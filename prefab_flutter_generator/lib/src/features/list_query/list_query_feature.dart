@@ -148,7 +148,7 @@ class ListQueryFeature extends Feature {
     if (m.hasSearch || m.hasSort || m.paged) {
       screen.buildStatements.add(
         _name,
-        Code('final notifier = ref.read(${screen.providerRef}.notifier);'),
+        Code('final notifier = ref.read(${ListScreenArtifact.providerRef}.notifier);'),
       );
     }
     if (m.hasSort) {

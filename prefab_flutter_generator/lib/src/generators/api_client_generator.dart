@@ -6,6 +6,7 @@ import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
 import '../core/extension_point.dart';
+import '../core/family_key.dart';
 import '../features/features.dart';
 import '../manifest/entity_manifest.dart';
 
@@ -41,6 +42,11 @@ class ApiClientArtifact extends Artifact {
   /// 20 sort and descending, 30 page and page size.
   final listQueryParameters =
       ValuePoint<QueryParameter>('apiClient.listQueryParameters');
+
+  /// The ids of the resources that own this one, outermost first: required
+  /// named parameters of every method and URL segments. Orders in use: the
+  /// depth of the ancestor (nested resources).
+  final familyKey = ValuePoint<FamilyId>('apiClient.familyKey');
 
   static Iterable<Artifact> create(EntityContext entity) {
     _requireJsonSupport(entity.element);
@@ -97,18 +103,13 @@ class ApiClientArtifact extends Artifact {
     final entity = manifest.entityName;
     final path = manifest.path;
 
-    // Determine whether this entity is nested under a parent.
-    final hasParent = manifest.hasParent;
+    final key = FamilyKey(familyKey.values);
+    final hasParent = !key.isEmpty;
     // The URL base path: '/orders/$orderId/lines/$orderLineId/notes' or
-    // '/path'; every ancestor contributes its path and id.
-    final urlBase = [
-      for (final a in manifest.ancestors) '/${a.path}/\$${a.paramName}',
-      '/$path',
-    ].join();
+    // '/path'; every family id contributes its path and value.
+    final urlBase = '${key.urlPrefix}/$path';
 
-    final requiredAncestors = [
-      for (final a in manifest.ancestors) 'required ${a.idType} ${a.paramName}',
-    ].join(', ');
+    final requiredAncestors = key.requiredParams;
     final parentParamTrailing = hasParent ? ', {$requiredAncestors}' : '';
 
     buffer.writeln('class ${entity}ApiClient {');

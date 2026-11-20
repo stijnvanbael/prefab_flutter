@@ -1,24 +1,5 @@
-import '../manifest/entity_manifest.dart';
-import '../manifest/entity_paths.dart';
-
-/// Source of the `bottom:` argument of an AppBar showing the breadcrumb row
-/// for [manifest] (which must have [EntityManifest.hasBreadcrumbs]).
-///
-/// Each ancestor is a tappable step labelled with the first visible field of
-/// the ancestor, read from the ancestor's detail provider; the last step is
-/// the entity's own title.
-String breadcrumbBottom(EntityManifest manifest, String indent) {
-  final lines = <String>[
-    'bottom: PrefabBreadcrumbBar(',
-    '  items: [',
-    ...ancestorBreadcrumbItems(manifest).map((l) => '  $l'),
-  ];
-  lines
-    ..add("    const PrefabBreadcrumb(label: '${escapeDartString(manifest.title)}'),")
-    ..add('  ],')
-    ..add('),');
-  return lines.map((l) => '$indent$l').join('\n');
-}
+import '../../manifest/entity_manifest.dart';
+import '../../manifest/entity_paths.dart';
 
 /// The `PrefabBreadcrumb(...)` entries for every ancestor of [manifest], one
 /// line each, outermost first. Each is labelled with the first visible field
@@ -43,7 +24,8 @@ List<String> ancestorBreadcrumbItems(EntityManifest manifest) {
     lines
       ..add('    PrefabBreadcrumb(')
       ..add('      label: $label,')
-      ..add("      onTap: () => context.go('${EntityPaths.ancestorPath(manifest, i)}'),")
+      ..add(
+          "      onTap: () => context.go('${EntityPaths.ancestorPath(manifest, i)}'),")
       ..add('    ),');
   }
   return lines;
@@ -63,3 +45,10 @@ String escapeDartString(String value) => value
     .replaceAll(r'\', r'\\')
     .replaceAll("'", r"\'")
     .replaceAll(r'$', r'\$');
+
+/// What only the breadcrumbs feature needs to know about an entity.
+extension BreadcrumbsManifest on EntityManifest {
+  /// Whether list and detail screens show a breadcrumb row (two or more
+  /// ancestors).
+  bool get hasBreadcrumbs => depth >= 2;
+}

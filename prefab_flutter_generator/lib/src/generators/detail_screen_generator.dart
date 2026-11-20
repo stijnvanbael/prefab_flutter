@@ -3,12 +3,12 @@ import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
 import '../core/extension_point.dart';
+import '../core/family_key.dart';
 import '../core/field_registries.dart';
 import '../features/features.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
 import '../manifest/field_manifest.dart';
-import 'breadcrumbs.dart';
 
 /// Generates a read-only `{Entity}DetailScreen` [ConsumerWidget] for every
 /// class annotated with [@View].
@@ -35,6 +35,15 @@ class DetailScreenArtifact extends Artifact {
   /// Widgets appended to the AppBar `actions`, after Edit and Delete
   /// (indent 10). Orders in use: 50 actions.
   final appBarActions = ExtensionPoint('detailScreen.appBarActions');
+
+  /// The `bottom:` argument of the app bar (indent 8). Single-valued.
+  final appBarBottom = ExtensionPoint('detailScreen.appBarBottom',
+      maxContributions: 1);
+
+  /// The ids of the owning resources, outermost first (nested resources):
+  /// constructor fields, the detail provider key and the list provider key
+  /// of the delete action.
+  final familyKey = ValuePoint<FamilyId>('detailScreen.familyKey');
 
   /// Name of the local variable holding the watched `AsyncValue` of the
   /// entity.
@@ -69,9 +78,9 @@ class DetailScreenArtifact extends Artifact {
       buffer.toString().trim(),
       imports: {
         ..._imports,
+        ...appBarBottom.imports,
         ...appBarActions.imports,
         entity.sourceFileName,
-        ...ancestorImports([entity.manifest]),
         ...afterFields.imports,
       },
     );
@@ -85,19 +94,18 @@ class DetailScreenArtifact extends Artifact {
       EntityManifest manifest, EntityPaths paths, StringBuffer buffer) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
-    final hasParent = manifest.hasParent;
+    final key = FamilyKey(familyKey.values);
+    final hasParent = !key.isEmpty;
 
     buffer.writeln('class ${entity}DetailScreen extends ConsumerWidget {');
     buffer.writeln('  final ${manifest.idType} id;');
-    if (hasParent) {
-      for (final a in manifest.ancestors) {
-        buffer.writeln('  final ${a.idType} ${a.paramName};');
-      }
+    for (final a in key.ids) {
+      buffer.writeln('  final ${a.type} ${a.name};');
     }
     buffer.writeln();
     if (hasParent) {
       buffer.writeln(
-          '  const ${entity}DetailScreen({super.key, required this.id, ${manifest.ancestors.map((a) => 'required this.${a.paramName}').join(', ')}});');
+          '  const ${entity}DetailScreen({super.key, required this.id, ${key.requiredThis}});');
     } else {
       buffer.writeln(
           '  const ${entity}DetailScreen({super.key, required this.id});');
@@ -105,20 +113,12 @@ class DetailScreenArtifact extends Artifact {
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln('  Widget build(BuildContext context, WidgetRef ref) {');
-    if (hasParent) {
-      buffer.writeln(
-          '    final ${entityLower}Async = ref.watch(${entityLower}DetailProvider(${manifest.detailKeyExpr('id', (a) => a.paramName)}));');
-    } else {
-      buffer.writeln(
-          '    final ${entityLower}Async = ref.watch(${entityLower}DetailProvider(id));');
-    }
+    buffer.writeln(
+        '    final ${entityLower}Async = ref.watch(${entityLower}DetailProvider(${key.detailExpr('id', (a) => a.name)}));');
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
-    if (manifest.hasBreadcrumbs) {
-      _imports.addAll({Libs.goRouter, Libs.widgets});
-      buffer.writeln(breadcrumbBottom(manifest, '        '));
-    }
+    if (!appBarBottom.isEmpty) buffer.writeln(appBarBottom.render(8));
 
     _writeAppBarActions(manifest, paths, buffer);
 
@@ -142,9 +142,9 @@ class DetailScreenArtifact extends Artifact {
     }
 
     final entityLower = manifest.entityNameLower;
-    final listProviderArg = manifest.hasParent
-        ? '(${manifest.parentKeyExpr((a) => a.paramName)})'
-        : '';
+    final key = FamilyKey(familyKey.values);
+    final listProviderArg =
+        key.isEmpty ? '' : '(${key.listExpr((a) => a.name)})';
 
     buffer.writeln('        actions: [');
 

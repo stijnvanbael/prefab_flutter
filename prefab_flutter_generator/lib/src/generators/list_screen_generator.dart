@@ -3,11 +3,11 @@ import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
 import '../core/extension_point.dart';
+import '../core/family_key.dart';
 import '../core/field_registries.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
 import '../features/features.dart';
-import 'breadcrumbs.dart';
 
 /// Generates a `{Entity}ListScreen` [ConsumerWidget] for every class annotated
 /// with [@View].
@@ -54,12 +54,25 @@ class ListScreenArtifact extends Artifact {
   /// fields.
   final fieldValue = ValuePoint<FieldValue>('listScreen.fieldValue');
 
-  /// Dart expression reading the list provider, e.g. `postsProvider(postId)`.
-  String get providerRef {
+  /// The `bottom:` argument of the app bar (indent 8). Single-valued.
+  final appBarBottom = ExtensionPoint('listScreen.appBarBottom',
+      maxContributions: 1);
+
+  /// The ids of the owning resources, outermost first (nested resources):
+  /// constructor fields and the key of the list provider.
+  final familyKey = ValuePoint<FamilyId>('listScreen.familyKey');
+
+  /// Placeholder for the expression reading the list provider (e.g.
+  /// `postsProvider(postId)`), for fragments written before every feature
+  /// has contributed; replaced when the screen is emitted.
+  static const providerRef = '{{providerRef}}';
+
+  String get _providerRef {
     final m = entity.manifest;
-    return m.hasParent
-        ? '${m.entityNameLower}sProvider(${m.parentKeyExpr((a) => a.paramName)})'
-        : '${m.entityNameLower}sProvider';
+    final key = FamilyKey(familyKey.values);
+    return key.isEmpty
+        ? '${m.entityNameLower}sProvider'
+        : '${m.entityNameLower}sProvider(${key.listExpr((a) => a.name)})';
   }
 
   /// Name of the local variable holding the watched `AsyncValue` of the page.
@@ -83,6 +96,7 @@ class ListScreenArtifact extends Artifact {
       buffer.toString().trim(),
       imports: {
         ...buildStatements.imports,
+        ...appBarBottom.imports,
         ...appBarActions.imports,
         ...aboveList.imports,
         ...belowList.imports,
@@ -92,7 +106,6 @@ class ListScreenArtifact extends Artifact {
         Libs.goRouter,
         Libs.widgets,
         entity.sourceFileName,
-        ...ancestorImports([entity.manifest]),
       },
     );
   }
@@ -108,26 +121,23 @@ class ListScreenArtifact extends Artifact {
   ) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
-    final hasParent = manifest.hasParent;
-    final parentKey =
-        hasParent ? manifest.parentKeyExpr((a) => a.paramName) : '';
+    final key = FamilyKey(familyKey.values);
+    final hasParent = !key.isEmpty;
 
     final itemPath =
         paths.itemPath(manifest, '\${$entityLower.${manifest.idFieldName}}');
 
     final createPath = paths.createPath(manifest);
-    final providerRef = hasParent
-        ? '${entityLower}sProvider($parentKey)'
-        : '${entityLower}sProvider';
+    final providerRef = _providerRef;
 
     buffer.writeln('class ${entity}ListScreen extends ConsumerWidget {');
     if (hasParent) {
-      for (final a in manifest.ancestors) {
-        buffer.writeln('  final ${a.idType} ${a.paramName};');
+      for (final a in key.ids) {
+        buffer.writeln('  final ${a.type} ${a.name};');
       }
       buffer.writeln();
       buffer.writeln(
-          '  const ${entity}ListScreen({super.key, ${manifest.ancestors.map((a) => 'required this.${a.paramName}').join(', ')}});');
+          '  const ${entity}ListScreen({super.key, ${key.requiredThis}});');
     } else {
       buffer.writeln('  const ${entity}ListScreen({super.key});');
     }
@@ -136,21 +146,18 @@ class ListScreenArtifact extends Artifact {
     buffer.writeln('  Widget build(BuildContext context, WidgetRef ref) {');
 
     // Watch the correct provider variant.
-    if (hasParent) {
-      buffer.writeln(
-          '    final ${entityLower}sAsync = ref.watch(${entityLower}sProvider($parentKey));');
-    } else {
-      buffer.writeln(
-          '    final ${entityLower}sAsync = ref.watch(${entityLower}sProvider);');
-    }
+    buffer.writeln(
+        '    final ${entityLower}sAsync = ref.watch($providerRef);');
 
-    if (!buildStatements.isEmpty) buffer.writeln(buildStatements.render(4));
+    if (!buildStatements.isEmpty) {
+      buffer.writeln(buildStatements
+          .render(4)
+          .replaceAll(ListScreenArtifact.providerRef, providerRef));
+    }
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
-    if (manifest.hasBreadcrumbs) {
-      buffer.writeln(breadcrumbBottom(manifest, '        '));
-    }
+    if (!appBarBottom.isEmpty) buffer.writeln(appBarBottom.render(8));
     if (!appBarActions.isEmpty) {
       buffer.writeln('        actions: [');
       buffer.writeln(appBarActions.render(10));
