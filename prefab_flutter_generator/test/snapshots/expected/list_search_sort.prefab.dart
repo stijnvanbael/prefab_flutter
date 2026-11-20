@@ -156,8 +156,12 @@ class BookDetailScreen extends ConsumerWidget {
           ],
         ),
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+        error: (error, stackTrace) => ref
+                .read(prefabBackendProvider)
+                .parseError(error)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/books'))
+            : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }

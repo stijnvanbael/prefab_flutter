@@ -183,8 +183,12 @@ class BetaDetailScreen extends ConsumerWidget {
           ],
         ),
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+        error: (error, stackTrace) => ref
+                .read(prefabBackendProvider)
+                .parseError(error)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/betas'))
+            : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -258,16 +262,19 @@ class BetaCreateScreen extends ConsumerStatefulWidget {
 class _BetaCreateScreenState extends ConsumerState<BetaCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   final _nameController = TextEditingController();
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _nameController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(betasProvider, (_, __) {});
@@ -281,8 +288,10 @@ class _BetaCreateScreenState extends ConsumerState<BetaCreateScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {'name'},
+      );
     } finally {
       subscription.close();
     }
@@ -297,16 +306,24 @@ class _BetaCreateScreenState extends ConsumerState<BetaCreateScreen> {
       ),
       body: Form(
         key: _formKey,
+        onChanged: _formErrors.clearEdited,
         child: ListView(
           padding: prefabTheme.formPadding,
           children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                return null;
-              },
+            PrefabFormErrorBanner(errors: _formErrors),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'name',
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    return null;
+                  },
+                ),
+              ],
             ),
             prefabTheme.saveButtonBuilder(
               context,

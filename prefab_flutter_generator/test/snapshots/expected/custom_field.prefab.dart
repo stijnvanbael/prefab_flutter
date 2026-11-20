@@ -212,8 +212,12 @@ class AppThemeDetailScreen extends ConsumerWidget {
           ],
         ),
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+        error: (error, stackTrace) => ref
+                .read(prefabBackendProvider)
+                .parseError(error)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/themes'))
+            : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -288,18 +292,21 @@ class AppThemeCreateScreen extends ConsumerStatefulWidget {
 class _AppThemeCreateScreenState extends ConsumerState<AppThemeCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   final _nameController = TextEditingController();
   int? _accentValue;
   int? _highlightValue;
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _nameController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(appThemesProvider, (_, __) {});
@@ -315,8 +322,10 @@ class _AppThemeCreateScreenState extends ConsumerState<AppThemeCreateScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {'name', 'accent', 'highlight'},
+      );
     } finally {
       subscription.close();
     }
@@ -331,27 +340,47 @@ class _AppThemeCreateScreenState extends ConsumerState<AppThemeCreateScreen> {
       ),
       body: Form(
         key: _formKey,
+        onChanged: _formErrors.clearEdited,
         child: ListView(
           padding: prefabTheme.formPadding,
           children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                return null;
-              },
+            PrefabFormErrorBanner(errors: _formErrors),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'name',
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    return null;
+                  },
+                ),
+              ],
             ),
-            ColorField(
-              initialValue: _accentValue,
-              onChanged: (value) => _accentValue = value,
-              label: 'Accent colour',
-              validator: (value) => value == null ? 'Required' : null,
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'accent',
+              children: [
+                ColorField(
+                  initialValue: _accentValue,
+                  onChanged: (value) => _accentValue = value,
+                  label: 'Accent colour',
+                  validator: (value) => value == null ? 'Required' : null,
+                ),
+              ],
             ),
-            ColorField(
-              initialValue: _highlightValue,
-              onChanged: (value) => _highlightValue = value,
-              label: 'Highlight',
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'highlight',
+              children: [
+                ColorField(
+                  initialValue: _highlightValue,
+                  onChanged: (value) => _highlightValue = value,
+                  label: 'Highlight',
+                ),
+              ],
             ),
             prefabTheme.saveButtonBuilder(
               context,
@@ -378,6 +407,7 @@ class AppThemeEditScreen extends ConsumerStatefulWidget {
 class _AppThemeEditScreenState extends ConsumerState<AppThemeEditScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   bool _prefilled = false;
   // ignore: unused_field
   AppTheme? _item;
@@ -387,6 +417,7 @@ class _AppThemeEditScreenState extends ConsumerState<AppThemeEditScreen> {
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _nameController.dispose();
     super.dispose();
   }
@@ -400,6 +431,7 @@ class _AppThemeEditScreenState extends ConsumerState<AppThemeEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(appThemesProvider, (_, __) {});
@@ -416,8 +448,10 @@ class _AppThemeEditScreenState extends ConsumerState<AppThemeEditScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {'name', 'accent', 'highlight'},
+      );
     } finally {
       subscription.close();
     }
@@ -439,30 +473,55 @@ class _AppThemeEditScreenState extends ConsumerState<AppThemeEditScreen> {
       ),
       body: asyncItem.when(
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
+        error: (e, st) => ref
+                .read(prefabBackendProvider)
+                .parseError(e)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/themes'))
+            : prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
+          onChanged: _formErrors.clearEdited,
           child: ListView(
             padding: prefabTheme.formPadding,
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  return null;
-                },
+              PrefabFormErrorBanner(errors: _formErrors),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'name',
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      return null;
+                    },
+                  ),
+                ],
               ),
-              ColorField(
-                initialValue: _accentValue,
-                onChanged: (value) => _accentValue = value,
-                label: 'Accent colour',
-                validator: (value) => value == null ? 'Required' : null,
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'accent',
+                children: [
+                  ColorField(
+                    initialValue: _accentValue,
+                    onChanged: (value) => _accentValue = value,
+                    label: 'Accent colour',
+                    validator: (value) => value == null ? 'Required' : null,
+                  ),
+                ],
               ),
-              ColorField(
-                initialValue: _highlightValue,
-                onChanged: (value) => _highlightValue = value,
-                label: 'Highlight',
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'highlight',
+                children: [
+                  ColorField(
+                    initialValue: _highlightValue,
+                    onChanged: (value) => _highlightValue = value,
+                    label: 'Highlight',
+                  ),
+                ],
               ),
               prefabTheme.saveButtonBuilder(
                 context,

@@ -51,6 +51,12 @@ product to see its detail screen, then edit or delete it. Reviews are served
 under a product: open `/products/1/reviews` (for example by typing the URL in
 the browser) or from the **Reviews** tile of the product detail screen.
 
+Server validation errors (PF-51): the mock backend rejects a product whose name
+is already taken (error on the **Name** field) and a price above 10000 (error
+on **Price** plus one for a field the form does not have, shown above the
+form). Open `/products/2/reviews/999` for the not-found state.
+See `test/server_errors_test.dart`.
+
 The generated files (`*.g.dart`, `*.prefab.dart`) are not committed.
 
 ## Test it

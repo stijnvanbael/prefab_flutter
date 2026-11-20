@@ -7,6 +7,7 @@ import '../core/entity_context.dart';
 import '../features/features.dart';
 import '../features/field_widgets/field_widgets_feature.dart';
 import '../manifest/entity_manifest.dart';
+import '../features/validators/validator_emitters.dart' show dartStringLiteral;
 import '../manifest/field_manifest.dart';
 
 /// The `{Entity}CreateScreen` and `{Entity}EditScreen` widgets come from the
@@ -69,6 +70,7 @@ abstract class FormScreenArtifact extends Artifact {
     buffer.writeln('  final _formKey = GlobalKey<FormState>();');
 
     buffer.writeln('  bool _saving = false;');
+    buffer.writeln('  final _formErrors = PrefabFormErrors();');
     if (isEdit) {
       buffer.writeln('  bool _prefilled = false;');
       buffer.writeln('  // ignore: unused_field');
@@ -82,6 +84,7 @@ abstract class FormScreenArtifact extends Artifact {
     buffer.writeln();
     buffer.writeln('  @override');
     buffer.writeln('  void dispose() {');
+    buffer.writeln('    _formErrors.dispose();');
     for (final field in fields) {
       if (_emitter(field).usesController) {
         buffer.writeln('    _${field.name}Controller.dispose();');
@@ -129,9 +132,11 @@ abstract class FormScreenArtifact extends Artifact {
     buffer.writeln('      ),');
     buffer.writeln('      body: Form(');
     buffer.writeln('        key: _formKey,');
+    buffer.writeln('        onChanged: _formErrors.clearEdited,');
     buffer.writeln('        child: ListView(');
     buffer.writeln('          padding: prefabTheme.formPadding,');
     buffer.writeln('          children: [');
+    buffer.writeln('            PrefabFormErrorBanner(errors: _formErrors),');
     for (final field in manifest.formFields) {
       _writeFormField(field, buffer);
     }
@@ -173,14 +178,27 @@ abstract class FormScreenArtifact extends Artifact {
     buffer.writeln(
       '        loading: () => prefabTheme.loadingBuilder(context),',
     );
+    buffer.writeln('        error: (e, st) =>');
     buffer.writeln(
-      '        error: (e, st) => prefabTheme.errorBuilder(context, e, st),',
+      '            ref.read(prefabBackendProvider).parseError(e).isNotFound',
+    );
+    final listPath = entity.paths
+        .collectionPath(manifest)
+        .replaceAllMapped(
+            RegExp(r'\$(\w+)'), (m) => '\${widget.${m[1]}}');
+    buffer.writeln(
+      "                ? prefabTheme.notFoundBuilder(context, () => context.go('$listPath'))",
+    );
+    buffer.writeln(
+      '                : prefabTheme.errorBuilder(context, e, st),',
     );
     buffer.writeln('        data: (_) => Form(');
     buffer.writeln('          key: _formKey,');
+    buffer.writeln('          onChanged: _formErrors.clearEdited,');
     buffer.writeln('          child: ListView(');
     buffer.writeln('            padding: prefabTheme.formPadding,');
     buffer.writeln('            children: [');
+    buffer.writeln('              PrefabFormErrorBanner(errors: _formErrors),');
     for (final field in manifest.formFields) {
       _writeFormField(field, buffer);
     }
@@ -218,6 +236,7 @@ abstract class FormScreenArtifact extends Artifact {
 
     buffer.writeln('  Future<void> _save() async {');
     buffer.writeln('    if (!_formKey.currentState!.validate()) return;');
+    buffer.writeln('    _formErrors.clear();');
     buffer.writeln('    setState(() => _saving = true);');
     buffer.writeln(
         '    // Keep the (auto-dispose) provider alive while the request runs.');
@@ -236,8 +255,13 @@ abstract class FormScreenArtifact extends Artifact {
     buffer.writeln('    } catch (e) {');
     buffer.writeln('      if (!mounted) return;');
     buffer.writeln('      setState(() => _saving = false);');
-    buffer.writeln(
-        '      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));');
+    final known = manifest.formFields
+        .map((f) => dartStringLiteral(f.jsonName))
+        .join(', ');
+    buffer.writeln('      _formErrors.setError(');
+    buffer.writeln('        ref.read(prefabBackendProvider).parseError(e),');
+    buffer.writeln('        const {$known},');
+    buffer.writeln('      );');
     buffer.writeln('    } finally {');
     buffer.writeln('      subscription.close();');
     buffer.writeln('    }');
@@ -323,8 +347,18 @@ abstract class FormScreenArtifact extends Artifact {
   // Individual form field — dispatches to the correct widget writer
   // ---------------------------------------------------------------------------
 
-  void _writeFormField(FieldManifest field, StringBuffer buffer) =>
-      _write(_emitter(field).formField(field), buffer);
+  /// A field is wrapped in `PrefabFieldError`, which shows the server error
+  /// of the field (by JSON name) below it.
+  void _writeFormField(FieldManifest field, StringBuffer buffer) {
+    final code = _emitter(field).formField(field);
+    buffer.writeln('            PrefabFieldError(');
+    buffer.writeln('              errors: _formErrors,');
+    buffer.writeln('              field: ${dartStringLiteral(field.jsonName)},');
+    buffer.writeln('              children: [');
+    _write(code, buffer);
+    buffer.writeln('              ],');
+    buffer.writeln('            ),');
+  }
 
   /// Writes [code] and remembers the libraries it needs.
   void _write(Code? code, StringBuffer buffer) {

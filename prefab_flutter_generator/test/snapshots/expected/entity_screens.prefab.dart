@@ -337,8 +337,12 @@ class OrderDetailScreen extends ConsumerWidget {
           ],
         ),
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+        error: (error, stackTrace) => ref
+                .read(prefabBackendProvider)
+                .parseError(error)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/orders'))
+            : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -377,7 +381,10 @@ class OrderLineDetailScreen extends ConsumerWidget {
         ),
         loading: () => prefabTheme.loadingBuilder(context),
         error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+            ref.read(prefabBackendProvider).parseError(error).isNotFound
+                ? prefabTheme.notFoundBuilder(
+                    context, () => context.go('/orders/$orderId/lines'))
+                : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -510,6 +517,7 @@ class OrderEditScreen extends ConsumerStatefulWidget {
 class _OrderEditScreenState extends ConsumerState<OrderEditScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   bool _prefilled = false;
   // ignore: unused_field
   Order? _item;
@@ -517,6 +525,7 @@ class _OrderEditScreenState extends ConsumerState<OrderEditScreen> {
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _numberController.dispose();
     super.dispose();
   }
@@ -528,6 +537,7 @@ class _OrderEditScreenState extends ConsumerState<OrderEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(ordersProvider, (_, __) {});
@@ -542,8 +552,10 @@ class _OrderEditScreenState extends ConsumerState<OrderEditScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {'number'},
+      );
     } finally {
       subscription.close();
     }
@@ -565,15 +577,28 @@ class _OrderEditScreenState extends ConsumerState<OrderEditScreen> {
       ),
       body: asyncItem.when(
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
+        error: (e, st) => ref
+                .read(prefabBackendProvider)
+                .parseError(e)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/orders'))
+            : prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
+          onChanged: _formErrors.clearEdited,
           child: ListView(
             padding: prefabTheme.formPadding,
             children: [
-              TextFormField(
-                controller: _numberController,
-                decoration: const InputDecoration(labelText: 'Number'),
+              PrefabFormErrorBanner(errors: _formErrors),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'number',
+                children: [
+                  TextFormField(
+                    controller: _numberController,
+                    decoration: const InputDecoration(labelText: 'Number'),
+                  ),
+                ],
               ),
               prefabTheme.saveButtonBuilder(
                 context,

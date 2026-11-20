@@ -74,6 +74,9 @@ class MockBackendAdapter implements HttpClientAdapter {
         final row = _find(rows, id);
         return row == null ? _json(404, {}) : _json(200, row);
       case 'POST':
+        final invalid =
+            table == 'products' ? _validateProduct(rows, body) : null;
+        if (invalid != null) return invalid;
         final row = Map<String, dynamic>.from(body as Map)..['id'] = _nextId++;
         // The parent id field of the created row, named after the parent.
         if (parts.length >= 3) {
@@ -85,6 +88,9 @@ class MockBackendAdapter implements HttpClientAdapter {
         rows.add(row);
         return _json(201, row);
       case 'PUT':
+        final invalid =
+            table == 'products' ? _validateProduct(rows, body, id: id) : null;
+        if (invalid != null) return invalid;
         final index = rows.indexWhere((r) => '${r['id']}' == id);
         if (index < 0) return _json(404, {});
         final row = Map<String, dynamic>.from(body as Map)
@@ -96,6 +102,44 @@ class MockBackendAdapter implements HttpClientAdapter {
         return _json(204, {});
     }
     return _json(405, {});
+  }
+
+  /// Server-side validation of a product, answered as RFC 9457 Problem
+  /// Details in the format of the Prefab preset of `PrefabBackend`: a name
+  /// that is already taken is an error of the `name` field, a price above
+  /// 10000 an error of `price` plus one of `warehouse`, which the form does
+  /// not have (so it appears above the form).
+  ResponseBody? _validateProduct(
+    List<Map<String, dynamic>> rows,
+    Object? body, {
+    String? id,
+  }) {
+    final product = body as Map;
+    final errors = <Map<String, String>>[];
+    final name = '${product['name']}'.toLowerCase();
+    if (rows.any(
+      (r) => '${r['name']}'.toLowerCase() == name && '${r['id']}' != id,
+    )) {
+      errors.add({
+        'field': 'name',
+        'message': 'A product with this name already exists',
+      });
+    }
+    if (((product['price'] as num?) ?? 0) > 10000) {
+      errors.add({'field': 'price', 'message': 'Must not exceed 10000'});
+      errors.add({
+        'field': 'warehouse',
+        'message': 'No capacity for this product',
+      });
+    }
+    if (errors.isEmpty) return null;
+    return _json(422, {
+      'type': 'about:blank',
+      'title': 'Invalid request',
+      'status': 422,
+      'detail': 'The product is invalid.',
+      'errors': errors,
+    });
   }
 
   /// Applies the list contract of the Prefab preset of `PrefabBackend`: `q`

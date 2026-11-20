@@ -248,7 +248,10 @@ class WidgetDemoDetailScreen extends ConsumerWidget {
         ),
         loading: () => prefabTheme.loadingBuilder(context),
         error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+            ref.read(prefabBackendProvider).parseError(error).isNotFound
+                ? prefabTheme.notFoundBuilder(
+                    context, () => context.go('/widget-demos'))
+                : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -325,6 +328,7 @@ class _WidgetDemoCreateScreenState
     extends ConsumerState<WidgetDemoCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   final _autoController = TextEditingController();
   final _notesController = TextEditingController();
   final _secretController = TextEditingController();
@@ -340,6 +344,7 @@ class _WidgetDemoCreateScreenState
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _autoController.dispose();
     _notesController.dispose();
     _secretController.dispose();
@@ -352,6 +357,7 @@ class _WidgetDemoCreateScreenState
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(widgetDemosProvider, (_, __) {});
@@ -373,8 +379,20 @@ class _WidgetDemoCreateScreenState
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {
+          'auto',
+          'notes',
+          'secret',
+          'quantity',
+          'day',
+          'at',
+          'moment',
+          'status',
+          'active'
+        },
+      );
     } finally {
       subscription.close();
     }
@@ -389,156 +407,213 @@ class _WidgetDemoCreateScreenState
       ),
       body: Form(
         key: _formKey,
+        onChanged: _formErrors.clearEdited,
         child: ListView(
           padding: prefabTheme.formPadding,
           children: [
-            TextFormField(
-              controller: _autoController,
-              decoration: const InputDecoration(labelText: 'Auto'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _notesController,
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
-              decoration: const InputDecoration(labelText: 'Notes'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _secretController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Secret'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _quantityController,
-              keyboardType: const TextInputType.numberWithOptions(signed: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$')),
+            PrefabFormErrorBanner(errors: _formErrors),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'auto',
+              children: [
+                TextFormField(
+                  controller: _autoController,
+                  decoration: const InputDecoration(labelText: 'Auto'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    return null;
+                  },
+                ),
               ],
-              decoration: const InputDecoration(labelText: 'Quantity'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                if (int.tryParse(value) == null)
-                  return 'Must be a whole number';
-                return null;
-              },
             ),
-            TextFormField(
-              controller: _dayController,
-              readOnly: true,
-              decoration: const InputDecoration(labelText: 'Day'),
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: _dayValue ?? DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (picked != null && context.mounted) {
-                  setState(() {
-                    _dayValue = picked;
-                    _dayController.text = MaterialLocalizations.of(context)
-                        .formatCompactDate(picked);
-                  });
-                }
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _atController,
-              readOnly: true,
-              decoration: const InputDecoration(labelText: 'At'),
-              onTap: () async {
-                final current = _atValue;
-                final picked = await showTimePicker(
-                  context: context,
-                  initialTime: current == null
-                      ? TimeOfDay.now()
-                      : TimeOfDay(
-                          hour: int.parse(current.split(':')[0]),
-                          minute: int.parse(current.split(':')[1])),
-                );
-                if (picked != null && context.mounted) {
-                  setState(() {
-                    _atValue =
-                        '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-                    _atController.text = MaterialLocalizations.of(context)
-                        .formatTimeOfDay(TimeOfDay(
-                            hour: int.parse(_atValue!.split(':')[0]),
-                            minute: int.parse(_atValue!.split(':')[1])));
-                  });
-                }
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _momentController,
-              readOnly: true,
-              decoration: const InputDecoration(labelText: 'Moment'),
-              onTap: () async {
-                final initial = _momentValue ?? DateTime.now();
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: initial,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (date == null || !context.mounted) return;
-                final time = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.fromDateTime(initial),
-                );
-                if (time == null || !context.mounted) return;
-                final picked = DateTime(
-                  date.year,
-                  date.month,
-                  date.day,
-                  time.hour,
-                  time.minute,
-                );
-                setState(() {
-                  _momentValue = picked;
-                  _momentController.text =
-                      '${MaterialLocalizations.of(context).formatCompactDate(picked)} ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(picked))}';
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                return null;
-              },
-            ),
-            DropdownButtonFormField<Status>(
-              value: _statusValue,
-              decoration: const InputDecoration(labelText: 'Status'),
-              items: [
-                ...Status.values.map((v) => DropdownMenuItem<Status>(
-                      value: v,
-                      child: Text(v.name),
-                    )),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'notes',
+              children: [
+                TextFormField(
+                  controller: _notesController,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    return null;
+                  },
+                ),
               ],
-              onChanged: (v) => setState(() => _statusValue = v),
-              validator: (value) => value == null ? 'Required' : null,
             ),
-            SwitchListTile(
-              title: const Text('Active'),
-              value: _activeValue,
-              onChanged: (v) => setState(() => _activeValue = v),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'secret',
+              children: [
+                TextFormField(
+                  controller: _secretController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Secret'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'quantity',
+              children: [
+                TextFormField(
+                  controller: _quantityController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(signed: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$')),
+                  ],
+                  decoration: const InputDecoration(labelText: 'Quantity'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    if (int.tryParse(value) == null)
+                      return 'Must be a whole number';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'day',
+              children: [
+                TextFormField(
+                  controller: _dayController,
+                  readOnly: true,
+                  decoration: const InputDecoration(labelText: 'Day'),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _dayValue ?? DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null && context.mounted) {
+                      setState(() {
+                        _dayValue = picked;
+                        _dayController.text = MaterialLocalizations.of(context)
+                            .formatCompactDate(picked);
+                      });
+                    }
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'at',
+              children: [
+                TextFormField(
+                  controller: _atController,
+                  readOnly: true,
+                  decoration: const InputDecoration(labelText: 'At'),
+                  onTap: () async {
+                    final current = _atValue;
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: current == null
+                          ? TimeOfDay.now()
+                          : TimeOfDay(
+                              hour: int.parse(current.split(':')[0]),
+                              minute: int.parse(current.split(':')[1])),
+                    );
+                    if (picked != null && context.mounted) {
+                      setState(() {
+                        _atValue =
+                            '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                        _atController.text = MaterialLocalizations.of(context)
+                            .formatTimeOfDay(TimeOfDay(
+                                hour: int.parse(_atValue!.split(':')[0]),
+                                minute: int.parse(_atValue!.split(':')[1])));
+                      });
+                    }
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'moment',
+              children: [
+                TextFormField(
+                  controller: _momentController,
+                  readOnly: true,
+                  decoration: const InputDecoration(labelText: 'Moment'),
+                  onTap: () async {
+                    final initial = _momentValue ?? DateTime.now();
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: initial,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (date == null || !context.mounted) return;
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(initial),
+                    );
+                    if (time == null || !context.mounted) return;
+                    final picked = DateTime(
+                      date.year,
+                      date.month,
+                      date.day,
+                      time.hour,
+                      time.minute,
+                    );
+                    setState(() {
+                      _momentValue = picked;
+                      _momentController.text =
+                          '${MaterialLocalizations.of(context).formatCompactDate(picked)} ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(picked))}';
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'status',
+              children: [
+                DropdownButtonFormField<Status>(
+                  value: _statusValue,
+                  decoration: const InputDecoration(labelText: 'Status'),
+                  items: [
+                    ...Status.values.map((v) => DropdownMenuItem<Status>(
+                          value: v,
+                          child: Text(v.name),
+                        )),
+                  ],
+                  onChanged: (v) => setState(() => _statusValue = v),
+                  validator: (value) => value == null ? 'Required' : null,
+                ),
+              ],
+            ),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'active',
+              children: [
+                SwitchListTile(
+                  title: const Text('Active'),
+                  value: _activeValue,
+                  onChanged: (v) => setState(() => _activeValue = v),
+                ),
+              ],
             ),
             prefabTheme.saveButtonBuilder(
               context,
@@ -566,6 +641,7 @@ class WidgetDemoEditScreen extends ConsumerStatefulWidget {
 class _WidgetDemoEditScreenState extends ConsumerState<WidgetDemoEditScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   bool _prefilled = false;
   // ignore: unused_field
   WidgetDemo? _item;
@@ -584,6 +660,7 @@ class _WidgetDemoEditScreenState extends ConsumerState<WidgetDemoEditScreen> {
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _autoController.dispose();
     _notesController.dispose();
     _secretController.dispose();
@@ -617,6 +694,7 @@ class _WidgetDemoEditScreenState extends ConsumerState<WidgetDemoEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(widgetDemosProvider, (_, __) {});
@@ -639,8 +717,20 @@ class _WidgetDemoEditScreenState extends ConsumerState<WidgetDemoEditScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {
+          'auto',
+          'notes',
+          'secret',
+          'quantity',
+          'day',
+          'at',
+          'moment',
+          'status',
+          'active'
+        },
+      );
     } finally {
       subscription.close();
     }
@@ -662,160 +752,221 @@ class _WidgetDemoEditScreenState extends ConsumerState<WidgetDemoEditScreen> {
       ),
       body: asyncItem.when(
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
+        error: (e, st) =>
+            ref.read(prefabBackendProvider).parseError(e).isNotFound
+                ? prefabTheme.notFoundBuilder(
+                    context, () => context.go('/widget-demos'))
+                : prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
+          onChanged: _formErrors.clearEdited,
           child: ListView(
             padding: prefabTheme.formPadding,
             children: [
-              TextFormField(
-                controller: _autoController,
-                decoration: const InputDecoration(labelText: 'Auto'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _notesController,
-                maxLines: null,
-                keyboardType: TextInputType.multiline,
-                decoration: const InputDecoration(labelText: 'Notes'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _secretController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Secret'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _quantityController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(signed: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$')),
+              PrefabFormErrorBanner(errors: _formErrors),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'auto',
+                children: [
+                  TextFormField(
+                    controller: _autoController,
+                    decoration: const InputDecoration(labelText: 'Auto'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      return null;
+                    },
+                  ),
                 ],
-                decoration: const InputDecoration(labelText: 'Quantity'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  if (int.tryParse(value) == null)
-                    return 'Must be a whole number';
-                  return null;
-                },
               ),
-              TextFormField(
-                controller: _dayController,
-                readOnly: true,
-                decoration: const InputDecoration(labelText: 'Day'),
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _dayValue ?? DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked != null && context.mounted) {
-                    setState(() {
-                      _dayValue = picked;
-                      _dayController.text = MaterialLocalizations.of(context)
-                          .formatCompactDate(picked);
-                    });
-                  }
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _atController,
-                readOnly: true,
-                decoration: const InputDecoration(labelText: 'At'),
-                onTap: () async {
-                  final current = _atValue;
-                  final picked = await showTimePicker(
-                    context: context,
-                    initialTime: current == null
-                        ? TimeOfDay.now()
-                        : TimeOfDay(
-                            hour: int.parse(current.split(':')[0]),
-                            minute: int.parse(current.split(':')[1])),
-                  );
-                  if (picked != null && context.mounted) {
-                    setState(() {
-                      _atValue =
-                          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-                      _atController.text = MaterialLocalizations.of(context)
-                          .formatTimeOfDay(TimeOfDay(
-                              hour: int.parse(_atValue!.split(':')[0]),
-                              minute: int.parse(_atValue!.split(':')[1])));
-                    });
-                  }
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _momentController,
-                readOnly: true,
-                decoration: const InputDecoration(labelText: 'Moment'),
-                onTap: () async {
-                  final initial = _momentValue ?? DateTime.now();
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: initial,
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (date == null || !context.mounted) return;
-                  final time = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.fromDateTime(initial),
-                  );
-                  if (time == null || !context.mounted) return;
-                  final picked = DateTime(
-                    date.year,
-                    date.month,
-                    date.day,
-                    time.hour,
-                    time.minute,
-                  );
-                  setState(() {
-                    _momentValue = picked;
-                    _momentController.text =
-                        '${MaterialLocalizations.of(context).formatCompactDate(picked)} ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(picked))}';
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  return null;
-                },
-              ),
-              DropdownButtonFormField<Status>(
-                value: _statusValue,
-                decoration: const InputDecoration(labelText: 'Status'),
-                items: [
-                  ...Status.values.map((v) => DropdownMenuItem<Status>(
-                        value: v,
-                        child: Text(v.name),
-                      )),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'notes',
+                children: [
+                  TextFormField(
+                    controller: _notesController,
+                    maxLines: null,
+                    keyboardType: TextInputType.multiline,
+                    decoration: const InputDecoration(labelText: 'Notes'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      return null;
+                    },
+                  ),
                 ],
-                onChanged: (v) => setState(() => _statusValue = v),
-                validator: (value) => value == null ? 'Required' : null,
               ),
-              SwitchListTile(
-                title: const Text('Active'),
-                value: _activeValue,
-                onChanged: (v) => setState(() => _activeValue = v),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'secret',
+                children: [
+                  TextFormField(
+                    controller: _secretController,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'Secret'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'quantity',
+                children: [
+                  TextFormField(
+                    controller: _quantityController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(signed: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$')),
+                    ],
+                    decoration: const InputDecoration(labelText: 'Quantity'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      if (int.tryParse(value) == null)
+                        return 'Must be a whole number';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'day',
+                children: [
+                  TextFormField(
+                    controller: _dayController,
+                    readOnly: true,
+                    decoration: const InputDecoration(labelText: 'Day'),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _dayValue ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null && context.mounted) {
+                        setState(() {
+                          _dayValue = picked;
+                          _dayController.text =
+                              MaterialLocalizations.of(context)
+                                  .formatCompactDate(picked);
+                        });
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'at',
+                children: [
+                  TextFormField(
+                    controller: _atController,
+                    readOnly: true,
+                    decoration: const InputDecoration(labelText: 'At'),
+                    onTap: () async {
+                      final current = _atValue;
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: current == null
+                            ? TimeOfDay.now()
+                            : TimeOfDay(
+                                hour: int.parse(current.split(':')[0]),
+                                minute: int.parse(current.split(':')[1])),
+                      );
+                      if (picked != null && context.mounted) {
+                        setState(() {
+                          _atValue =
+                              '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                          _atController.text = MaterialLocalizations.of(context)
+                              .formatTimeOfDay(TimeOfDay(
+                                  hour: int.parse(_atValue!.split(':')[0]),
+                                  minute: int.parse(_atValue!.split(':')[1])));
+                        });
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'moment',
+                children: [
+                  TextFormField(
+                    controller: _momentController,
+                    readOnly: true,
+                    decoration: const InputDecoration(labelText: 'Moment'),
+                    onTap: () async {
+                      final initial = _momentValue ?? DateTime.now();
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: initial,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (date == null || !context.mounted) return;
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.fromDateTime(initial),
+                      );
+                      if (time == null || !context.mounted) return;
+                      final picked = DateTime(
+                        date.year,
+                        date.month,
+                        date.day,
+                        time.hour,
+                        time.minute,
+                      );
+                      setState(() {
+                        _momentValue = picked;
+                        _momentController.text =
+                            '${MaterialLocalizations.of(context).formatCompactDate(picked)} ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(picked))}';
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'status',
+                children: [
+                  DropdownButtonFormField<Status>(
+                    value: _statusValue,
+                    decoration: const InputDecoration(labelText: 'Status'),
+                    items: [
+                      ...Status.values.map((v) => DropdownMenuItem<Status>(
+                            value: v,
+                            child: Text(v.name),
+                          )),
+                    ],
+                    onChanged: (v) => setState(() => _statusValue = v),
+                    validator: (value) => value == null ? 'Required' : null,
+                  ),
+                ],
+              ),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'active',
+                children: [
+                  SwitchListTile(
+                    title: const Text('Active'),
+                    value: _activeValue,
+                    onChanged: (v) => setState(() => _activeValue = v),
+                  ),
+                ],
               ),
               prefabTheme.saveButtonBuilder(
                 context,

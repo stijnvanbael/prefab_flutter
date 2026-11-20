@@ -626,8 +626,8 @@ void main() {
         outputs: {
           'a|lib/item.form_screen.dart': decodedMatches(allOf(
             contains('_dueDateValue = item.dueDate'),
-            contains(
-                '_dueDateController.text = MaterialLocalizations.of(context)\n'),
+            contains(RegExp(
+                r'_dueDateController\.text =\s*MaterialLocalizations\.of\(context\)')),
             contains('.formatCompactDate(_dueDateValue!)'),
           )),
         },

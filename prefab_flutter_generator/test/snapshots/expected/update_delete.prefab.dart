@@ -217,8 +217,12 @@ class GammaDetailScreen extends ConsumerWidget {
           ],
         ),
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+        error: (error, stackTrace) => ref
+                .read(prefabBackendProvider)
+                .parseError(error)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/gammas'))
+            : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -286,6 +290,7 @@ class GammaEditScreen extends ConsumerStatefulWidget {
 class _GammaEditScreenState extends ConsumerState<GammaEditScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   bool _prefilled = false;
   // ignore: unused_field
   Gamma? _item;
@@ -293,6 +298,7 @@ class _GammaEditScreenState extends ConsumerState<GammaEditScreen> {
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _nameController.dispose();
     super.dispose();
   }
@@ -304,6 +310,7 @@ class _GammaEditScreenState extends ConsumerState<GammaEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(gammasProvider, (_, __) {});
@@ -318,8 +325,10 @@ class _GammaEditScreenState extends ConsumerState<GammaEditScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {'name'},
+      );
     } finally {
       subscription.close();
     }
@@ -341,19 +350,32 @@ class _GammaEditScreenState extends ConsumerState<GammaEditScreen> {
       ),
       body: asyncItem.when(
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
+        error: (e, st) => ref
+                .read(prefabBackendProvider)
+                .parseError(e)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/gammas'))
+            : prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
+          onChanged: _formErrors.clearEdited,
           child: ListView(
             padding: prefabTheme.formPadding,
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  return null;
-                },
+              PrefabFormErrorBanner(errors: _formErrors),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'name',
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      return null;
+                    },
+                  ),
+                ],
               ),
               prefabTheme.saveButtonBuilder(
                 context,

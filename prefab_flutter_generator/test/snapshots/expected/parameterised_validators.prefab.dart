@@ -225,7 +225,10 @@ class AccountDetailScreen extends ConsumerWidget {
         ),
         loading: () => prefabTheme.loadingBuilder(context),
         error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+            ref.read(prefabBackendProvider).parseError(error).isNotFound
+                ? prefabTheme.notFoundBuilder(
+                    context, () => context.go('/accounts'))
+                : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -300,6 +303,7 @@ class AccountCreateScreen extends ConsumerStatefulWidget {
 class _AccountCreateScreenState extends ConsumerState<AccountCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
   final _codeController = TextEditingController();
@@ -308,6 +312,7 @@ class _AccountCreateScreenState extends ConsumerState<AccountCreateScreen> {
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _emailController.dispose();
     _usernameController.dispose();
     _codeController.dispose();
@@ -318,6 +323,7 @@ class _AccountCreateScreenState extends ConsumerState<AccountCreateScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(accountsProvider, (_, __) {});
@@ -336,8 +342,10 @@ class _AccountCreateScreenState extends ConsumerState<AccountCreateScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {'email', 'username', 'code', 'age', 'website'},
+      );
     } finally {
       subscription.close();
     }
@@ -352,72 +360,106 @@ class _AccountCreateScreenState extends ConsumerState<AccountCreateScreen> {
       ),
       body: Form(
         key: _formKey,
+        onChanged: _formErrors.clearEdited,
         child: ListView(
           padding: prefabTheme.formPadding,
           children: [
-            TextFormField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value))
-                  return 'Invalid email address';
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _usernameController,
-              decoration: const InputDecoration(labelText: 'Username'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                if (value.length < 3) return 'Must be at least 3 characters';
-                if (value.length > 20) return 'Too long';
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _codeController,
-              decoration: const InputDecoration(labelText: 'Code'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                if (!RegExp('^[A-Z]+\$').hasMatch(value))
-                  return 'Invalid format';
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _ageController,
-              keyboardType: const TextInputType.numberWithOptions(signed: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$')),
+            PrefabFormErrorBanner(errors: _formErrors),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'email',
+              children: [
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value))
+                      return 'Invalid email address';
+                    return null;
+                  },
+                ),
               ],
-              decoration: const InputDecoration(labelText: 'Age'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                if (int.tryParse(value) == null)
-                  return 'Must be a whole number';
-                {
-                  final n = double.tryParse(value);
-                  if (n == null || n < 1) return 'Can\'t be < 1';
-                }
-                {
-                  final n = double.tryParse(value);
-                  if (n == null || n > 99) return 'Must be at most 99';
-                }
-                return null;
-              },
             ),
-            TextFormField(
-              controller: _websiteController,
-              decoration: const InputDecoration(labelText: 'Website'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return null;
-                {
-                  final uri = Uri.tryParse(value);
-                  if (uri == null || !uri.isAbsolute) return 'Invalid URL';
-                }
-                return null;
-              },
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'username',
+              children: [
+                TextFormField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(labelText: 'Username'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    if (value.length < 3)
+                      return 'Must be at least 3 characters';
+                    if (value.length > 20) return 'Too long';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'code',
+              children: [
+                TextFormField(
+                  controller: _codeController,
+                  decoration: const InputDecoration(labelText: 'Code'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    if (!RegExp('^[A-Z]+\$').hasMatch(value))
+                      return 'Invalid format';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'age',
+              children: [
+                TextFormField(
+                  controller: _ageController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(signed: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$')),
+                  ],
+                  decoration: const InputDecoration(labelText: 'Age'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    if (int.tryParse(value) == null)
+                      return 'Must be a whole number';
+                    {
+                      final n = double.tryParse(value);
+                      if (n == null || n < 1) return 'Can\'t be < 1';
+                    }
+                    {
+                      final n = double.tryParse(value);
+                      if (n == null || n > 99) return 'Must be at most 99';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'website',
+              children: [
+                TextFormField(
+                  controller: _websiteController,
+                  decoration: const InputDecoration(labelText: 'Website'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return null;
+                    {
+                      final uri = Uri.tryParse(value);
+                      if (uri == null || !uri.isAbsolute) return 'Invalid URL';
+                    }
+                    return null;
+                  },
+                ),
+              ],
             ),
             prefabTheme.saveButtonBuilder(
               context,
@@ -444,6 +486,7 @@ class AccountEditScreen extends ConsumerStatefulWidget {
 class _AccountEditScreenState extends ConsumerState<AccountEditScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   bool _prefilled = false;
   // ignore: unused_field
   Account? _item;
@@ -455,6 +498,7 @@ class _AccountEditScreenState extends ConsumerState<AccountEditScreen> {
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _emailController.dispose();
     _usernameController.dispose();
     _codeController.dispose();
@@ -474,6 +518,7 @@ class _AccountEditScreenState extends ConsumerState<AccountEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(accountsProvider, (_, __) {});
@@ -493,8 +538,10 @@ class _AccountEditScreenState extends ConsumerState<AccountEditScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {'email', 'username', 'code', 'age', 'website'},
+      );
     } finally {
       subscription.close();
     }
@@ -516,76 +563,114 @@ class _AccountEditScreenState extends ConsumerState<AccountEditScreen> {
       ),
       body: asyncItem.when(
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
+        error: (e, st) =>
+            ref.read(prefabBackendProvider).parseError(e).isNotFound
+                ? prefabTheme.notFoundBuilder(
+                    context, () => context.go('/accounts'))
+                : prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
+          onChanged: _formErrors.clearEdited,
           child: ListView(
             padding: prefabTheme.formPadding,
             children: [
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value))
-                    return 'Invalid email address';
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _usernameController,
-                decoration: const InputDecoration(labelText: 'Username'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  if (value.length < 3) return 'Must be at least 3 characters';
-                  if (value.length > 20) return 'Too long';
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _codeController,
-                decoration: const InputDecoration(labelText: 'Code'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  if (!RegExp('^[A-Z]+\$').hasMatch(value))
-                    return 'Invalid format';
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _ageController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(signed: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$')),
+              PrefabFormErrorBanner(errors: _formErrors),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'email',
+                children: [
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                          .hasMatch(value)) return 'Invalid email address';
+                      return null;
+                    },
+                  ),
                 ],
-                decoration: const InputDecoration(labelText: 'Age'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  if (int.tryParse(value) == null)
-                    return 'Must be a whole number';
-                  {
-                    final n = double.tryParse(value);
-                    if (n == null || n < 1) return 'Can\'t be < 1';
-                  }
-                  {
-                    final n = double.tryParse(value);
-                    if (n == null || n > 99) return 'Must be at most 99';
-                  }
-                  return null;
-                },
               ),
-              TextFormField(
-                controller: _websiteController,
-                decoration: const InputDecoration(labelText: 'Website'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return null;
-                  {
-                    final uri = Uri.tryParse(value);
-                    if (uri == null || !uri.isAbsolute) return 'Invalid URL';
-                  }
-                  return null;
-                },
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'username',
+                children: [
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(labelText: 'Username'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      if (value.length < 3)
+                        return 'Must be at least 3 characters';
+                      if (value.length > 20) return 'Too long';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'code',
+                children: [
+                  TextFormField(
+                    controller: _codeController,
+                    decoration: const InputDecoration(labelText: 'Code'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      if (!RegExp('^[A-Z]+\$').hasMatch(value))
+                        return 'Invalid format';
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'age',
+                children: [
+                  TextFormField(
+                    controller: _ageController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(signed: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^-?\d*$')),
+                    ],
+                    decoration: const InputDecoration(labelText: 'Age'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      if (int.tryParse(value) == null)
+                        return 'Must be a whole number';
+                      {
+                        final n = double.tryParse(value);
+                        if (n == null || n < 1) return 'Can\'t be < 1';
+                      }
+                      {
+                        final n = double.tryParse(value);
+                        if (n == null || n > 99) return 'Must be at most 99';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'website',
+                children: [
+                  TextFormField(
+                    controller: _websiteController,
+                    decoration: const InputDecoration(labelText: 'Website'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return null;
+                      {
+                        final uri = Uri.tryParse(value);
+                        if (uri == null || !uri.isAbsolute)
+                          return 'Invalid URL';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
               ),
               prefabTheme.saveButtonBuilder(
                 context,

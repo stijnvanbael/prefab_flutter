@@ -174,9 +174,15 @@ class DetailScreenArtifact extends Artifact {
     buffer.writeln('        ),');
     buffer.writeln(
         '        loading: () => prefabTheme.loadingBuilder(context),');
+    final listPath = entity.paths.collectionPath(manifest);
+    _imports.add(Libs.goRouter);
+    buffer.writeln('        error: (error, stackTrace) =>');
     buffer.writeln(
-        '        error: (error, stackTrace) =>\n'
-        '            prefabTheme.errorBuilder(context, error, stackTrace),');
+        '            ref.read(prefabBackendProvider).parseError(error).isNotFound');
+    buffer.writeln(
+        "                ? prefabTheme.notFoundBuilder(context, () => context.go('$listPath'))");
+    buffer.writeln(
+        '                : prefabTheme.errorBuilder(context, error, stackTrace),');
     buffer.writeln('      ),');
   }
 
