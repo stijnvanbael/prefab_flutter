@@ -14,7 +14,6 @@ final _createChecker = TypeChecker.typeNamed(Create, inPackage: 'prefab_flutter'
 final _updateChecker = TypeChecker.typeNamed(Update, inPackage: 'prefab_flutter');
 final _deleteChecker = TypeChecker.typeNamed(Delete, inPackage: 'prefab_flutter');
 final _fieldChecker = TypeChecker.typeNamed(Field, inPackage: 'prefab_flutter');
-// ignore: deprecated_member_use
 final _formFieldChecker = TypeChecker.typeNamed(FormField, inPackage: 'prefab_flutter');
 final _idChecker = TypeChecker.typeNamed(Id, inPackage: 'prefab_flutter');
 final _viewChecker = TypeChecker.typeNamed(View, inPackage: 'prefab_flutter');
