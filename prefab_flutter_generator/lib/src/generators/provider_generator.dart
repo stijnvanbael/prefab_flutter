@@ -3,6 +3,7 @@ import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
 import '../core/extension_point.dart';
+import '../core/family_key.dart';
 import '../features/features.dart';
 import '../manifest/entity_manifest.dart';
 
@@ -53,20 +54,19 @@ abstract class _ProviderArtifact extends Artifact {
   // Provider declarations
   // ---------------------------------------------------------------------------
 
-  void _writeDetailProvider(StringBuffer buffer) {
+  void _writeDetailProvider(StringBuffer buffer, FamilyKey key) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
-    final hasParent = manifest.hasParent;
 
-    if (hasParent) {
+    if (!key.isEmpty) {
       // Detail provider keyed on (id, ancestor ids...), outermost first.
       final named = [
-        for (var i = 0; i < manifest.ancestors.length; i++)
-          '${manifest.ancestors[i].paramName}: args.\$${i + 2}',
+        for (var i = 0; i < key.ids.length; i++)
+          '${key.ids[i].name}: args.\$${i + 2}',
       ].join(', ');
       buffer.writeln(
           'final ${entityLower}DetailProvider = FutureProvider.autoDispose'
-          '.family<$entity, ${manifest.detailKeyType}>((ref, args) =>');
+          '.family<$entity, ${key.detailType(manifest.idType)}>((ref, args) =>');
       buffer.writeln(
           '    ref.watch(${entityLower}ApiClientProvider).getById(args.\$1, $named));');
     } else {
@@ -100,10 +100,14 @@ class DetailProviderArtifact extends _ProviderArtifact {
   @override
   String get primaryName => '${manifest.entityNameLower}DetailProvider';
 
+  /// The ids of the owning resources, outermost first (nested resources);
+  /// the detail provider is keyed on `(id, ids...)`.
+  final familyKey = ValuePoint<FamilyId>('detailProvider.familyKey');
+
   @override
   Code emit() {
     final buffer = StringBuffer();
-    _writeDetailProvider(buffer);
+    _writeDetailProvider(buffer, FamilyKey(familyKey.values));
     return _code(buffer, const {});
   }
 }
@@ -133,6 +137,11 @@ class ListProviderArtifact extends _ProviderArtifact {
   /// 10 search, 20 sort, 30 descending, 40 page, 50 page size.
   final fetchArguments = ValuePoint<NamedArgument>('listProvider.fetchArguments');
 
+  /// The ids of the owning resources, outermost first (nested resources):
+  /// the list provider becomes a family keyed on them and passes them to the
+  /// API client.
+  final familyKey = ValuePoint<FamilyId>('listProvider.familyKey');
+
   @override
   List<String> get declaredNames =>
       [primaryName, '${manifest.entityName}sNotifier'];
@@ -140,8 +149,9 @@ class ListProviderArtifact extends _ProviderArtifact {
   void _writeListProvider(StringBuffer buffer) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
-    final hasParent = manifest.hasParent;
-    final parentParamType = hasParent ? manifest.parentKeyType : null;
+    final key = FamilyKey(familyKey.values);
+    final hasParent = !key.isEmpty;
+    final parentParamType = hasParent ? key.listType : null;
 
     if (hasParent) {
       // List provider keyed on parentType parentId.
@@ -154,15 +164,16 @@ class ListProviderArtifact extends _ProviderArtifact {
       // Family notifier; the family argument is the parent id.
       buffer.writeln(
           'class ${entity}sNotifier extends AutoDisposeFamilyAsyncNotifier<PrefabPage<$entity>, $parentParamType> {');
-      for (var i = 0; i < manifest.ancestors.length; i++) {
-        final a = manifest.ancestors[i];
-        final access = manifest.depth == 1 ? 'arg' : 'arg.\$${i + 1}';
-        buffer.writeln('  ${a.idType} get ${a.paramName} => $access;');
+      for (var i = 0; i < key.depth; i++) {
+        final a = key.ids[i];
+        final access = key.depth == 1 ? 'arg' : 'arg.\$${i + 1}';
+        buffer.writeln('  ${a.type} get ${a.name} => $access;');
       }
       buffer.writeln();
       _writeNotifierBody(manifest, buffer,
+          key: key,
           buildSignature: '$parentParamType arg',
-          parentArg: manifest.ancestorNamedArgs());
+          parentArg: key.namedArgs());
       buffer.writeln('}');
     } else {
       // List provider (no family arg).
@@ -174,7 +185,8 @@ class ListProviderArtifact extends _ProviderArtifact {
       // AsyncNotifier.
       buffer.writeln(
           'class ${entity}sNotifier extends AutoDisposeAsyncNotifier<PrefabPage<$entity>> {');
-      _writeNotifierBody(manifest, buffer, buildSignature: '', parentArg: '');
+      _writeNotifierBody(manifest, buffer,
+          key: key, buildSignature: '', parentArg: '');
       buffer.writeln('}');
     }
   }
@@ -189,20 +201,21 @@ class ListProviderArtifact extends _ProviderArtifact {
   void _writeNotifierBody(
     EntityManifest manifest,
     StringBuffer buffer, {
+    required FamilyKey key,
     required String buildSignature,
     required String parentArg,
   }) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
-    final hasParent = manifest.hasParent;
+    final hasParent = !key.isEmpty;
     final listArgs = [
       if (hasParent) parentArg,
       for (final argument in fetchArguments.values) '$argument',
     ].join(', ');
     final clientTrailing = hasParent ? ', $parentArg' : '';
-    final detailKeyArgs = manifest.detailKeyExpr(
+    final detailKeyArgs = key.detailExpr(
         '$entityLower.${manifest.idFieldName}${manifest.idBang}',
-        (a) => a.paramName);
+        (a) => a.name);
 
     buffer.writeln(
         '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');

@@ -3,6 +3,7 @@ import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
 import '../core/extension_point.dart';
+import '../features/features.dart';
 import '../manifest/entity_manifest.dart';
 
 /// Generates GoRouter [GoRoute] declarations for every class annotated with
@@ -41,7 +42,8 @@ import '../manifest/entity_manifest.dart';
 /// ```
 class RoutesGenerator extends ArtifactGenerator {
   RoutesGenerator()
-      : super('RoutesGenerator', const [RoutesArtifact.create]);
+      : super('RoutesGenerator', const [RoutesArtifact.create],
+            features: registeredFeatures);
 }
 
 /// The `$<file>Routes` list of one source file (one artifact per library).
@@ -56,6 +58,20 @@ class RoutesArtifact extends Artifact {
   /// entity screens.
   final detailChildRoutes =
       ValuePoint<DetailChildRoute>('routes.detailChildRoutes');
+
+  /// Top-level routes of entities that have a `@Parent` (nested resources):
+  /// without a contribution such an entity has no route of its own.
+  final routes = ValuePoint<RouteSpec>('routes.routes');
+
+  /// The routes nested in the detail route of a parent entity.
+  final childRoutes =
+      ValuePoint<List<RouteSpec> Function(EntityManifest parent)>(
+          'routes.childRoutes');
+
+  /// Extra arguments of the screens of an entity (`name: value` pairs, empty
+  /// for none), e.g. the ancestor ids read from the path parameters.
+  final screenArguments =
+      ValuePoint<String Function(EntityManifest entity)>('routes.screenArguments');
 
   static Iterable<Artifact> create(EntityContext entity) =>
       entity.manifest == entity.libraryManifests.first
@@ -105,207 +121,107 @@ class RoutesArtifact extends Artifact {
     String getterName,
     StringBuffer buffer,
   ) {
-    // Map: parentEntityNameLower → child manifests
-    final childrenByParent = <String, List<EntityManifest>>{};
-    for (final m in manifests) {
-      final parentName = m.parentEntityNameLower;
-      // Children of a parent declared in another file cannot be nested inside
-      // that file's route tree; they become top-level routes instead.
-      if (parentName != null && m.parentInSameLibrary) {
-        childrenByParent.putIfAbsent(parentName, () => []).add(m);
-      }
-    }
-
+    final extra = {for (final s in routes.values) s.manifest: s};
     buffer.writeln('List<RouteBase> get $getterName => [');
     for (final manifest in manifests) {
-      if (!manifest.hasParent) {
-        _writeEntityRoute(manifest, childrenByParent, buffer, level: 1);
-      } else if (!manifest.parentInSameLibrary) {
-        _writeNestedEntityRoute(
-          manifest,
-          childrenByParent: childrenByParent,
-          buffer: buffer,
-          level: 1,
-          absolutePrefix: [
-            for (final a in manifest.ancestors) '/${a.path}/:${a.routeParam}',
-            '/',
-          ].join(),
-        );
-      }
+      // An entity without parent has a root route; any other gets a
+      // top-level route only when a feature supplies one (`routes`).
+      final spec = manifest.hasParent
+          ? extra[manifest]
+          : RouteSpec(manifest, path: '/${manifest.path}');
+      if (spec != null) _writeEntityRoute(spec, buffer);
     }
     buffer.writeln('];');
   }
 
-  // Writes a root-level entity route (no @Parent).
-  void _writeEntityRoute(
-    EntityManifest manifest,
-    Map<String, List<EntityManifest>> childrenByParent,
-    StringBuffer buffer, {
-    required int level,
-  }) {
-    final entity = manifest.entityName;
-    final entityLower = manifest.entityNameLower;
-    final path = manifest.path;
+  /// Extra arguments of the screens of [manifest] (e.g. the ids of its
+  /// ancestors), as `name: value` pairs separated by commas.
+  String _screenArguments(EntityManifest manifest) => [
+        for (final f in screenArguments.values) f(manifest),
+      ].where((a) => a.isNotEmpty).join(', ');
 
-    final children = childrenByParent[entityLower] ?? [];
-    // When this entity is a parent of others, use a named id param to avoid
-    // collisions with the nested :id params (GoRouter requires unique names).
-    final idParam = children.isNotEmpty ? '${entityLower}Id' : 'id';
-
-    final i = _i(level);
-
-    buffer.writeln('${i}GoRoute(');
-    buffer.writeln("$i  path: '/$path',");
-    buffer.writeln(
-        '$i  builder: (context, state) => const ${entity}ListScreen(),');
-    buffer.writeln('$i  routes: [');
-
-    // The create route (only with @Create) must precede ':id' so '/create' is
-    // not parsed as an id.
-    if (manifest.hasCreate) {
-      buffer.writeln('$i    GoRoute(');
-      buffer.writeln("$i      path: 'create',");
-      buffer.writeln(
-          '$i      builder: (context, state) => const ${entity}CreateScreen(),');
-      buffer.writeln('$i    ),');
-    }
-
-    // Detail route
-    buffer.writeln('$i    GoRoute(');
-    buffer.writeln("$i      path: ':$idParam',");
-    buffer.writeln(
-        "        builder: (context, state) => ${entity}DetailScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}),");
-
-    final hasSubRoutes = manifest.hasUpdate ||
-        children.isNotEmpty ||
-        _childRoutes(manifest).isNotEmpty;
-    if (hasSubRoutes) {
-      buffer.writeln('$i      routes: [');
-      if (manifest.hasUpdate) {
-        buffer.writeln('$i        GoRoute(');
-        buffer.writeln("$i          path: 'edit',");
-        buffer.writeln(
-            "          builder: (context, state) => ${entity}EditScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}),");
-        buffer.writeln('$i        ),');
-      }
-      _writeChildScreenRoutes(manifest, idParam, i, buffer);
-      // Nested child entity routes
-      for (final child in children) {
-        _writeNestedEntityRoute(
-          child,
-          childrenByParent: childrenByParent,
-          buffer: buffer,
-          level: level + 4,
-        );
-      }
-      buffer.writeln('$i      ],');
-    }
-
-    buffer.writeln('$i    ),');
-
-    buffer.writeln('$i  ],');
-    buffer.writeln('$i),');
-  }
-
-  // Writes a nested entity route (entity has @Parent).
-  void _writeNestedEntityRoute(
-    EntityManifest manifest, {
-    required Map<String, List<EntityManifest>> childrenByParent,
-    required StringBuffer buffer,
-    required int level,
-    String absolutePrefix = '',
-  }) {
-    final entity = manifest.entityName;
-    final entityLower = manifest.entityNameLower;
-    final path = '$absolutePrefix${manifest.path}';
-    // Every ancestor id comes from the path parameters of the enclosing
-    // routes (named after the ancestor, so they are unique per level).
-    final ancestorArgs = manifest.ancestors
-        .map((a) =>
-            "${a.paramName}: ${a.parse("state.pathParameters['${a.routeParam}']!")}")
-        .join(', ');
-
-    final children = childrenByParent[entityLower] ?? [];
-    final idParam = children.isNotEmpty ? '${entityLower}Id' : 'id';
-
-    final i = _i(level);
-
-    buffer.writeln('${i}GoRoute(');
-    buffer.writeln("$i  path: '$path',");
-    buffer.writeln(
-        "$i  builder: (context, state) => ${entity}ListScreen($ancestorArgs),");
-    buffer.writeln('$i  routes: [');
-
-    // The create route (only with @Create) must precede ':id' so '/create' is
-    // not parsed as an id.
-    if (manifest.hasCreate) {
-      buffer.writeln('$i    GoRoute(');
-      buffer.writeln("$i      path: 'create',");
-      buffer.writeln(
-          "$i      builder: (context, state) => ${entity}CreateScreen($ancestorArgs),");
-      buffer.writeln('$i    ),');
-    }
-
-    // Detail route
-    buffer.writeln('$i    GoRoute(');
-    buffer.writeln("$i      path: ':$idParam',");
-    buffer.writeln(
-        "        builder: (context, state) => ${entity}DetailScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}, $ancestorArgs),");
-
-    final hasSubRoutes = manifest.hasUpdate ||
-        children.isNotEmpty ||
-        _childRoutes(manifest).isNotEmpty;
-    if (hasSubRoutes) {
-      buffer.writeln('$i      routes: [');
-      if (manifest.hasUpdate) {
-        buffer.writeln('$i        GoRoute(');
-        buffer.writeln("$i          path: 'edit',");
-        buffer.writeln(
-            "          builder: (context, state) => ${entity}EditScreen(id: ${manifest.parseId("state.pathParameters['$idParam']!")}, $ancestorArgs),");
-        buffer.writeln('$i        ),');
-      }
-      _writeChildScreenRoutes(manifest, idParam, i, buffer);
-      for (final child in children) {
-        _writeNestedEntityRoute(
-          child,
-          childrenByParent: childrenByParent,
-          buffer: buffer,
-          level: level + 4,
-        );
-      }
-      buffer.writeln('$i      ],');
-    }
-
-    buffer.writeln('$i    ),');
-
-    buffer.writeln('$i  ],');
-    buffer.writeln('$i),');
-  }
-
-  /// Writes the routes of the hand-written screens of [manifest], each below
-  /// the detail route whose id parameter is [idParam].
-  void _writeChildScreenRoutes(
-      EntityManifest manifest, String idParam, String i, StringBuffer buffer) {
-    for (final r in _childRoutes(manifest)) {
-      final args = [
-        "id: ${manifest.parseId("state.pathParameters['$idParam']!")}",
-        for (final a in manifest.ancestors)
-          "${a.paramName}: ${a.parse("state.pathParameters['${a.routeParam}']!")}",
-      ].join(', ');
-      buffer.writeln('$i        GoRoute(');
-      buffer.writeln("$i          path: '${r.path}',");
-      buffer.writeln(
-          '$i          builder: (context, state) => ${r.className}($args),');
-      buffer.writeln('$i        ),');
-    }
-  }
-
-  List<DetailChildRoute> _childRoutes(EntityManifest manifest) => [
-        for (final r in detailChildRoutes.values)
-          if (r.entityName == manifest.entityName) r,
+  List<RouteSpec> _childRoutes(EntityManifest manifest) => [
+        for (final f in childRoutes.values) ...f(manifest),
       ];
 
-  static String _i(int level) => '  ' * level;
+  // Writes the route tree of one entity: list, create, detail and edit, with
+  // the routes of its children inside the detail route.
+  void _writeEntityRoute(RouteSpec spec, StringBuffer buffer) {
+    final manifest = spec.manifest;
+    final entity = manifest.entityName;
+    final args = _screenArguments(manifest);
+    final constant = args.isEmpty ? 'const ' : '';
+    String screenArgs(String id) =>
+        [id, args].where((a) => a.isNotEmpty).join(', ');
+
+    final children = _childRoutes(manifest);
+    // When this entity is a parent of others, use a named id param to avoid
+    // collisions with the nested :id params (GoRouter requires unique names).
+    final idParam =
+        children.isNotEmpty ? '${manifest.entityNameLower}Id' : 'id';
+    final id = manifest.parseId("state.pathParameters['$idParam']!");
+
+    buffer.writeln('GoRoute(');
+    buffer.writeln("  path: '${spec.path}',");
+    buffer.writeln(
+        '  builder: (context, state) => $constant${entity}ListScreen($args),');
+    buffer.writeln('  routes: [');
+
+    // The create route (only with @Create) must precede ':id' so '/create' is
+    // not parsed as an id.
+    if (manifest.hasCreate) {
+      buffer.writeln('GoRoute(');
+      buffer.writeln("  path: 'create',");
+      buffer.writeln(
+          '  builder: (context, state) => $constant${entity}CreateScreen($args),');
+      buffer.writeln('),');
+    }
+
+    // Detail route
+    buffer.writeln('GoRoute(');
+    buffer.writeln("  path: ':$idParam',");
+    buffer.writeln(
+        '  builder: (context, state) => ${entity}DetailScreen(${screenArgs('id: $id')}),');
+    final screens = [
+      for (final r in detailChildRoutes.values)
+        if (r.entityName == manifest.entityName) r,
+    ];
+    if (manifest.hasUpdate || children.isNotEmpty || screens.isNotEmpty) {
+      buffer.writeln('  routes: [');
+      if (manifest.hasUpdate) {
+        buffer.writeln('GoRoute(');
+        buffer.writeln("  path: 'edit',");
+        buffer.writeln(
+            '  builder: (context, state) => ${entity}EditScreen(${screenArgs('id: $id')}),');
+        buffer.writeln('),');
+      }
+      for (final r in screens) {
+        buffer.writeln('GoRoute(');
+        buffer.writeln("  path: '${r.path}',");
+        buffer.writeln(
+            '  builder: (context, state) => ${r.className}(${screenArgs('id: $id')}),');
+        buffer.writeln('),');
+      }
+      for (final child in children) {
+        _writeEntityRoute(child, buffer);
+      }
+      buffer.writeln('  ],');
+    }
+    buffer.writeln('),');
+
+    buffer.writeln('  ],');
+    buffer.writeln('),');
+  }
+}
+
+/// A route tree of one entity: [path] is the `GoRoute.path` of its list route
+/// (absolute for a top-level route, relative inside its parent's detail
+/// route).
+class RouteSpec {
+  const RouteSpec(this.manifest, {required this.path});
+
+  final EntityManifest manifest;
+  final String path;
 }
 
 /// A hand-written screen (`@EntityScreen`) below the detail route of an

@@ -282,9 +282,6 @@ class EntityManifest {
   /// Number of ancestors (0 for a root entity).
   int get depth => ancestors.length;
 
-  /// Whether list and detail screens show a breadcrumb row (two or more
-  /// ancestors).
-  bool get hasBreadcrumbs => depth >= 2;
 
   /// Type of the key of the list provider family: the parent id type for one
   /// ancestor, a positional record of all ancestor id types otherwise.

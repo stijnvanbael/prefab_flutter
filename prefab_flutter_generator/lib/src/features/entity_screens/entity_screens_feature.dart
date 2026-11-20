@@ -5,10 +5,10 @@ import '../../core/code.dart';
 import '../../core/entity_context.dart';
 import '../../core/feature.dart';
 import '../../core/library_emitter.dart';
-import '../../generators/breadcrumbs.dart';
 import '../../generators/detail_screen_generator.dart';
 import '../../generators/routes_generator.dart';
 import '../../manifest/entity_manifest.dart';
+import '../breadcrumbs/breadcrumb_items.dart';
 import 'child_screen.dart';
 
 /// Hand-written screens below an entity (`@EntityScreen`).
