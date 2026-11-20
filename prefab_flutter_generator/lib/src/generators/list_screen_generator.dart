@@ -2,9 +2,11 @@ import '../core/artifact.dart';
 import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
+import '../core/extension_point.dart';
 import '../core/field_registries.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
+import '../features/features.dart';
 import 'breadcrumbs.dart';
 
 /// Generates a `{Entity}ListScreen` [ConsumerWidget] for every class annotated
@@ -18,7 +20,8 @@ import 'breadcrumbs.dart';
 ///   scope its API call to the correct parent resource.
 class ListScreenGenerator extends ArtifactGenerator {
   ListScreenGenerator()
-      : super('ListScreenGenerator', const [ListScreenArtifact.create]);
+      : super('ListScreenGenerator', const [ListScreenArtifact.create],
+            features: registeredFeatures);
 }
 
 /// The `{Entity}ListScreen` widget of one entity.
@@ -26,6 +29,29 @@ class ListScreenArtifact extends Artifact {
   ListScreenArtifact(this.entity);
 
   final EntityContext entity;
+
+  /// Statements at the start of `build`, after the list is watched (indent 4).
+  final buildStatements = ExtensionPoint('listScreen.buildStatements');
+
+  /// Widgets of the app bar `actions` (indent 10). Orders in use: 10 sort.
+  final appBarActions = ExtensionPoint('listScreen.appBarActions');
+
+  /// Widgets in the body column above the list (indent 10). Orders: 10 search.
+  final aboveList = ExtensionPoint('listScreen.aboveList');
+
+  /// Widgets in the body column below the list (indent 10). Orders: 10 paging.
+  final belowList = ExtensionPoint('listScreen.belowList');
+
+  /// Dart expression reading the list provider, e.g. `postsProvider(postId)`.
+  String get providerRef {
+    final m = entity.manifest;
+    return m.hasParent
+        ? '${m.entityNameLower}sProvider(${m.parentKeyExpr((a) => a.paramName)})'
+        : '${m.entityNameLower}sProvider';
+  }
+
+  /// Name of the local variable holding the watched `AsyncValue` of the page.
+  String get asyncName => '${entity.manifest.entityNameLower}sAsync';
 
   static Iterable<Artifact> create(EntityContext entity) =>
       [ListScreenArtifact(entity)];
@@ -44,6 +70,10 @@ class ListScreenArtifact extends Artifact {
     return Code(
       buffer.toString().trim(),
       imports: {
+        ...buildStatements.imports,
+        ...appBarActions.imports,
+        ...aboveList.imports,
+        ...belowList.imports,
         Libs.materialUi,
         Libs.riverpod,
         Libs.goRouter,
@@ -101,34 +131,16 @@ class ListScreenArtifact extends Artifact {
           '    final ${entityLower}sAsync = ref.watch(${entityLower}sProvider);');
     }
 
-    if (manifest.hasSearch || manifest.hasSort || manifest.paged) {
-      buffer.writeln('    final notifier = ref.read($providerRef.notifier);');
-    }
+    if (!buildStatements.isEmpty) buffer.writeln(buildStatements.render(4));
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
     if (manifest.hasBreadcrumbs) {
       buffer.writeln(breadcrumbBottom(manifest, '        '));
     }
-    if (manifest.hasSort) {
+    if (!appBarActions.isEmpty) {
       buffer.writeln('        actions: [');
-      buffer.writeln('          PrefabSortMenu<$entity>(');
-      buffer.writeln('            options: const [');
-      for (final f in manifest.sortableFields) {
-        buffer.writeln(
-            "              PrefabSortOption(id: '${f.jsonName}', label: '${_escape(f.label)} ↑', icon: Icons.arrow_upward),");
-        buffer.writeln(
-            "              PrefabSortOption(id: '-${f.jsonName}', label: '${_escape(f.label)} ↓', icon: Icons.arrow_downward),");
-      }
-      buffer.writeln('            ],');
-      buffer.writeln(
-          "            selectedId: notifier.sort == null ? null : '\${notifier.descending ? '-' : ''}\${notifier.sort}',");
-      buffer
-          .writeln('            onSortChanged: (option) => notifier.setSort(');
-      buffer.writeln("              option.id.replaceFirst('-', ''),");
-      buffer.writeln("              descending: option.id.startsWith('-'),");
-      buffer.writeln('            ),');
-      buffer.writeln('          ),');
+      buffer.writeln(appBarActions.render(10));
       buffer.writeln('        ],');
     }
     buffer.writeln('      ),');
@@ -144,15 +156,7 @@ class ListScreenArtifact extends Artifact {
     }
     buffer.writeln('      body: Column(');
     buffer.writeln('        children: [');
-    if (manifest.hasSearch) {
-      buffer.writeln('          Padding(');
-      buffer.writeln('            padding: const EdgeInsets.all(8),');
-      buffer.writeln('            child: PrefabSearchBar(');
-      buffer.writeln('              initialValue: notifier.search,');
-      buffer.writeln('              onChanged: notifier.setSearch,');
-      buffer.writeln('            ),');
-      buffer.writeln('          ),');
-    }
+    if (!aboveList.isEmpty) buffer.writeln(aboveList.render(10));
     buffer.writeln('          Expanded(');
     buffer.writeln('            child: ${entityLower}sAsync.when(');
     buffer.writeln('        skipLoadingOnReload: true,');
@@ -183,24 +187,11 @@ class ListScreenArtifact extends Artifact {
         "        error: (error, stackTrace) => Center(child: Text('Error: \$error')),");
     buffer.writeln('            ),');
     buffer.writeln('          ),');
-    if (manifest.paged) {
-      buffer.writeln('          PrefabPaginationBar.controlled(');
-      buffer.writeln(
-          '            page: ${entityLower}sAsync.valueOrNull?.page ?? 0,');
-      buffer.writeln(
-          '            totalPages: ${entityLower}sAsync.valueOrNull?.totalPages ?? 0,');
-      buffer.writeln('            onPageChanged: notifier.goToPage,');
-      buffer.writeln('          ),');
-    }
+    if (!belowList.isEmpty) buffer.writeln(belowList.render(10));
     buffer.writeln('        ],');
     buffer.writeln('      ),');
     buffer.writeln('    );');
     buffer.writeln('  }');
     buffer.writeln('}');
   }
-
-  static String _escape(String value) => value
-      .replaceAll(r'\', r'\\')
-      .replaceAll("'", r"\'")
-      .replaceAll(r'$', r'\$');
 }

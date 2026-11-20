@@ -51,3 +51,70 @@ class Contribution {
   final Code code;
   final int order;
 }
+
+/// A place in an artifact template that holds typed values instead of code,
+/// for contributions that several features combine and the template renders
+/// (e.g. the query parameters of the list request).
+///
+/// Values are ordered like an [ExtensionPoint]: by `order`, then feature
+/// name, then the order in which they were added.
+class ValuePoint<T> {
+  ValuePoint(this.name);
+
+  /// Qualified name, e.g. `apiClient.listQueryParameters`.
+  final String name;
+
+  final _entries = <(String, int, T)>[];
+
+  void add(String feature, T value, {int order = 0}) =>
+      _entries.add((feature, order, value));
+
+  bool get isEmpty => _entries.isEmpty;
+
+  List<T> get values {
+    final indexed = [
+      for (var i = 0; i < _entries.length; i++) (i, _entries[i]),
+    ];
+    indexed.sort((a, b) {
+      final byOrder = a.$2.$2.compareTo(b.$2.$2);
+      if (byOrder != 0) return byOrder;
+      final byFeature = a.$2.$1.compareTo(b.$2.$1);
+      return byFeature != 0 ? byFeature : a.$1.compareTo(b.$1);
+    });
+    return [for (final e in indexed) e.$2.$3];
+  }
+}
+
+/// A named argument of a generated call, e.g. `search: _search`.
+class NamedArgument {
+  const NamedArgument(this.name, this.expression);
+
+  final String name;
+  final String expression;
+
+  @override
+  String toString() => '$name: $expression';
+}
+
+/// A parameter of the API client's `list` method.
+///
+/// It is always declared. With [query] it is also passed to
+/// `PrefabListAdapter.queryParameters`, with [parse] also to `parsePage`.
+class QueryParameter {
+  const QueryParameter(
+    this.name,
+    this.type, {
+    this.defaultValue,
+    this.query = true,
+    this.parse = false,
+  });
+
+  final String name;
+  final String type;
+  final String? defaultValue;
+  final bool query;
+  final bool parse;
+
+  String get declaration =>
+      defaultValue == null ? '$type $name' : '$type $name = $defaultValue';
+}

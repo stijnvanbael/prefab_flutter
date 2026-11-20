@@ -38,6 +38,9 @@ prefab_flutter_generator/
     library_emitter.dart            #   LibraryEmitter: assembles a .prefab.dart
     artifact_generator.dart         #   ArtifactGenerator: source_gen wrapper
     field_registries.dart           #   FieldEmitter, ValidatorEmitter, FieldDisplay + registries
+  lib/src/features/                 # feature modules, one directory each
+    features.dart                   #   registeredFeatures (alphabetical)
+    list_query/                     #   search, sort and pagination
   lib/src/generators/               # the artifacts, one file per output kind
     api_client_generator.dart       #   ApiClientArtifact
     provider_generator.dart         #   DetailProvider-, ListProvider-, ApiClientProviderArtifact
@@ -84,16 +87,17 @@ contribute to, and an import collector. There is no `code_builder`.
    features, rendered by `order`, then feature name, so the registration
    order of features never matters. A single-valued point
    (`maxContributions: 1`) fails with both feature names when two features
-   claim it. A `Feature` (`lib/src/core/feature.dart`) adds artifacts and
-   contributes to the extension points of the artifacts it finds in the
-   `ArtifactSet`; no feature module exists yet and the templates do not
-   expose points yet (PF-39).
+   claim it. A `ValuePoint<T>` holds typed values (`NamedArgument`,
+   `QueryParameter`) that several features combine and the template renders.
+   A `Feature` (`lib/src/core/feature.dart`) adds artifacts and contributes to
+   the extension points of the artifacts it finds in the `ArtifactSet`; see
+   "Adding a feature". The points that exist today are in the table there.
 6. **Registries.** `FieldEmitters` (how a `FieldWidget` appears in the forms),
    `ValidatorEmitters` (the check a `Validator` adds) and `FieldDisplays` (how a
    value is shown in detail screens and list tiles) look up the emitter by the
    annotation value. The first implementations wrap the code that used to live
    in the form, detail and list templates; they move into one class per widget
-   or validator in the follow-ups of PF-39.
+   or validator in the follow-ups of PF-39 (PF-43 to PF-48).
 7. **Tests.** The per-kind generators (`ApiClientGenerator`, ...,
    `RoutesGenerator`) are `ArtifactGenerator`s with the factories of one kind.
    They back the per-kind builders in `lib/builder.dart` that unit tests use;
@@ -126,6 +130,58 @@ Say you want to generate `{Entity}Foo` classes.
 5. **Write tests** (see below), then update the
    [user guide](user_guide.md) (generated files and classes) and the root
    `README.md` if the output changes.
+
+## Adding a feature
+
+A feature is behaviour declared on the model (search, sort, create, ...). It
+lives in a **feature module** and adds code to the artifacts through extension
+points, so adding or changing it does not touch the other features. Search,
+sort and pagination (`lib/src/features/list_query/`) are the reference module.
+
+1. **Create the module.** `lib/src/features/<feature>/<feature>_feature.dart`
+   with a `const` class extending `Feature`. `name` is the directory name.
+   `contribute(entity, artifacts)` looks up the artifacts it needs with
+   `artifacts.get<ListScreenArtifact>(ArtifactKind.listScreen, entityName)`.
+   The lookup returns `null` when the artifact is not generated or is promoted:
+   skip it then, and never write to hand-written code.
+2. **Contribute through points.** Add `Code` (written at column 0; the point
+   indents it) with `point.add(name, Code(text, imports: {...}), order: n)`.
+   Name every library the text uses in `imports`; never write `import` lines.
+   Use a distinct `order` per contribution; ties are broken by feature name.
+   Typed points (`ValuePoint<T>`) take values instead of code.
+3. **Register it.** Add one line to `registeredFeatures` in
+   `lib/src/features/features.dart`, kept alphabetical. The order has no
+   meaning.
+4. **Test it.** One test file per feature (`test/<feature>_test.dart`), plus a
+   snapshot fixture for new output (see "Snapshot tests").
+5. **Document it** in the user guide page of its topic.
+
+What a module may touch: its own directory, its own test file and
+documentation, and its one registry line. It reads annotation data from the
+manifest (`EntityContext.manifest`); data that only the feature uses is read
+inside the module (for list query: the `ListQueryManifest` extension). If it
+needs an extension point that does not exist, add the point to the artifact as
+a separate, small change (the artifact owns its skeleton and renders the
+point). It may not edit another feature's directory or the templates beyond
+adding a point.
+
+`FieldManifest` and the raw flags (`searchable`, `sortable`, `@View.paged`)
+stay in `lib/src/manifest/`: they are read in one place with the defaults and
+inference of every field (principle 2), and several features look at the same
+field. Derived getters used by one feature move into its module.
+
+Extension points that exist today (all contributions are at column 0):
+
+| Artifact | Point | Holds | Orders in use |
+|---|---|---|---|
+| list screen | `buildStatements` (indent 4) | `Code` | 10 list query |
+| list screen | `appBarActions`, `aboveList`, `belowList` (indent 10) | `Code` | 10 list query |
+| list notifier | `state`, `onBuild`, `methods` (indent 2, 4, 2) | `Code` | 10 list query |
+| list notifier | `fetchArguments` | `ValuePoint<NamedArgument>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
+| API client | `listQueryParameters` | `ValuePoint<QueryParameter>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
+
+The other points sketched in decision-1 are added by the migration tasks
+PF-43 to PF-48.
 
 ### Testing a generator
 

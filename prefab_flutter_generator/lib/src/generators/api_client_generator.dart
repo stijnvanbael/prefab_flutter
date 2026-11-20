@@ -5,6 +5,8 @@ import '../core/artifact.dart';
 import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
+import '../core/extension_point.dart';
+import '../features/features.dart';
 import '../manifest/entity_manifest.dart';
 
 /// Generates a Dio-backed `{Entity}ApiClient` class for every class annotated
@@ -25,7 +27,8 @@ import '../manifest/entity_manifest.dart';
 /// ```
 class ApiClientGenerator extends ArtifactGenerator {
   ApiClientGenerator()
-      : super('ApiClientGenerator', const [ApiClientArtifact.create]);
+      : super('ApiClientGenerator', const [ApiClientArtifact.create],
+            features: registeredFeatures);
 }
 
 /// The `{Entity}ApiClient` class of one entity.
@@ -33,6 +36,11 @@ class ApiClientArtifact extends Artifact {
   ApiClientArtifact(this.entity);
 
   final EntityContext entity;
+
+  /// Parameters of `list`, in declaration order. Orders in use: 10 search,
+  /// 20 sort and descending, 30 page and page size.
+  final listQueryParameters =
+      ValuePoint<QueryParameter>('apiClient.listQueryParameters');
 
   static Iterable<Artifact> create(EntityContext entity) {
     _requireJsonSupport(entity.element);
@@ -115,31 +123,22 @@ class ApiClientArtifact extends Artifact {
     // (names and response shape come from the PrefabListAdapter).
     final listParams = [
       if (hasParent) requiredAncestors,
-      'String? search',
-      'String? sort',
-      'bool descending = false',
-      'int page = 0',
-      'int? pageSize',
+      for (final p in listQueryParameters.values) p.declaration,
     ].join(', ');
     buffer.writeln('  Future<PrefabPage<$entity>> list({$listParams}) async {');
     buffer.writeln('    final response = await _dio.get(');
     buffer.writeln("      '$urlBase',");
     buffer.writeln('      queryParameters: _adapter.queryParameters(');
-    buffer.writeln('        search: search,');
-    buffer.writeln('        sort: sort,');
-    buffer.writeln('        descending: descending,');
-    if (manifest.paged) {
-      buffer.writeln('        page: page,');
-      buffer.writeln('        pageSize: pageSize,');
+    for (final p in listQueryParameters.values.where((p) => p.query)) {
+      buffer.writeln('        ${p.name}: ${p.name},');
     }
     buffer.writeln('      ),');
     buffer.writeln('    );');
     buffer.writeln('    return _adapter.parsePage(');
     buffer.writeln('      response.data,');
     buffer.writeln('      $entity.fromJson,');
-    if (manifest.paged) {
-      buffer.writeln('      page: page,');
-      buffer.writeln('      pageSize: pageSize,');
+    for (final p in listQueryParameters.values.where((p) => p.parse)) {
+      buffer.writeln('      ${p.name}: ${p.name},');
     }
     buffer.writeln('    );');
     buffer.writeln('  }');
