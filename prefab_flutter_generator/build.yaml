@@ -5,10 +5,16 @@ builders:
     build_extensions: {".dart": [".prefab_promoted.json"]}
     auto_apply: dependents
     build_to: cache
+  prefab_actions:
+    import: "package:prefab_flutter_generator/builder.dart"
+    builder_factories: ["prefabActionsBuilder"]
+    build_extensions: {".dart": [".prefab_actions.json"]}
+    auto_apply: dependents
+    build_to: cache
   prefab_builder:
     import: "package:prefab_flutter_generator/builder.dart"
     builder_factories: ["prefabBuilder"]
     build_extensions: {".dart": [".prefab.dart"]}
     auto_apply: dependents
     build_to: source
-    required_inputs: [".prefab_promoted.json"]
+    required_inputs: [".prefab_promoted.json", ".prefab_actions.json"]

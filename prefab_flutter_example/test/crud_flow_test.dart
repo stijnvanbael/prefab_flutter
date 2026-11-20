@@ -85,6 +85,31 @@ void main() {
     expect(find.text('Keyboard'), findsOneWidget);
   });
 
+  testWidgets('PF-44 hand-written actions on list items and the list',
+      (tester) async {
+    await _pumpApp(tester);
+    expect(find.text('Keyboard'), findsOneWidget);
+
+    // Item action in the trailing menu of the first row.
+    await tester.tap(find.byType(PopupMenuButton<void>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Duplicate'));
+    await tester.pumpAndSettle();
+    expect(find.text('Keyboard (copy)'), findsOneWidget);
+
+    // AppBar action of the list.
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pumpAndSettle();
+    expect(find.text('Keyboard (copy)'), findsOneWidget);
+  });
+
+  testWidgets('PF-44 hand-written action on a detail screen', (tester) async {
+    await _pumpApp(tester, location: '/products/2/reviews/10');
+    await tester.tap(find.byTooltip('Show comment'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sharp picture'), findsWidgets);
+  });
+
   testWidgets('create and edit a nested review', (tester) async {
     await _pumpApp(tester, location: '/products/1/reviews');
     expect(find.text('No items found'), findsOneWidget);

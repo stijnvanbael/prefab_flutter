@@ -9,6 +9,7 @@ import 'src/generators/list_screen_generator.dart';
 import 'src/generators/prefab_generator.dart';
 import 'src/generators/provider_generator.dart';
 import 'src/generators/routes_generator.dart';
+import 'src/features/actions/action_scanner.dart';
 import 'src/promoted/promoted_scanner.dart';
 
 /// The generators format their own output (`ArtifactGenerator`, with a pinned
@@ -71,3 +72,6 @@ Builder prefabBuilder(BuilderOptions options) => LibraryBuilder(
 
 /// Summarises the `@Promoted` declarations of a file for [prefabBuilder].
 Builder prefabPromotedBuilder(BuilderOptions options) => PromotedBuilder();
+
+/// Summarises the `@EntityAction` functions of a file for [prefabBuilder].
+Builder prefabActionsBuilder(BuilderOptions options) => ActionsBuilder();

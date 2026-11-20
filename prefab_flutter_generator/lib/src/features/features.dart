@@ -1,4 +1,5 @@
 import '../core/feature.dart';
+import 'actions/actions_feature.dart';
 import 'list_query/list_query_feature.dart';
 import 'nullable_fields/nullable_fields_feature.dart';
 import 'validators/validators_feature.dart';
@@ -7,6 +8,7 @@ import 'validators/validators_feature.dart';
 /// you add a feature; the order has no meaning (contributions are ordered by
 /// their `order`, then feature name).
 const registeredFeatures = <Feature>[
+  ActionsFeature(),
   ListQueryFeature(),
   NullableFieldsFeature(),
   ValidatorsFeature(),

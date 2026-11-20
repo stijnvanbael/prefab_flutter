@@ -1,0 +1,33 @@
+class AlphaApiClient
+  AlphaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<Alpha>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Alpha> getById(int id);
+  Future<Alpha> update(Alpha alpha);
+  Future<void> delete(Alpha alpha);
+final alphaDetailProvider = FutureProvider.autoDispose.family<Alpha, int>;
+final alphasProvider = AsyncNotifierProvider.autoDispose<AlphasNotifier, PrefabPage<Alpha>>;
+class AlphasNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Alpha>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Alpha>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> updateEntity(Alpha alpha);
+  Future<void> delete(Alpha alpha);
+final alphaApiClientProvider = Provider.autoDispose<AlphaApiClient>;
+class AlphaDetailScreen extends ConsumerWidget
+  final int id;
+  const AlphaDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class AlphaListScreen extends ConsumerWidget
+  const AlphaListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class AlphaEditScreen extends ConsumerStatefulWidget
+  final int id;
+  const AlphaEditScreen({super.key, required this.id});
+  ConsumerState<AlphaEditScreen> createState();
+List<RouteBase> get $entityActionsRoutes;

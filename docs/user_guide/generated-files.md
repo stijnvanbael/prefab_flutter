@@ -9,7 +9,7 @@ contains:
 | Generated code | Contents |
 |---|---|
 | `ProductListScreen` | A `ListView` of items (or a "No items found" message when empty); tapping one opens its detail screen. With a `searchable` field it has a `PrefabSearchBar`, with `sortable` fields a `PrefabSortMenu` in the AppBar, and (unless `@View(paged: false)`) a `PrefabPaginationBar` footer. With `@Create`, a floating action button opens the create screen (nested route for nested entities) and the list reloads on return |
-| `ProductDetailScreen(id:)` | One `ListTile` per visible field, plus Edit/Delete actions |
+| `ProductDetailScreen(id:)` | One `ListTile` per visible field, plus Edit/Delete actions and your [`@EntityAction`s](actions.md) |
 | `ProductCreateScreen` | Only with `@Create` |
 | `ProductEditScreen(id:)` | Only with `@Update` |
 | `productDetailProvider`, `productsProvider`, `ProductsNotifier`, `productApiClientProvider` | `productDetailProvider` (`FutureProvider.autoDispose.family` on the id), `productsProvider` (`AsyncNotifierProvider.autoDispose`) with `ProductsNotifier` (an `AutoDisposeAsyncNotifier<List<Product>>`; nested entities use `AutoDisposeFamilyAsyncNotifier` keyed on the parent id) exposing `setSearch`, `setSort`, `goToPage`, `setPageSize`, `create` (with `@Create`), `updateEntity` (with `@Update`) and `delete` (with `@Delete`) (`updateEntity` and `delete` invalidate the entity's `productDetailProvider` so detail screens refetch), and `productApiClientProvider` |
