@@ -4,6 +4,7 @@ import 'package:source_gen/source_gen.dart';
 
 import '../features/actions/action_scanner.dart';
 import '../features/entity_screens/child_screen.dart';
+import 'artifact.dart';
 import 'entity_context.dart';
 import 'feature.dart';
 import '../promoted/promoted_scanner.dart';
@@ -20,12 +21,19 @@ class ArtifactGenerator extends Generator {
     this.name,
     this.artifactFactories, {
     this.features = const [],
+    this.kinds,
   });
 
   /// Printed in the banner of the generated file.
   final String name;
   final List<ArtifactFactory> artifactFactories;
   final List<Feature> features;
+
+  /// When set, artifacts that features add are generated only when their
+  /// kind is listed. The per-kind generators use it so that registering every
+  /// feature (for its contributions) does not add the screens of the create
+  /// and update features to, say, the API client output.
+  final Set<ArtifactKind>? kinds;
 
   @override
   Future<String> generate(LibraryReader library, BuildStep buildStep) async {
@@ -42,6 +50,7 @@ class ArtifactGenerator extends Generator {
     final emitter = LibraryEmitter(
       artifactFactories: artifactFactories,
       features: features,
+      featureKinds: kinds,
       promoted: promoted,
     );
     await _checkPromoted(emitter, entities, promoted, buildStep);

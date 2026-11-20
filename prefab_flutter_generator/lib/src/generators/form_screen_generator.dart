@@ -4,28 +4,25 @@ import '../core/artifact.dart';
 import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
+import '../features/features.dart';
 import '../features/field_widgets/field_widgets_feature.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/field_manifest.dart';
 
-/// Generates `{Entity}CreateScreen` and `{Entity}EditScreen` [ConsumerWidget]s
-/// for every class annotated with [@View] that also carries [@Create] (create screen) and/or [@Update] (edit screen).
+/// The `{Entity}CreateScreen` and `{Entity}EditScreen` widgets come from the
+/// create and update features (`lib/src/features/create/` and `update/`);
+/// this library holds the template they share: the form state class with the
+/// fields, validation and the save method.
 class FormScreenGenerator extends ArtifactGenerator {
   FormScreenGenerator()
-      : super('FormScreenGenerator', const [createFormScreenArtifacts]);
+      : super('FormScreenGenerator', const [],
+            features: registeredFeatures,
+            kinds: {ArtifactKind.createScreen, ArtifactKind.editScreen});
 }
 
-/// The create screen (with `@Create`) and the edit screen (with `@Update`) of
-/// one entity, in this order. They share one factory so that the two screens of
-/// an entity stay together in the generated file.
-Iterable<Artifact> createFormScreenArtifacts(EntityContext entity) => [
-      if (entity.manifest.hasCreate) CreateScreenArtifact(entity),
-      if (entity.manifest.hasUpdate) EditScreenArtifact(entity),
-    ];
-
 /// The templates shared by the create and the edit screen of one entity.
-abstract class _FormScreenArtifact extends Artifact {
-  _FormScreenArtifact(this.entity);
+abstract class FormScreenArtifact extends Artifact {
+  FormScreenArtifact(this.entity);
 
   final EntityContext entity;
 
@@ -38,7 +35,12 @@ abstract class _FormScreenArtifact extends Artifact {
     Libs.goRouter,
   };
 
-  Code _code(StringBuffer buffer) => Code(
+  /// `required this.orderId, required this.orderLineId`.
+  static String requiredThis(EntityManifest manifest) => manifest.ancestors
+      .map((a) => 'required this.${a.paramName}')
+      .join(', ');
+
+  Code code(StringBuffer buffer) => Code(
         buffer.toString().trim(),
         imports: {..._imports, entity.sourceFileName},
       );
@@ -47,97 +49,10 @@ abstract class _FormScreenArtifact extends Artifact {
       formFieldEmitters.resolve(field);
 
   // ---------------------------------------------------------------------------
-  // Create screen
-  // ---------------------------------------------------------------------------
-
-  /// `required this.orderId, required this.orderLineId`.
-  static String _requiredThis(EntityManifest manifest) => manifest.ancestors
-      .map((a) => 'required this.${a.paramName}')
-      .join(', ');
-
-  void _writeCreateScreen(EntityManifest manifest, StringBuffer buffer) {
-    final entity = manifest.entityName;
-
-    buffer.writeln(
-      'class ${entity}CreateScreen extends ConsumerStatefulWidget {',
-    );
-    if (manifest.hasParent) {
-      for (final a in manifest.ancestors) {
-        buffer.writeln('  final ${a.idType} ${a.paramName};');
-      }
-      buffer.writeln();
-      buffer.writeln(
-        '  const ${entity}CreateScreen({super.key, ${_requiredThis(manifest)}});',
-      );
-    } else {
-      buffer.writeln('  const ${entity}CreateScreen({super.key});');
-    }
-    buffer.writeln();
-    buffer.writeln('  @override');
-    buffer.writeln(
-      '  ConsumerState<${entity}CreateScreen> createState() => _${entity}CreateScreenState();',
-    );
-    buffer.writeln('}');
-    buffer.writeln();
-
-    _writeScreenState(
-      manifest: manifest,
-      stateClassName: '_${entity}CreateScreenState',
-      widgetClassName: '${entity}CreateScreen',
-      saveButtonLabel: 'Create',
-      isEdit: false,
-      buffer: buffer,
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Edit screen
-  // ---------------------------------------------------------------------------
-
-  void _writeEditScreen(EntityManifest manifest, StringBuffer buffer) {
-    final entity = manifest.entityName;
-
-    buffer.writeln(
-      'class ${entity}EditScreen extends ConsumerStatefulWidget {',
-    );
-    buffer.writeln('  final ${manifest.idType} id;');
-    buffer.writeln();
-    if (manifest.hasParent) {
-      for (final a in manifest.ancestors) {
-        buffer.writeln('  final ${a.idType} ${a.paramName};');
-      }
-      buffer.writeln();
-      buffer.writeln(
-        '  const ${entity}EditScreen({super.key, required this.id, ${_requiredThis(manifest)}});',
-      );
-    } else {
-      buffer.writeln(
-        '  const ${entity}EditScreen({super.key, required this.id});',
-      );
-    }
-    buffer.writeln();
-    buffer.writeln('  @override');
-    buffer.writeln(
-      '  ConsumerState<${entity}EditScreen> createState() => _${entity}EditScreenState();',
-    );
-    buffer.writeln('}');
-    buffer.writeln();
-
-    _writeScreenState(
-      manifest: manifest,
-      stateClassName: '_${entity}EditScreenState',
-      widgetClassName: '${entity}EditScreen',
-      saveButtonLabel: 'Save',
-      isEdit: true,
-      buffer: buffer,
-    );
-  }
-
-  // ---------------------------------------------------------------------------
   // Shared state class
   // ---------------------------------------------------------------------------
 
-  void _writeScreenState({
+  void writeScreenState({
     required EntityManifest manifest,
     required String stateClassName,
     required String widgetClassName,
@@ -418,49 +333,5 @@ abstract class _FormScreenArtifact extends Artifact {
     if (code == null) return;
     buffer.write(code.text);
     _imports.addAll(code.imports);
-  }
-}
-
-/// The `{Entity}CreateScreen` widget of one entity with `@Create`.
-class CreateScreenArtifact extends _FormScreenArtifact {
-  CreateScreenArtifact(super.entity);
-
-  @override
-  ArtifactId get id => ArtifactId(ArtifactKind.createScreen, manifest.entityName);
-
-  @override
-  String get primaryName => '${manifest.entityName}CreateScreen';
-
-  @override
-  List<String> get declaredNames =>
-      [primaryName, '_${manifest.entityName}CreateScreenState'];
-
-  @override
-  Code emit() {
-    final buffer = StringBuffer();
-    _writeCreateScreen(manifest, buffer);
-    return _code(buffer);
-  }
-}
-
-/// The `{Entity}EditScreen` widget of one entity with `@Update`.
-class EditScreenArtifact extends _FormScreenArtifact {
-  EditScreenArtifact(super.entity);
-
-  @override
-  ArtifactId get id => ArtifactId(ArtifactKind.editScreen, manifest.entityName);
-
-  @override
-  String get primaryName => '${manifest.entityName}EditScreen';
-
-  @override
-  List<String> get declaredNames =>
-      [primaryName, '_${manifest.entityName}EditScreenState'];
-
-  @override
-  Code emit() {
-    final buffer = StringBuffer();
-    _writeEditScreen(manifest, buffer);
-    return _code(buffer);
   }
 }

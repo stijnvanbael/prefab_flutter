@@ -22,7 +22,8 @@ import '../features/features.dart';
 class ListScreenGenerator extends ArtifactGenerator {
   ListScreenGenerator()
       : super('ListScreenGenerator', const [ListScreenArtifact.create],
-            features: registeredFeatures);
+            features: registeredFeatures,
+            kinds: {ArtifactKind.listScreen});
 }
 
 /// The `{Entity}ListScreen` widget of one entity.
@@ -58,6 +59,11 @@ class ListScreenArtifact extends Artifact {
   /// How a field value is shown in a list tile. Orders in use: 10 nullable
   /// fields.
   final fieldValue = ValuePoint<FieldValue>('listScreen.fieldValue');
+
+  /// The `floatingActionButton` of the scaffold (indent 6): one widget
+  /// expression ending in a comma. Orders in use: 10 create.
+  final floatingActionButton =
+      ExtensionPoint('listScreen.floatingActionButton', maxContributions: 1);
 
   /// The `bottom:` argument of the app bar (indent 8). Single-valued.
   final appBarBottom = ExtensionPoint('listScreen.appBarBottom',
@@ -106,6 +112,7 @@ class ListScreenArtifact extends Artifact {
         ...aboveList.imports,
         ...belowList.imports,
         ...itemActions.imports,
+        ...floatingActionButton.imports,
         Libs.materialUi,
         Libs.riverpod,
         Libs.goRouter,
@@ -132,7 +139,6 @@ class ListScreenArtifact extends Artifact {
     final itemPath =
         paths.itemPath(manifest, '\${$entityLower.${manifest.idFieldName}}');
 
-    final createPath = paths.createPath(manifest);
     final providerRef = _providerRef;
 
     buffer.writeln('class ${entity}ListScreen extends ConsumerWidget {');
@@ -169,15 +175,12 @@ class ListScreenArtifact extends Artifact {
       buffer.writeln('        ],');
     }
     buffer.writeln('      ),');
-    if (manifest.hasCreate) {
-      buffer.writeln('      floatingActionButton: FloatingActionButton(');
-      buffer.writeln("        tooltip: 'Create ${manifest.title}',");
-      buffer.writeln('        onPressed: () async {');
-      buffer.writeln("          await context.push('$createPath');");
-      buffer.writeln('          ref.invalidate($providerRef);');
-      buffer.writeln('        },');
-      buffer.writeln('        child: const Icon(Icons.add),');
-      buffer.writeln('      ),');
+    if (!floatingActionButton.isEmpty) {
+      buffer.write('      floatingActionButton: ');
+      buffer.writeln(floatingActionButton
+          .render(6)
+          .trimLeft()
+          .replaceAll(ListScreenArtifact.providerRef, providerRef));
     }
     buffer.writeln('      body: Column(');
     buffer.writeln('        children: [');

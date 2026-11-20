@@ -25,7 +25,12 @@ import '../manifest/entity_manifest.dart';
 class ProviderGenerator extends ArtifactGenerator {
   ProviderGenerator()
       : super('ProviderGenerator', const [createProviderArtifacts],
-            features: registeredFeatures);
+            features: registeredFeatures,
+            kinds: {
+              ArtifactKind.detailProvider,
+              ArtifactKind.listProvider,
+              ArtifactKind.apiClientProvider,
+            });
 }
 
 /// The provider artifacts of one entity: its detail provider, list provider
@@ -130,7 +135,9 @@ class ListProviderArtifact extends _ProviderArtifact {
   /// Statements at the start of `build` (indent 4).
   final onBuild = ExtensionPoint('listProvider.onBuild');
 
-  /// Methods after `_load` (indent 2), separated by blank lines.
+  /// Methods after `_load` (indent 2), separated by blank lines. Orders in
+  /// use: 10 list query, 20 create, 30 update, 40 delete. Contribute with
+  /// `addLazy` when the code uses [key].
   final methods = ExtensionPoint('listProvider.methods');
 
   /// Arguments of `_client.list(...)`, after the ancestor ids. Orders in use:
@@ -141,6 +148,19 @@ class ListProviderArtifact extends _ProviderArtifact {
   /// the list provider becomes a family keyed on them and passes them to the
   /// API client.
   final familyKey = ValuePoint<FamilyId>('listProvider.familyKey');
+
+  /// The ids of [familyKey] and the snippets built from them.
+  FamilyKey get key => FamilyKey(familyKey.values);
+
+  /// The ancestor ids as trailing named arguments of an API client call, e.g.
+  /// `, postId: postId`, or empty without ancestors.
+  String get clientTrailing => key.isEmpty ? '' : ', ${key.namedArgs()}';
+
+  /// The argument of `{entity}DetailProvider(...)` for the entity held in the
+  /// local variable named like the entity (`post`).
+  String get detailKeyArgs => key.detailExpr(
+      '${manifest.entityNameLower}.${manifest.idFieldName}${manifest.idBang}',
+      (a) => a.name);
 
   @override
   List<String> get declaredNames =>
@@ -212,11 +232,6 @@ class ListProviderArtifact extends _ProviderArtifact {
       if (hasParent) parentArg,
       for (final argument in fetchArguments.values) '$argument',
     ].join(', ');
-    final clientTrailing = hasParent ? ', $parentArg' : '';
-    final detailKeyArgs = key.detailExpr(
-        '$entityLower.${manifest.idFieldName}${manifest.idBang}',
-        (a) => a.name);
-
     buffer.writeln(
         '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');
     buffer.writeln();
@@ -238,33 +253,7 @@ class ListProviderArtifact extends _ProviderArtifact {
     buffer.writeln('  }');
     if (!methods.isEmpty) {
       buffer.writeln();
-      buffer.writeln(methods.render(2));
-    }
-    if (manifest.hasCreate) {
-      buffer.writeln();
-      buffer.writeln('  Future<void> create($entity $entityLower) async {');
-      buffer.writeln('    await _client.create($entityLower$clientTrailing);');
-      buffer.writeln('    await _load();');
-      buffer.writeln('  }');
-    }
-    if (manifest.hasUpdate) {
-      buffer.writeln();
-      buffer
-          .writeln('  Future<void> updateEntity($entity $entityLower) async {');
-      buffer.writeln('    await _client.update($entityLower$clientTrailing);');
-      buffer.writeln(
-          '    ref.invalidate(${entityLower}DetailProvider($detailKeyArgs));');
-      buffer.writeln('    await _load();');
-      buffer.writeln('  }');
-    }
-    if (manifest.hasDelete) {
-      buffer.writeln();
-      buffer.writeln('  Future<void> delete($entity $entityLower) async {');
-      buffer.writeln('    await _client.delete($entityLower$clientTrailing);');
-      buffer.writeln(
-          '    ref.invalidate(${entityLower}DetailProvider($detailKeyArgs));');
-      buffer.writeln('    await _load();');
-      buffer.writeln('  }');
+      buffer.writeln(methods.render(2, separator: '\n\n'));
     }
   }
 

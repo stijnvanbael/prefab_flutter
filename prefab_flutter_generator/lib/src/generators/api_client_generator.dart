@@ -13,8 +13,9 @@ import '../manifest/entity_manifest.dart';
 /// Generates a Dio-backed `{Entity}ApiClient` class for every class annotated
 /// with [@View].
 ///
-/// Each API client exposes methods for: list, getById and delete, plus create (only with [@Create])
-/// and update (only with [@Update]).  When the entity carries a [@Parent]-annotated field, every method
+/// Each API client exposes list and getById; the create, update and delete
+/// methods come from the create, update and delete features (delete is always
+/// generated, the other two need [@Create] / [@Update]).  When the entity carries a [@Parent]-annotated field, every method
 /// accepts a named id parameter for each ancestor (the whole chain, outermost
 /// first) and the URL is prefixed with the ancestor resource paths so that the
 /// resource is correctly scoped:
@@ -29,7 +30,8 @@ import '../manifest/entity_manifest.dart';
 class ApiClientGenerator extends ArtifactGenerator {
   ApiClientGenerator()
       : super('ApiClientGenerator', const [ApiClientArtifact.create],
-            features: registeredFeatures);
+            features: registeredFeatures,
+            kinds: {ArtifactKind.apiClient});
 }
 
 /// The `{Entity}ApiClient` class of one entity.
@@ -47,6 +49,22 @@ class ApiClientArtifact extends Artifact {
   /// named parameters of every method and URL segments. Orders in use: the
   /// depth of the ancestor (nested resources).
   final familyKey = ValuePoint<FamilyId>('apiClient.familyKey');
+
+  /// Methods after `getById` (indent 2), separated by blank lines. Orders in
+  /// use: 10 create, 20 update, 30 delete. Contribute with `addLazy`: the
+  /// ids of [familyKey] are added by another feature.
+  final methods = ExtensionPoint('apiClient.methods');
+
+  /// The ids of [familyKey] and the snippets built from them.
+  FamilyKey get key => FamilyKey(familyKey.values);
+
+  /// The URL of the collection, e.g. `/orders/$orderId/lines`.
+  String get urlBase => '${key.urlPrefix}/${entity.manifest.path}';
+
+  /// The ancestor id parameters after the positional ones, e.g.
+  /// `, {required int orderId}`, or empty without ancestors.
+  String get parentParamTrailing =>
+      key.isEmpty ? '' : ', {${key.requiredParams}}';
 
   static Iterable<Artifact> create(EntityContext entity) {
     _requireJsonSupport(entity.element);
@@ -66,7 +84,12 @@ class ApiClientArtifact extends Artifact {
     _writeApiClientClass(entity.manifest, buffer);
     return Code(
       buffer.toString().trim(),
-      imports: {Libs.dio, Libs.widgets, entity.sourceFileName},
+      imports: {
+        ...methods.imports,
+        Libs.dio,
+        Libs.widgets,
+        entity.sourceFileName,
+      },
     );
   }
 
@@ -101,16 +124,8 @@ class ApiClientArtifact extends Artifact {
     StringBuffer buffer,
   ) {
     final entity = manifest.entityName;
-    final path = manifest.path;
-
-    final key = FamilyKey(familyKey.values);
     final hasParent = !key.isEmpty;
-    // The URL base path: '/orders/$orderId/lines/$orderLineId/notes' or
-    // '/path'; every family id contributes its path and value.
-    final urlBase = '${key.urlPrefix}/$path';
-
     final requiredAncestors = key.requiredParams;
-    final parentParamTrailing = hasParent ? ', {$requiredAncestors}' : '';
 
     buffer.writeln('class ${entity}ApiClient {');
     buffer.writeln('  final Dio _dio;');
@@ -154,36 +169,9 @@ class ApiClientArtifact extends Artifact {
     buffer.writeln('  }');
     buffer.writeln();
 
-    if (manifest.hasCreate) {
-      // create
-      buffer.writeln(
-          '  Future<$entity> create($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
-      buffer.writeln(
-          "    final response = await _dio.post('$urlBase', data: ${manifest.entityNameLower}.toJson());");
-      buffer.writeln(
-          '    return $entity.fromJson(response.data as Map<String, dynamic>);');
-      buffer.writeln('  }');
-      buffer.writeln();
+    if (!methods.isEmpty) {
+      buffer.writeln(methods.render(2, separator: '\n\n'));
     }
-
-    if (manifest.hasUpdate) {
-      // update
-      buffer.writeln(
-          '  Future<$entity> update($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
-      buffer.writeln(
-          "    final response = await _dio.put('$urlBase/\${${manifest.entityNameLower}.${manifest.idFieldName}}', data: ${manifest.entityNameLower}.toJson());");
-      buffer.writeln(
-          '    return $entity.fromJson(response.data as Map<String, dynamic>);');
-      buffer.writeln('  }');
-      buffer.writeln();
-    }
-
-    // delete
-    buffer.writeln(
-        '  Future<void> delete($entity ${manifest.entityNameLower}$parentParamTrailing) async {');
-    buffer.writeln(
-        "    await _dio.delete('$urlBase/\${${manifest.entityNameLower}.${manifest.idFieldName}}');");
-    buffer.writeln('  }');
 
     buffer.writeln('}');
   }

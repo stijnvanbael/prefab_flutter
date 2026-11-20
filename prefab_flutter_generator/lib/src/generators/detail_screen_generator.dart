@@ -23,7 +23,8 @@ import '../manifest/field_manifest.dart';
 class DetailScreenGenerator extends ArtifactGenerator {
   DetailScreenGenerator()
       : super('DetailScreenGenerator', const [DetailScreenArtifact.create],
-            features: registeredFeatures);
+            features: registeredFeatures,
+            kinds: {ArtifactKind.detailScreen});
 }
 
 /// The `{Entity}DetailScreen` widget of one entity.
@@ -32,8 +33,9 @@ class DetailScreenArtifact extends Artifact {
 
   final EntityContext entity;
 
-  /// Widgets appended to the AppBar `actions`, after Edit and Delete
-  /// (indent 10). Orders in use: 50 actions.
+  /// Widgets of the AppBar `actions` (indent 10). Orders in use: 10 update
+  /// (Edit), 20 delete, 50 actions. Contribute with `addLazy` when the code
+  /// uses [key].
   final appBarActions = ExtensionPoint('detailScreen.appBarActions');
 
   /// The `bottom:` argument of the app bar (indent 8). Single-valued.
@@ -44,6 +46,9 @@ class DetailScreenArtifact extends Artifact {
   /// constructor fields, the detail provider key and the list provider key
   /// of the delete action.
   final familyKey = ValuePoint<FamilyId>('detailScreen.familyKey');
+
+  /// The ids of [familyKey] and the snippets built from them.
+  FamilyKey get key => FamilyKey(familyKey.values);
 
   /// Name of the local variable holding the watched `AsyncValue` of the
   /// entity.
@@ -123,7 +128,7 @@ class DetailScreenArtifact extends Artifact {
     buffer.writeln("        title: const Text('${manifest.title}'),");
     if (!appBarBottom.isEmpty) buffer.writeln(appBarBottom.render(8));
 
-    _writeAppBarActions(manifest, paths, buffer);
+    _writeAppBarActions(buffer);
 
     buffer.writeln('      ),');
 
@@ -138,57 +143,10 @@ class DetailScreenArtifact extends Artifact {
   // AppBar actions
   // ---------------------------------------------------------------------------
 
-  void _writeAppBarActions(
-      EntityManifest manifest, EntityPaths paths, StringBuffer buffer) {
-    if (!manifest.hasUpdate && !manifest.hasDelete && appBarActions.isEmpty) {
-      return;
-    }
-
-    final entityLower = manifest.entityNameLower;
-    final key = FamilyKey(familyKey.values);
-    final listProviderArg =
-        key.isEmpty ? '' : '(${key.listExpr((a) => a.name)})';
-
+  void _writeAppBarActions(StringBuffer buffer) {
+    if (appBarActions.isEmpty) return;
     buffer.writeln('        actions: [');
-
-    if (manifest.hasUpdate) {
-      _imports.add(Libs.goRouter);
-      buffer.writeln('          IconButton(');
-      buffer.writeln('            icon: const Icon(Icons.edit),');
-      buffer.writeln("            tooltip: 'Edit',");
-      buffer.writeln(
-          "            onPressed: () => context.push('${paths.editPath(manifest, r'$id')}'),");
-      buffer.writeln('          ),');
-    }
-
-    if (manifest.hasDelete) {
-      _imports.addAll({Libs.goRouter, Libs.widgets});
-      buffer.writeln('          IconButton(');
-      buffer.writeln('            icon: const Icon(Icons.delete),');
-      buffer.writeln("            tooltip: 'Delete',");
-      buffer.writeln('            onPressed: ${entityLower}Async.hasValue');
-      buffer.writeln('                ? () async {');
-      buffer.writeln(
-          '                    final $entityLower = ${entityLower}Async.value!;');
-      buffer.writeln(
-          '                    final confirmed = await showPrefabDeleteDialog(');
-      buffer.writeln('                      context: context,');
-      buffer.writeln('                      item: $entityLower,');
-      buffer.writeln(
-          '                      itemLabel: $entityLower.${manifest.firstLabelFieldName}.toString(),');
-      buffer.writeln(
-          '                      onDelete: () => ref.read(${entityLower}sProvider$listProviderArg.notifier).delete($entityLower),');
-      buffer.writeln('                    );');
-      buffer.writeln('                    if (confirmed && context.mounted) {');
-      buffer.writeln('                      context.pop();');
-      buffer.writeln('                    }');
-      buffer.writeln('                  }');
-      buffer.writeln('                : null,');
-      buffer.writeln('          ),');
-    }
-
-    if (!appBarActions.isEmpty) buffer.writeln(appBarActions.render(10));
-
+    buffer.writeln(appBarActions.render(10));
     buffer.writeln('        ],');
   }
 

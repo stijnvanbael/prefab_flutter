@@ -18,14 +18,20 @@ class ExtensionPoint {
 
   final _contributions = <Contribution>[];
 
-  void add(String feature, Code code, {int order = 0}) {
+  void add(String feature, Code code, {int order = 0}) =>
+      addLazy(feature, () => code, order: order);
+
+  /// Like [add], but [build] runs when the artifact is emitted, so the code
+  /// can use what other features add to the artifact after this one ran (e.g.
+  /// the `familyKey` of nested resources).
+  void addLazy(String feature, Code Function() build, {int order = 0}) {
     if (maxContributions != null &&
         _contributions.length >= maxContributions!) {
       final others = _contributions.map((c) => c.feature).join(', ');
       throw StateError(
           '$feature cannot contribute to $name: already taken by $others.');
     }
-    _contributions.add(Contribution(feature, code, order));
+    _contributions.add(Contribution(feature, build, order));
   }
 
   bool get isEmpty => _contributions.isEmpty;
@@ -39,17 +45,21 @@ class ExtensionPoint {
   Set<String> get imports =>
       {for (final c in _contributions) ...c.code.imports};
 
-  /// The contributions' text, each indented by [spaces], one after another.
-  String render(int spaces) =>
-      contributions.map((c) => indent(c.code.text, spaces)).join('\n');
+  /// The contributions' text, each indented by [spaces], one after another
+  /// and joined by [separator] (`'\n\n'` puts a blank line between members).
+  String render(int spaces, {String separator = '\n'}) => contributions
+      .map((c) => indent(c.code.text, spaces))
+      .join(separator);
 }
 
 class Contribution {
-  const Contribution(this.feature, this.code, this.order);
+  const Contribution(this.feature, this._build, this.order);
 
   final String feature;
-  final Code code;
+  final Code Function() _build;
   final int order;
+
+  Code get code => _build();
 }
 
 /// A place in an artifact template that holds typed values instead of code,
