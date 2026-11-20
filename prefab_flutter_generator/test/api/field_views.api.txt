@@ -1,0 +1,26 @@
+class ItemApiClient
+  ItemApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<Item>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Item> getById(int id);
+  Future<void> delete(Item item);
+final itemDetailProvider = FutureProvider.autoDispose.family<Item, int>;
+final itemsProvider = AsyncNotifierProvider.autoDispose<ItemsNotifier, PrefabPage<Item>>;
+class ItemsNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Item>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Item>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+final itemApiClientProvider = Provider.autoDispose<ItemApiClient>;
+class ItemDetailScreen extends ConsumerWidget
+  final int id;
+  const ItemDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class ItemListScreen extends ConsumerWidget
+  const ItemListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+List<RouteBase> get $fieldViewsRoutes;

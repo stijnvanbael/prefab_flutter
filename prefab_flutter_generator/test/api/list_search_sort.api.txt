@@ -1,0 +1,24 @@
+class BookApiClient
+  BookApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<Book>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Book> getById(int id);
+  Future<void> delete(Book book);
+final bookDetailProvider = FutureProvider.autoDispose.family<Book, int>;
+final booksProvider = AsyncNotifierProvider.autoDispose<BooksNotifier, PrefabPage<Book>>;
+class BooksNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Book>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Book>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+final bookApiClientProvider = Provider.autoDispose<BookApiClient>;
+class BookDetailScreen extends ConsumerWidget
+  final int id;
+  const BookDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class BookListScreen extends ConsumerWidget
+  const BookListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+List<RouteBase> get $listSearchSortRoutes;

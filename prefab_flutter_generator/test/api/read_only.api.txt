@@ -1,0 +1,26 @@
+class DeltaApiClient
+  DeltaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<Delta>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Delta> getById(int id);
+  Future<void> delete(Delta delta);
+final deltaDetailProvider = FutureProvider.autoDispose.family<Delta, int>;
+final deltasProvider = AsyncNotifierProvider.autoDispose<DeltasNotifier, PrefabPage<Delta>>;
+class DeltasNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Delta>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Delta>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+final deltaApiClientProvider = Provider.autoDispose<DeltaApiClient>;
+class DeltaDetailScreen extends ConsumerWidget
+  final int id;
+  const DeltaDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class DeltaListScreen extends ConsumerWidget
+  const DeltaListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+List<RouteBase> get $readOnlyRoutes;

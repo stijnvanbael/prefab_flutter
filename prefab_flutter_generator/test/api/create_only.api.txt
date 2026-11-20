@@ -1,0 +1,31 @@
+class BetaApiClient
+  BetaApiClient(this._dio, [this._adapter = const PrefabListAdapter()]);
+  Future<PrefabPage<Beta>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Beta> getById(int id);
+  Future<Beta> create(Beta beta);
+  Future<void> delete(Beta beta);
+final betaDetailProvider = FutureProvider.autoDispose.family<Beta, int>;
+final betasProvider = AsyncNotifierProvider.autoDispose<BetasNotifier, PrefabPage<Beta>>;
+class BetasNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Beta>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Beta>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> create(Beta beta);
+final betaApiClientProvider = Provider.autoDispose<BetaApiClient>;
+class BetaDetailScreen extends ConsumerWidget
+  final int id;
+  const BetaDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class BetaListScreen extends ConsumerWidget
+  const BetaListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class BetaCreateScreen extends ConsumerStatefulWidget
+  const BetaCreateScreen({super.key});
+  ConsumerState<BetaCreateScreen> createState();
+List<RouteBase> get $createOnlyRoutes;
