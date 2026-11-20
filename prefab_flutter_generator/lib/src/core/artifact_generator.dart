@@ -85,6 +85,10 @@ class ArtifactGenerator extends Generator {
       promoted: promoted,
     );
     await _checkPromoted(emitter, entities, promoted, buildStep);
+    final mismatches = emitter.promotedMismatches(entities);
+    if (mismatches.isNotEmpty) {
+      throw InvalidGenerationSourceError(mismatches.join('\n'));
+    }
     await _checkActions(entities, allActions, buildStep);
     final source = emitter.emit(entities, header: banner(name), onWarning: log.warning);
     return formatGenerated(source, sourceFileName);
