@@ -34,7 +34,9 @@ enum PrefabVersionTransport {
 ///   and `size`;
 /// * a Spring `PagedModel` response
 ///   `{ "content": [...], "page": { "totalElements": n, "number": p } }`;
-/// * ids (`Reference<T>` strings or numbers) are URL-encoded path segments.
+/// * ids (`Reference<T>` strings or numbers) are URL-encoded path segments;
+/// * named operations are `POST {collection}/{id}/{operation}` with the
+///   parameters as the JSON body.
 ///
 /// [PrefabBackend.simple] is the **Simple preset** for plain backends:
 /// `sort=-field` and `{ "items": [...], "total": n }`.
@@ -100,9 +102,14 @@ class PrefabBackend {
   /// Where updates carry the version of a `@Version` entity.
   final PrefabVersionTransport versionTransport;
 
+  /// HTTP method of a named operation (`@Update(path: ...)`), sent to
+  /// `{collection}/{id}/{operation}`.
+  final String operationMethod;
+
   /// The Prefab preset (see the class documentation).
   const PrefabBackend({
     this.versionTransport = PrefabVersionTransport.body,
+    this.operationMethod = 'POST',
     this.searchParam = 'q',
     this.sortParam = 'sort',
     this.sortFormat = PrefabSortFormat.commaDirection,
@@ -121,6 +128,7 @@ class PrefabBackend {
   /// The Simple preset: `sort=-field` and `{ "items": [...], "total": n }`.
   const PrefabBackend.simple({
     this.versionTransport = PrefabVersionTransport.body,
+    this.operationMethod = 'POST',
     this.searchParam = 'q',
     this.sortParam = 'sort',
     this.sortFormat = PrefabSortFormat.minusPrefix,
@@ -186,6 +194,11 @@ class PrefabBackend {
     }
     return Options(headers: {'If-Match': '"$version"'});
   }
+
+  /// The request body of a named operation, from the JSON of its parameters
+  /// (`null` for an operation without parameters). Both presets send the
+  /// parameters as they are; override to wrap them.
+  Object? operationBody(Map<String, dynamic>? parameters) => parameters;
 
   /// Encodes an entity id as one URL path segment.
   String encodeId(Object? id) => Uri.encodeComponent('$id');

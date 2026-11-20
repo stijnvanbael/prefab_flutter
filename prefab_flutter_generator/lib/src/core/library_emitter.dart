@@ -91,7 +91,10 @@ class LibraryEmitter {
           1,
         ArtifactKind.detailScreen => 2,
         ArtifactKind.listScreen => 3,
-        ArtifactKind.createScreen || ArtifactKind.editScreen => 4,
+        ArtifactKind.createScreen ||
+        ArtifactKind.editScreen ||
+        ArtifactKind.operationScreen =>
+          4,
         ArtifactKind.routes => 5,
         ArtifactKind.breadcrumbs => 6,
       };

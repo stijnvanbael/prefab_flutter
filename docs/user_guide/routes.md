@@ -10,6 +10,7 @@ For `@Entity(path: 'products')` with `@Create` and `@Update` (the `create` route
 | `/products/create` | `ProductCreateScreen` |
 | `/products/:id` | `ProductDetailScreen` |
 | `/products/:id/edit` | `ProductEditScreen` |
+| `/products/:id/discount` | `ProductDiscountScreen`, one per [named operation](annotations.md#named-operations-update-path-) with `parameters` |
 
 Register them with:
 

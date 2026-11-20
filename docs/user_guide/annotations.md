@@ -97,6 +97,57 @@ either annotation no form screens are generated.
 > **Migration:** `@Update` used to enable creating as well. Add `@Create()`
 > next to `@Update()` to keep the previous behaviour.
 
+#### Named operations: `@Update(path: ...)`
+
+With a `path`, `@Update` declares a **named operation** instead of marking the
+entity as editable (Prefab's `@Update(path = "send")`). It is repeatable and
+needs no `@Update()` without a path, and it does not generate the edit screen.
+
+```dart
+class ScheduleParameters {
+  @Field(form: FormOptions(validators: [Validator.required]))
+  final DateTime sendOn;
+  const ScheduleParameters({required this.sendOn});
+  Map<String, dynamic> toJson() => {'sendOn': sendOn.toIso8601String()};
+}
+
+@Entity()
+@Update(path: 'send', label: 'Send', icon: 'send', confirm: 'Send the invoice?')
+@Update(path: 'schedule', parameters: ScheduleParameters, on: {Place.item})
+class Invoice { ... }
+```
+
+| Parameter | Meaning |
+|---|---|
+| `path` | The URL segment after the id (`/invoices/1/send`). Letters and digits, words separated by `-` or `_` (`mark-paid`). The method name is the camel-cased path (`markPaid`). `edit`, `create` and the names of the generated methods (`update`, `delete`, `list`, ...) are not allowed |
+| `label` | Button text and tooltip; default: the path in words (`mark-paid` gives `Mark paid`) |
+| `icon` | A member of Flutter's `Icons` as a string; default `Icons.bolt` |
+| `on` | `{Place.detail}` (default) and/or `Place.item` |
+| `confirm` | The question of a confirmation dialog; without it the operation runs at once. Only for operations without `parameters` |
+| `parameters` | A class with `@Field` fields (same field widgets and validators as an entity), an unnamed constructor and a `toJson()` method. Its JSON is the request body |
+| `order` | Sort key among the operations and the [actions](actions.md), default `0` |
+
+Every operation adds:
+
+- `Future<void> send(id)` (and `send(id, parameters)`) on the API client, which
+  calls `POST {path}/{id}/send` (method and body come from the backend adapter,
+  see [REST contract](rest-contract.md#named-operations));
+- the same method on the list notifier, which refreshes the detail provider
+  of the entity and reloads the list;
+- a button in the detail screen's AppBar and/or the menu of each list item,
+  rendered like [actions](actions.md);
+- for an operation **without** `parameters`: the button confirms (when
+  `confirm` is set), runs the operation and shows a failure's Problem Details
+  message in a snack bar (`runPrefabOperation`);
+- for an operation **with** `parameters`: the button opens
+  `{Entity}{Operation}Screen` (`InvoiceScheduleScreen`, route
+  `/invoices/:id/schedule`), a form with the fields of the parameters class.
+  Server validation errors (`errors` in the Problem Details) appear under
+  their field.
+
+A promoted detail screen does not show the operations; the build warns, and
+`on: {Place.item}` still works.
+
 ### `@Delete` (class)
 
 Adds a **Delete** action to the detail screen's AppBar. It opens a

@@ -9,6 +9,7 @@ import 'field_widgets/field_widgets_feature.dart';
 import 'list_query/list_query_feature.dart';
 import 'nested_resources/nested_resources_feature.dart';
 import 'nullable_fields/nullable_fields_feature.dart';
+import 'operations/operations_feature.dart';
 import 'places/places_feature.dart';
 import 'promoted/promoted_feature.dart';
 import 'update/update_feature.dart';
@@ -28,6 +29,7 @@ const registeredFeatures = <Feature>[
   ListQueryFeature(),
   NestedResourcesFeature(),
   NullableFieldsFeature(),
+  OperationsFeature(),
   PlacesFeature(),
   PromotedFeature(),
   UpdateFeature(),

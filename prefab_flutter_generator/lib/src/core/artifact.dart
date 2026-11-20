@@ -10,6 +10,7 @@ enum ArtifactKind {
   listScreen,
   createScreen,
   editScreen,
+  operationScreen,
   routes,
   breadcrumbs,
 }

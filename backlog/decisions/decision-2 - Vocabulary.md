@@ -39,7 +39,7 @@ list or extend it in this record first.
 | **Field** | A property of an entity that the generated screens use. | `@Field` |
 | **Id** | The field that identifies an entity. | `@Id` |
 | **Parent** | The entity another entity is nested under. | `@Parent(Entity)` |
-| **Operation** | A change the server performs on an entity: create, update, delete (later: named operations, PF-54). Names as in Prefab. | `@Create`, `@Update`, `@Delete`; API client and notifier methods |
+| **Operation** | A change the server performs on an entity: create, update, delete, or a named operation (`send`). Names as in Prefab. | `@Create`, `@Update`, `@Delete`, `@Update(path:)`; API client and notifier methods |
 | **Screen** | A full page. Generated: list screen, detail screen, create screen, edit screen. Hand-written: entity screen. | `{Entity}ListScreen`, `{Entity}DetailScreen`, `{Entity}CreateScreen`, `{Entity}EditScreen`, `@EntityScreen` |
 | **Place** | A part of the generated screens where a field or an action appears: `list` (the list screen's app bar), `item` (each item of the list), `detail` (the detail screen), `form` (the create and edit screens). | `Place`; the `on:` parameter |
 | **Action** | A hand-written function started from a generated screen. | `@EntityAction` |

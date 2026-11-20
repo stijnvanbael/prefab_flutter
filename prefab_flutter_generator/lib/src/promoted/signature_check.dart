@@ -15,6 +15,7 @@ String? checkPromotedSignature(ArtifactKind kind, String name,
   switch (kind) {
     case ArtifactKind.detailScreen:
     case ArtifactKind.editScreen:
+    case ArtifactKind.operationScreen:
       return _screen(name, shape, [_Param('id', manifest.idType), ..._ids(manifest)]);
     case ArtifactKind.listScreen:
     case ArtifactKind.createScreen:
