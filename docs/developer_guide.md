@@ -103,7 +103,7 @@ contribute to, and an import collector. There is no `code_builder`.
    value is shown in detail screens and list tiles) look up the emitter by the
    annotation value. The first implementations wrap the code that used to live
    in the form, detail and list templates; they move into one class per widget
-   or validator in the follow-ups of PF-39 (PF-43 to PF-48).
+   or validator in the follow-ups of PF-39 (PF-59 to PF-64).
 7. **Tests.** The per-kind generators (`ApiClientGenerator`, ...,
    `RoutesGenerator`) are `ArtifactGenerator`s with the factories of one kind.
    They back the per-kind builders in `lib/builder.dart` that unit tests use;
@@ -187,7 +187,7 @@ Extension points that exist today (all contributions are at column 0):
 | API client | `listQueryParameters` | `ValuePoint<QueryParameter>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
 
 The other points sketched in decision-1 are added by the migration tasks
-PF-43 to PF-48.
+PF-59 to PF-64.
 
 ### Testing a generator
 
