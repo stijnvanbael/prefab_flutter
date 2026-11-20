@@ -1,4 +1,5 @@
 import 'package:build/build.dart';
+import 'package:pub_semver/pub_semver.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'src/generators/api_client_generator.dart';
@@ -12,7 +13,7 @@ import 'src/promoted/promoted_scanner.dart';
 
 /// The generators format their own output (`ArtifactGenerator`, with a pinned
 /// `dart_style`), so the builder must not format it a second time.
-String _alreadyFormatted(String code) => code;
+String _alreadyFormatted(String code, Version languageVersion) => code;
 
 /// Generates a read-only `{Entity}DetailScreen` [ConsumerWidget].
 Builder detailScreenBuilder(BuilderOptions options) => LibraryBuilder(

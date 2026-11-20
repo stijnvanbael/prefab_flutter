@@ -7,6 +7,9 @@ analyzer:
   errors:
     missing_required_param: error
     missing_return: error
+    # analyzer 7 deprecates the old element model the generator uses; migrating
+    # to the new one (analyzer 8+, source_gen 3+) is PF-66.
+    deprecated_member_use: ignore
   exclude:
     # Snapshot fixtures and expected output are test data, not code of this package.
     - test/snapshots/fixtures/**
