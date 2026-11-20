@@ -174,7 +174,7 @@ void main() {
         'validators: [Validator.email]))\n  final int? color;',
       );
       expect(error, contains('"color"'));
-      expect(error, contains('Only Validator.required'));
+      expect(error, contains('needs a String field'));
     });
   });
 }

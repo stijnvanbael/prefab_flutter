@@ -59,11 +59,15 @@ parameters (the `PrefabFieldBuilder<T>` typedef in `prefab_flutter_widgets`;
 | `initialValue` | `T?` | `null` in the create screen, the loaded value in the edit screen |
 | `onChanged` | `ValueChanged<T?>` | call it with every new value; the form keeps the last one and passes it to the entity constructor |
 | `label` | `String` | the field label |
-| `validator` | `String? Function(T? value)?` | runs `Validator.required`; optional, but a widget used for a required field must declare it |
+| `validator` | `String? Function(T? value)?` | runs the declared validators; optional, but a widget used for a required or validated field must declare it |
 | `key` | `Key?` | optional, never passed |
 
-Only `Validator.required` can be combined with a custom widget (the other
-validators check text; others are planned in PF-69); check other rules inside the widget. Create and
+The widget's `validator` runs `Validator.required` and every other validator
+that fits the field type: `min`, `max`, `positive` and `nonNegative` on `int`,
+`double` and `num`; `minLength` and `maxLength` on `String`, `List`, `Set` and
+`Iterable`; `email`, `url` and `pattern` on `String`. A validator that does not
+fit the type fails the build, and so does a widget without a `validator`
+parameter when the field is required or has validators. Create and
 edit screens share the widget; it is built after the edit screen has loaded
 the entity, so `initialValue` is already the stored value.
 

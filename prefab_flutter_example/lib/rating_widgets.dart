@@ -9,11 +9,13 @@ class RatingField extends StatefulWidget {
     required this.initialValue,
     required this.onChanged,
     required this.label,
+    this.validator,
   });
 
   final int? initialValue;
   final ValueChanged<int?> onChanged;
   final String label;
+  final String? Function(int?)? validator;
 
   @override
   State<RatingField> createState() => _RatingFieldState();
@@ -24,24 +26,37 @@ class _RatingFieldState extends State<RatingField> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(widget.label),
-        const SizedBox(width: 16),
-        for (var star = 1; star <= 5; star++)
-          IconButton(
-            key: Key('rating-$star'),
-            icon: Icon(
-              (_value ?? 0) >= star ? Icons.star : Icons.star_border,
-            ),
-            onPressed: () {
-              // Tapping the current rating clears it.
-              final next = _value == star ? null : star;
-              setState(() => _value = next);
-              widget.onChanged(next);
-            },
+    return FormField<int>(
+      initialValue: widget.initialValue,
+      validator: widget.validator,
+      builder: (state) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(widget.label),
+              const SizedBox(width: 16),
+              for (var star = 1; star <= 5; star++)
+                IconButton(
+                  key: Key('rating-$star'),
+                  icon: Icon(
+                    (_value ?? 0) >= star ? Icons.star : Icons.star_border,
+                  ),
+                  onPressed: () {
+                    // Tapping the current rating clears it.
+                    final next = _value == star ? null : star;
+                    setState(() => _value = next);
+                    state.didChange(next);
+                    widget.onChanged(next);
+                  },
+                ),
+            ],
           ),
-      ],
+          if (state.hasError)
+            Text(state.errorText!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ],
+      ),
     );
   }
 }
