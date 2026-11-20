@@ -233,6 +233,12 @@ class _Emitter extends FieldEmitter {
   bool accepts(FieldManifest field) => type.isEmpty || field.dartType == type;
 
   @override
+  Code? stateDeclaration(FieldManifest field) => null;
+
+  @override
+  Code initialValue(FieldManifest field, String entity) => const Code('');
+
+  @override
   Code formField(FieldManifest field) => const Code('');
 
   @override

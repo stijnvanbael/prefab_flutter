@@ -104,11 +104,11 @@ contribute to, and an import collector. There is no `code_builder`.
 6. **Registries.** `FieldEmitters` (how a `FieldWidget` appears in the forms),
    `ValidatorEmitters` (the check a `Validator` adds) and `FieldDisplays` (how a
    value is shown in detail screens and list tiles) look up the emitter by the
-   annotation value. The validators are one class per `Validator` in
-   `lib/src/features/validators/` (PF-60). The field emitters still wrap the
-   code that used to live in the form template and the display code in the
-   detail and list templates; they move into one class per widget in the
-   follow-ups of PF-39 (PF-59, PF-62 to PF-64).
+   annotation value. Field widgets are one `FormFieldEmitter` class each in
+   `lib/src/features/field_widgets/` (state declaration, prefill, form field,
+   value expression); the registry is `formFieldEmitters`. The validators are
+   one class per `Validator` in `lib/src/features/validators/` (PF-60). The
+   display code of the detail and list templates moves in PF-62 to PF-64.
 7. **Tests.** The per-kind generators (`ApiClientGenerator`, ...,
    `RoutesGenerator`) are `ArtifactGenerator`s with the factories of one kind.
    They back the per-kind builders in `lib/builder.dart` that unit tests use;
@@ -195,8 +195,9 @@ Extension points that exist today (all contributions are at column 0):
 | API client | `listQueryParameters` | `ValuePoint<QueryParameter>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
 
 The other points sketched in decision-1 are added by the migration tasks
-PF-59 and PF-62 to PF-64. The nullable handling of the create and edit
-forms stays in the form screen until PF-59 splits it per `FieldWidget`.
+PF-62 to PF-64. Field widgets (PF-59) need no point: the form screens ask the
+`formFieldEmitters` registry, so a new `FieldWidget` is one new emitter class
+and one line in that list.
 
 ### Testing a generator
 
