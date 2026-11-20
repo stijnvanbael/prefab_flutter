@@ -112,7 +112,8 @@ contribute to, and an import collector. There is no `code_builder`.
    value expression); the registry is `formFieldEmitters`. The validators are
    one class per `Validator` in `lib/src/features/validators/` (PF-60). The
    views (which fields the list tile and detail screen show) are in
-   `lib/src/features/views/` (PF-64); the rest of the display code moves in PF-63.
+   `lib/src/features/views/` (PF-64); create, update and delete are in
+   `lib/src/features/create/`, `update/` and `delete/` (PF-63).
 7. **Tests.** The per-kind generators (`ApiClientGenerator`, ...,
    `RoutesGenerator`) are `ArtifactGenerator`s with the factories of one kind.
    They back the per-kind builders in `lib/builder.dart` that unit tests use;
@@ -163,7 +164,11 @@ sort and pagination (`lib/src/features/list_query/`) are the reference module.
    indents it) with `point.add(name, Code(text, imports: {...}), order: n)`.
    Name every library the text uses in `imports`; never write `import` lines.
    Use a distinct `order` per contribution; ties are broken by feature name.
-   Typed points (`ValuePoint<T>`) take values instead of code.
+   Typed points (`ValuePoint<T>`) take values instead of code. Code that
+   depends on what another feature adds to the same artifact (the `familyKey`
+   ids of nested resources) goes in with `point.addLazy(name, () => Code(...))`:
+   features run in no fixed order, and the function runs when the artifact is
+   emitted.
 3. **Register it.** Add one line to `registeredFeatures` in
    `lib/src/features/features.dart`, kept alphabetical. The order has no
    meaning.
@@ -190,23 +195,38 @@ Extension points that exist today (all contributions are at column 0):
 | Artifact | Point | Holds | Orders in use |
 |---|---|---|---|
 | detail screen | `afterFields` (indent 12) | `Code` | 10 entity screens |
-| routes | `detailChildRoutes` | `ValuePoint<DetailChildRoute>` | 10 entity screens |
+| routes | `detailChildRoutes` (screens below the detail route) | `ValuePoint<DetailChildRoute>` | 5 update (edit), 10 entity screens |
+| routes | `listChildRoutes` (screens below the list route, before the detail route) | `ValuePoint<ListChildRoute>` | 10 create |
 | list screen | `buildStatements` (indent 4) | `Code` | 10 list query |
 | list screen | `appBarActions`, `aboveList`, `belowList` (indent 10) | `Code` | 10 list query (`appBarActions`), 50 actions |
+| list screen | `floatingActionButton` (indent 6, one widget expression, single-valued) | `Code` | 10 create |
 | list screen | `itemActions` (indent 14, `PopupMenuEntry<void>` expressions) | `Code` | 50 actions |
-| detail screen | `appBarActions` (indent 10, after Edit and Delete) | `Code` | 50 actions |
+| detail screen | `appBarActions` (indent 10) | `Code` | 10 update (Edit), 20 delete, 50 actions |
 | list screen, detail screen | `appBarBottom` (indent 8, single-valued `bottom:` argument) | `Code` | breadcrumbs |
 | API client, detail provider, list provider, list screen, detail screen | `familyKey` (the ids of the owning resources, outermost first; `FamilyKey` renders them) | `ValuePoint<FamilyId>` | nested resources (order = depth) |
 | routes | `routes` (top-level route of an entity with `@Parent`), `childRoutes` (routes inside a parent's detail route), `screenArguments` (extra screen arguments) | `ValuePoint<RouteSpec>`, `ValuePoint<Function>` | nested resources |
 | list screen | `itemTile` | `ValuePoint<FieldManifest>` (title, subtitle, trailing) | 10 views |
 | detail screen | `detailFields` | `ValuePoint<FieldManifest>` | 10 views |
 | list screen, detail screen | `fieldValue` | `ValuePoint<FieldValue>` | 10 nullable fields |
-| list notifier | `state`, `onBuild`, `methods` (indent 2, 4, 2) | `Code` | 10 list query |
+| list notifier | `state`, `onBuild`, `methods` (indent 2, 4, 2) | `Code` | 10 list query (`state`, `onBuild`); `methods`: 10 list query, 20 create, 30 update, 40 delete |
 | list notifier | `fetchArguments` | `ValuePoint<NamedArgument>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
+| API client | `methods` (indent 2, after `getById`; use `addLazy`, the `familyKey` is added by another feature) | `Code` | 10 create, 20 update, 30 delete |
 | API client | `listQueryParameters` | `ValuePoint<QueryParameter>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
 
-The other points sketched in decision-1 are added by the migration task
-PF-63. Field widgets (PF-59) need no point: the form screens ask the
+The create, update and delete features (PF-63) also add artifacts: a feature
+lists its artifact factories in `Feature.artifacts` (`CreateScreenArtifact`,
+`EditScreenArtifact`). The emitter writes artifacts grouped by kind, so a
+feature's artifacts take their place in the output and not the end. The
+per-kind generators (`ApiClientGenerator`, ...) register every feature for its
+contributions but pass `kinds`, so they only emit artifacts of their own kind.
+The form state template the two screens share stays in
+`generators/form_screen_generator.dart`. `@Create`, `@Update` and `@Delete`
+stay in the manifest as plain flags (`hasCreate`, ...): they are read once with
+the other annotations (principle 2) and the form screens, routes and
+providers of several features look at them. The API client's `delete` is
+generated for every entity, with or without `@Delete`, as before the migration.
+
+Field widgets (PF-59) need no point: the form screens ask the
 `formFieldEmitters` registry, so a new `FieldWidget` is one new emitter class
 and one line in that list.
 

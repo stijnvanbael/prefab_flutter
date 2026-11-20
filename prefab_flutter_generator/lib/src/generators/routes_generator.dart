@@ -43,7 +43,7 @@ import '../manifest/entity_manifest.dart';
 class RoutesGenerator extends ArtifactGenerator {
   RoutesGenerator()
       : super('RoutesGenerator', const [RoutesArtifact.create],
-            features: registeredFeatures);
+            features: registeredFeatures, kinds: {ArtifactKind.routes});
 }
 
 /// The `$<file>Routes` list of one source file (one artifact per library).
@@ -53,8 +53,13 @@ class RoutesArtifact extends Artifact {
   /// The first entity of the library.
   final EntityContext entity;
 
-  /// Hand-written screens below the detail route of an entity (one value per
-  /// screen; the template places them by entity name). Orders in use: 10
+  /// Screens below the list route of an entity, before its detail route (one
+  /// value per screen; the template places them by entity name). Orders in
+  /// use: 10 create.
+  final listChildRoutes = ValuePoint<ListChildRoute>('routes.listChildRoutes');
+
+  /// Screens below the detail route of an entity (one value per screen; the
+  /// template places them by entity name). Orders in use: 5 update (edit), 10
   /// entity screens.
   final detailChildRoutes =
       ValuePoint<DetailChildRoute>('routes.detailChildRoutes');
@@ -91,7 +96,8 @@ class RoutesArtifact extends Artifact {
     _writeRoutesList(entity.libraryManifests, primaryName, buffer);
     return Code(buffer.toString().trim(), imports: {
       Libs.goRouter,
-      for (final r in detailChildRoutes.values) r.libraryUri,
+      for (final r in detailChildRoutes.values)
+        if (r.libraryUri.isNotEmpty) r.libraryUri,
     });
   }
 
@@ -167,13 +173,14 @@ class RoutesArtifact extends Artifact {
         '  builder: (context, state) => $constant${entity}ListScreen($args),');
     buffer.writeln('  routes: [');
 
-    // The create route (only with @Create) must precede ':id' so '/create' is
-    // not parsed as an id.
-    if (manifest.hasCreate) {
+    // The create route (from the create feature) must precede ':id' so
+    // '/create' is not parsed as an id.
+    for (final r in listChildRoutes.values) {
+      if (r.entityName != manifest.entityName) continue;
       buffer.writeln('GoRoute(');
-      buffer.writeln("  path: 'create',");
+      buffer.writeln("  path: '${r.path}',");
       buffer.writeln(
-          '  builder: (context, state) => $constant${entity}CreateScreen($args),');
+          '  builder: (context, state) => $constant${r.className}($args),');
       buffer.writeln('),');
     }
 
@@ -186,15 +193,8 @@ class RoutesArtifact extends Artifact {
       for (final r in detailChildRoutes.values)
         if (r.entityName == manifest.entityName) r,
     ];
-    if (manifest.hasUpdate || children.isNotEmpty || screens.isNotEmpty) {
+    if (children.isNotEmpty || screens.isNotEmpty) {
       buffer.writeln('  routes: [');
-      if (manifest.hasUpdate) {
-        buffer.writeln('GoRoute(');
-        buffer.writeln("  path: 'edit',");
-        buffer.writeln(
-            '  builder: (context, state) => ${entity}EditScreen(${screenArgs('id: $id')}),');
-        buffer.writeln('),');
-      }
       for (final r in screens) {
         buffer.writeln('GoRoute(');
         buffer.writeln("  path: '${r.path}',");
@@ -224,8 +224,19 @@ class RouteSpec {
   final String path;
 }
 
-/// A hand-written screen (`@EntityScreen`) below the detail route of an
-/// entity.
+/// A screen below the list route of an entity, before its detail route
+/// (e.g. the create screen). It gets the extra screen arguments of the entity.
+class ListChildRoute {
+  const ListChildRoute(
+      {required this.entityName, required this.path, required this.className});
+
+  final String entityName;
+  final String path;
+  final String className;
+}
+
+/// A screen below the detail route of an entity (the edit screen, a
+/// hand-written `@EntityScreen`); it gets `id` and the extra screen arguments.
 class DetailChildRoute {
   const DetailChildRoute(
       {required this.entityName,
@@ -237,6 +248,7 @@ class DetailChildRoute {
   final String path;
   final String className;
 
-  /// Library the generated routes import to reach [className].
+  /// Library the generated routes import to reach [className]; empty when the
+  /// screen is generated into the same library.
   final String libraryUri;
 }

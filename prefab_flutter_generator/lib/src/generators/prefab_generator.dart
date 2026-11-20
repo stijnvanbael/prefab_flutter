@@ -3,7 +3,6 @@ import '../core/library_emitter.dart';
 import '../features/features.dart';
 import 'api_client_generator.dart';
 import 'detail_screen_generator.dart';
-import 'form_screen_generator.dart';
 import 'list_screen_generator.dart';
 import 'provider_generator.dart';
 import 'routes_generator.dart';
@@ -14,7 +13,6 @@ const List<ArtifactFactory> prefabArtifactFactories = [
   createProviderArtifacts,
   DetailScreenArtifact.create,
   ListScreenArtifact.create,
-  createFormScreenArtifacts,
   RoutesArtifact.create,
 ];
 
