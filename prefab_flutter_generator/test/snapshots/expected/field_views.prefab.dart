@@ -209,9 +209,12 @@ class ItemListScreen extends ConsumerWidget {
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final item = page.items[index];
-                        return ListTile(
+                        return prefabTheme.listItemBuilder(
+                          context,
                           title: Text(item.name.toString()),
                           subtitle: Text(item.note?.toString() ?? '—'),
+                          trailing: null,
+                          actions: const [],
                           onTap: () => context.push('/items/${item.id}'),
                         );
                       },

@@ -182,8 +182,8 @@ void main() {
           'a|lib/product.list_screen.dart': decodedMatches(
             allOf(
               contains('title: Text(product.name.toString())'),
-              isNot(contains('subtitle:')),
-              isNot(contains('trailing:')),
+              contains('subtitle: null'),
+              contains('trailing: null'),
             ),
           ),
         },

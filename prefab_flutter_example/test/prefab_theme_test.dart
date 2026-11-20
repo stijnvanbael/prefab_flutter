@@ -12,6 +12,25 @@ ThemeData _theme() => ThemeData(
           emptyBuilder: (_) => const Center(child: Text('Nothing here')),
           errorBuilder: (_, error, __) => Center(child: Text('Oops: $error')),
           listPadding: const EdgeInsets.all(40),
+          listItemBuilder: (context,
+                  {required title,
+                  required subtitle,
+                  required trailing,
+                  required actions,
+                  required onTap}) =>
+              Card(
+            child: InkWell(
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(children: [
+                  if (title != null) Expanded(child: title),
+                  if (actions.isNotEmpty)
+                    PopupMenuButton<void>(itemBuilder: (_) => actions),
+                ]),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -51,5 +70,13 @@ void main() {
     await _pump(tester, dio);
     expect(find.textContaining('Oops:'), findsOneWidget);
     expect(find.byWidgetPredicate((w) => w is Text && (w.data ?? '').startsWith('Error:')), findsNothing);
+  });
+
+  testWidgets('the generated list screen renders items as cards',
+      (tester) async {
+    await _pump(tester, createMockDio());
+    expect(find.text('Keyboard'), findsOneWidget);
+    expect(find.byType(Card), findsWidgets);
+    expect(find.byType(ListTile), findsNothing);
   });
 }

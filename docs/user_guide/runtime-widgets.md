@@ -45,8 +45,31 @@ MaterialApp.router(
 | `emptyBuilder(context)` | Centered `No items found` | List screens without items |
 | `loadingBuilder(context)` | Centered `CircularProgressIndicator` | List, detail and edit screens while loading |
 | `errorBuilder(context, error, stackTrace)` | Centered `Error: $error` | List, detail and edit screens when loading failed |
+| `listItemBuilder(context, title:, subtitle:, trailing:, actions:, onTap:)` | `ListTile` with `title`, `subtitle` and `trailing`; the `actions` open in a `PopupMenuButton` next to `trailing` | Every item of list screens |
 | `detailFieldBuilder(context, label, value)` | `ListTile` with the label as title and the value widget as subtitle | Every field of detail screens |
 | `saveButtonBuilder(context, label, onPressed, saving)` | `ElevatedButton`; a small progress indicator while `saving` (`onPressed` is then `null`) | Create and edit screens |
+
+`listItemBuilder` receives the first three `@Field(on: Place.item)` fields as
+widgets (`null` when the entity has fewer), the menu entries of the item's
+actions (`delete`, `@EntityScreen` links, `@EntityAction`s; empty without
+actions) and `onTap`, which opens the detail screen. It lets an app render cards
+without promoting the list screen, so search, sort, paging and item actions stay:
+
+```dart
+PrefabTheme(
+  listItemBuilder: (context,
+          {required title, required subtitle, required trailing,
+           required actions, required onTap}) =>
+      Card(
+        child: ListTile(
+          title: title,
+          subtitle: subtitle,
+          trailing: PopupMenuButton<void>(itemBuilder: (_) => actions),
+          onTap: onTap,
+        ),
+      ),
+)
+```
 
 `PrefabTheme` has `copyWith` and `lerp` (paddings interpolate, builders switch
 at `t >= 0.5`). `PrefabTheme.of(context)` returns the extension or the

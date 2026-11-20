@@ -291,32 +291,27 @@ class AlphaListScreen extends ConsumerWidget {
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final alpha = page.items[index];
-                        return ListTile(
+                        return prefabTheme.listItemBuilder(
+                          context,
                           title: Text(alpha.name.toString()),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              PopupMenuButton<void>(
-                                itemBuilder: (_) => [
-                                  PopupMenuItem<void>(
-                                    onTap: () =>
-                                        duplicateAlpha(context, ref, alpha),
-                                    child: const Row(
-                                      children: [
-                                        Icon(Icons.copy),
-                                        SizedBox(width: 8),
-                                        Text('Duplicate'),
-                                      ],
-                                    ),
-                                  ),
-                                  PopupMenuItem<void>(
-                                    onTap: () => sendAlpha(context, ref, alpha),
-                                    child: const Text('Send'),
-                                  ),
+                          subtitle: null,
+                          trailing: null,
+                          actions: [
+                            PopupMenuItem<void>(
+                              onTap: () => duplicateAlpha(context, ref, alpha),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.copy),
+                                  SizedBox(width: 8),
+                                  Text('Duplicate'),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                            PopupMenuItem<void>(
+                              onTap: () => sendAlpha(context, ref, alpha),
+                              child: const Text('Send'),
+                            ),
+                          ],
                           onTap: () => context.push('/alphas/${alpha.id}'),
                         );
                       },

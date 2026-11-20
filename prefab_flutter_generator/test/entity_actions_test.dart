@@ -181,7 +181,8 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
       expect(out, contains('onPressed: alphaAsync.hasValue'));
       expect(out, contains('alpha(context, ref, alphaAsync.value!)'));
       expect(out, isNot(contains("tooltip: 'Zeta'")));
-      expect(out, contains('PopupMenuButton<void>('));
+      expect(out, contains('prefabTheme.listItemBuilder('));
+      expect(out, contains('actions: ['));
       expect(out, contains('enabled: alphaAsync.hasValue'));
       expect(out.indexOf("Text('Zeta')"), lessThan(out.indexOf("Text('Late')")));
       expect(out, contains('child: const Row('));
@@ -198,9 +199,9 @@ void go(BuildContext c, WidgetRef r, Alpha a) {}
       });
       expect(out, contains(r"tooltip: 'Export \'all\''"));
       expect(out, contains('onPressed: () => exportAlphas(context, ref)'));
-      expect(out, contains('PopupMenuButton<void>('));
+      expect(out, contains('prefabTheme.listItemBuilder('));
+      expect(out, contains('actions: ['));
       expect(out, matches(RegExp(r'onTap: \(\) =>\s+duplicateAlpha\(context, ref, alpha\)')));
-      expect(out, contains('trailing: Row('));
       // No action on the detail screen: it has no `actions` of its own here
       // beyond Edit.
       expect(out, isNot(contains('exportAlphas(context, ref, ')));

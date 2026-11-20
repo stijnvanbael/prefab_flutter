@@ -248,8 +248,12 @@ class GammaListScreen extends ConsumerWidget {
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final gamma = page.items[index];
-                        return ListTile(
+                        return prefabTheme.listItemBuilder(
+                          context,
                           title: Text(gamma.name.toString()),
+                          subtitle: null,
+                          trailing: null,
+                          actions: const [],
                           onTap: () => context.push('/gammas/${gamma.id}'),
                         );
                       },

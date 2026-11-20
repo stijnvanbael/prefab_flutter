@@ -222,8 +222,12 @@ class BetaListScreen extends ConsumerWidget {
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final beta = page.items[index];
-                        return ListTile(
+                        return prefabTheme.listItemBuilder(
+                          context,
                           title: Text(beta.name.toString()),
+                          subtitle: null,
+                          trailing: null,
+                          actions: const [],
                           onTap: () => context.push('/betas/${beta.id}'),
                         );
                       },
