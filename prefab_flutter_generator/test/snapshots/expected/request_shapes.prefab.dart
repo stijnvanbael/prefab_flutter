@@ -236,8 +236,12 @@ class TicketDetailScreen extends ConsumerWidget {
           ],
         ),
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (error, stackTrace) =>
-            prefabTheme.errorBuilder(context, error, stackTrace),
+        error: (error, stackTrace) => ref
+                .read(prefabBackendProvider)
+                .parseError(error)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/tickets'))
+            : prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -311,11 +315,13 @@ class TicketCreateScreen extends ConsumerStatefulWidget {
 class _TicketCreateScreenState extends ConsumerState<TicketCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   final _titleController = TextEditingController();
   final _reporterController = TextEditingController();
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _titleController.dispose();
     _reporterController.dispose();
     super.dispose();
@@ -323,6 +329,7 @@ class _TicketCreateScreenState extends ConsumerState<TicketCreateScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(ticketsProvider, (_, __) {});
@@ -339,8 +346,10 @@ class _TicketCreateScreenState extends ConsumerState<TicketCreateScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {'title', 'reporter', 'resolution'},
+      );
     } finally {
       subscription.close();
     }
@@ -355,24 +364,38 @@ class _TicketCreateScreenState extends ConsumerState<TicketCreateScreen> {
       ),
       body: Form(
         key: _formKey,
+        onChanged: _formErrors.clearEdited,
         child: ListView(
           padding: prefabTheme.formPadding,
           children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                return null;
-              },
+            PrefabFormErrorBanner(errors: _formErrors),
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'title',
+              children: [
+                TextFormField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    return null;
+                  },
+                ),
+              ],
             ),
-            TextFormField(
-              controller: _reporterController,
-              decoration: const InputDecoration(labelText: 'Reporter'),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Required';
-                return null;
-              },
+            PrefabFieldError(
+              errors: _formErrors,
+              field: 'reporter',
+              children: [
+                TextFormField(
+                  controller: _reporterController,
+                  decoration: const InputDecoration(labelText: 'Reporter'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return 'Required';
+                    return null;
+                  },
+                ),
+              ],
             ),
             prefabTheme.saveButtonBuilder(
               context,
@@ -399,6 +422,7 @@ class TicketEditScreen extends ConsumerStatefulWidget {
 class _TicketEditScreenState extends ConsumerState<TicketEditScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
+  final _formErrors = PrefabFormErrors();
   bool _prefilled = false;
   // ignore: unused_field
   Ticket? _item;
@@ -407,6 +431,7 @@ class _TicketEditScreenState extends ConsumerState<TicketEditScreen> {
 
   @override
   void dispose() {
+    _formErrors.dispose();
     _titleController.dispose();
     _resolutionController.dispose();
     super.dispose();
@@ -420,6 +445,7 @@ class _TicketEditScreenState extends ConsumerState<TicketEditScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    _formErrors.clear();
     setState(() => _saving = true);
     // Keep the (auto-dispose) provider alive while the request runs.
     final subscription = ref.listenManual(ticketsProvider, (_, __) {});
@@ -440,8 +466,10 @@ class _TicketEditScreenState extends ConsumerState<TicketEditScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      _formErrors.setError(
+        ref.read(prefabBackendProvider).parseError(e),
+        const {'title', 'reporter', 'resolution'},
+      );
     } finally {
       subscription.close();
     }
@@ -463,23 +491,42 @@ class _TicketEditScreenState extends ConsumerState<TicketEditScreen> {
       ),
       body: asyncItem.when(
         loading: () => prefabTheme.loadingBuilder(context),
-        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
+        error: (e, st) => ref
+                .read(prefabBackendProvider)
+                .parseError(e)
+                .isNotFound
+            ? prefabTheme.notFoundBuilder(context, () => context.go('/tickets'))
+            : prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
+          onChanged: _formErrors.clearEdited,
           child: ListView(
             padding: prefabTheme.formPadding,
             children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Required';
-                  return null;
-                },
+              PrefabFormErrorBanner(errors: _formErrors),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'title',
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(labelText: 'Title'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      return null;
+                    },
+                  ),
+                ],
               ),
-              TextFormField(
-                controller: _resolutionController,
-                decoration: const InputDecoration(labelText: 'Resolution'),
+              PrefabFieldError(
+                errors: _formErrors,
+                field: 'resolution',
+                children: [
+                  TextFormField(
+                    controller: _resolutionController,
+                    decoration: const InputDecoration(labelText: 'Resolution'),
+                  ),
+                ],
               ),
               prefabTheme.saveButtonBuilder(
                 context,
