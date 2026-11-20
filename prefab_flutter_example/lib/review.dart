@@ -32,7 +32,10 @@ class Review {
 
   /// Edited and shown with the hand-written widgets of `rating_widgets.dart`.
   @Field(
-    form: FormOptions(builder: RatingField.new),
+    form: FormOptions(
+      builder: RatingField.new,
+      validators: [Validator.min(1), Validator.max(5)],
+    ),
     displayBuilder: RatingStars.new,
   )
   final int? quality;

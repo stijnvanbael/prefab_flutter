@@ -12,7 +12,7 @@ import '../field_widgets/form_validation.dart';
 /// The form keeps the value in `_<name>Value` and hands the widget the
 /// plain-Flutter contract of `PrefabFieldBuilder`: `initialValue`,
 /// `onChanged`, `label` and, if the field is required and the widget takes
-/// one, a `validator`. It claims every field that names a custom widget, ahead
+/// one, a `validator` that runs the validators fitting the field type. It claims every field that names a custom widget, ahead
 /// of the `FieldWidget` emitters.
 class CustomFormFieldEmitter extends FormFieldEmitter {
   const CustomFormFieldEmitter();
@@ -36,30 +36,80 @@ class CustomFormFieldEmitter extends FormFieldEmitter {
   @override
   void check(FieldManifest field) {
     final custom = field.customForm!;
+    final type = field.dartType;
     for (final v in field.validators) {
-      if (v is! RequiredValidator) {
+      final String? needs = switch (v) {
+        RequiredValidator() => null,
+        MinValidator() ||
+        MaxValidator() ||
+        PositiveValidator() ||
+        NonNegativeValidator() =>
+          _isNumeric(type) ? null : 'a numeric field (int, double or num)',
+        MinLengthValidator() || MaxLengthValidator() =>
+          (type == 'String' || _isCollection(type))
+              ? null
+              : 'a String or a collection (List, Set, Iterable)',
+        _ => type == 'String' ? null : 'a String field',
+      };
+      if (needs != null) {
         throw InvalidGenerationSourceError(
-          '${v.runtimeType} cannot be used on "${field.name}" because it '
-          'uses the custom widget ${custom.invocation}. Only '
-          'Validator.required is supported there; check other rules inside '
-          'the widget.',
+          '${v.runtimeType} cannot be used on "${field.name}" (type '
+          '$type) because it needs $needs. The custom widget '
+          '${custom.invocation} receives the validators that fit the field '
+          'type; check other rules inside the widget.',
         );
       }
     }
-    if (field.isRequired && !custom.parameters.contains('validator')) {
+    if (_needsValidator(field) && !custom.parameters.contains('validator')) {
       throw InvalidGenerationSourceError(
-        'Field "${field.name}" is required but its custom widget '
-        '${custom.invocation} takes no "validator" parameter, so the form '
-        'cannot reject an empty value. Add a '
+        'Field "${field.name}" is required or has validators but its custom '
+        'widget ${custom.invocation} takes no "validator" parameter, so the '
+        'form cannot check the value. Add a '
         '`String? Function(T? value)? validator` parameter.',
       );
     }
   }
 
+  static bool _isNumeric(String t) => t == 'int' || t == 'double' || t == 'num';
+
+  static bool _isCollection(String t) =>
+      t.startsWith('List<') ||
+      t.startsWith('Set<') ||
+      t.startsWith('Iterable<');
+
+  static bool _needsValidator(FieldManifest field) =>
+      field.isRequired || field.validators.any((v) => v is! RequiredValidator);
+
+  /// The check of one validator on the non-null `value`.
+  String _check(Validator v, String value) {
+    String msg(String fallback) => dartStringLiteral(v.message ?? fallback);
+    const i = '                  ';
+    return switch (v) {
+      MinValidator() =>
+        '${i}if ($value < ${v.value}) return ${msg('Must be at least ${v.value}')};\n',
+      MaxValidator() =>
+        '${i}if ($value > ${v.value}) return ${msg('Must be at most ${v.value}')};\n',
+      PositiveValidator() =>
+        '${i}if ($value <= 0) return ${msg('Must be a positive number')};\n',
+      NonNegativeValidator() =>
+        '${i}if ($value < 0) return ${msg('Must not be negative')};\n',
+      MinLengthValidator() =>
+        '${i}if ($value.length < ${v.length}) return ${msg('Must have at least ${v.length} characters or items')};\n',
+      MaxLengthValidator() =>
+        '${i}if ($value.length > ${v.length}) return ${msg('Must have at most ${v.length} characters or items')};\n',
+      EmailValidator() =>
+        "${i}if (!RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+\$').hasMatch($value)) return ${msg('Invalid email address')};\n",
+      UrlValidator() =>
+        '${i}if (!(Uri.tryParse($value)?.isAbsolute ?? false)) return ${msg('Invalid URL')};\n',
+      PatternValidator() =>
+        '${i}if (!RegExp(${dartStringLiteral(v.regex)}).hasMatch($value)) return ${msg('Invalid format')};\n',
+      _ => '',
+    };
+  }
+
   @override
-  Code? stateDeclaration(FieldManifest field) => Code(
-        '  ${field.dartType}? _${field.name}Value;\n',
-      );
+  Code? stateDeclaration(FieldManifest field) =>
+      Code('  ${field.dartType}? _${field.name}Value;\n');
 
   @override
   Code initialValue(FieldManifest field, String entity) =>
@@ -78,11 +128,30 @@ class CustomFormFieldEmitter extends FormFieldEmitter {
       ..writeln('              initialValue: _${n}Value,')
       ..writeln('              onChanged: (value) => _${n}Value = value,')
       ..writeln("              label: ${dartStringLiteral(field.label)},");
-    if (field.isRequired) {
-      buffer.writeln('              validator: (value) =>');
-      buffer.writeln(
-        '                  value == null ? ${requiredMessage(field)} : null,',
-      );
+    if (_needsValidator(field)) {
+      final others = field.validators
+          .where((v) => v is! RequiredValidator)
+          .toList();
+      if (others.isEmpty) {
+        buffer.writeln('              validator: (value) =>');
+        buffer.writeln(
+          '                  value == null ? ${requiredMessage(field)} : null,',
+        );
+      } else {
+        buffer.writeln('              validator: (value) {');
+        buffer.writeln(
+          field.isRequired
+              ? '                if (value == null) return ${requiredMessage(field)};'
+              : '                if (value == null) return null;',
+        );
+        buffer.writeln('                {');
+        for (final v in others) {
+          buffer.write(_check(v, 'value'));
+        }
+        buffer.writeln('                }');
+        buffer.writeln('                return null;');
+        buffer.writeln('              },');
+      }
     }
     buffer.writeln('            ),');
     return Code(

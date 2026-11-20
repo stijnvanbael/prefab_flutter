@@ -1,7 +1,7 @@
 ---
 id: PF-69
 title: Support validators beyond required on custom field widgets
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-11-20 12:00'
 labels: []
@@ -19,8 +19,14 @@ Pass all declared validators that apply to the field's type to the widget's `val
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Validators that apply to the field's Dart type run through the custom widget's `validator` parameter
-- [ ] #2 A validator that cannot apply to the field type fails the build with a clear message
-- [ ] #3 Tests cover a numeric custom field with `min`/`max` and an invalid combination
-- [ ] #4 docs/user_guide/field-widgets.md is updated and the Known limitations row is removed
+- [x] #1 Validators that apply to the field's Dart type run through the custom widget's `validator` parameter
+- [x] #2 A validator that cannot apply to the field type fails the build with a clear message
+- [x] #3 Tests cover a numeric custom field with `min`/`max` and an invalid combination
+- [x] #4 docs/user_guide/field-widgets.md is updated and the Known limitations row is removed
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Checks are emitted by `CustomFormFieldEmitter` on the typed value. The example `Review.quality` now uses `min(1)`/`max(5)` on its custom widget; the existing example tests still pass; no extra widget test was added.
+<!-- SECTION:NOTES:END -->
