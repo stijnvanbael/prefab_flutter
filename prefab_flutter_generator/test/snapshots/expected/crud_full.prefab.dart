@@ -184,6 +184,7 @@ class AlphaDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final alphaAsync = ref.watch(alphaDetailProvider(id));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alpha'),
@@ -216,16 +217,18 @@ class AlphaDetailScreen extends ConsumerWidget {
       ),
       body: alphaAsync.when(
         data: (alpha) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [
-            ListTile(
-              title: const Text('Name'),
-              subtitle: Text(alpha.name.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Name',
+              alpha.name.toString(),
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -238,6 +241,7 @@ class AlphaListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final alphasAsync = ref.watch(alphasProvider);
     final notifier = ref.read(alphasProvider.notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alpha'),
@@ -256,8 +260,9 @@ class AlphaListScreen extends ConsumerWidget {
             child: alphasAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final alpha = page.items[index];
@@ -267,9 +272,9 @@ class AlphaListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
           PrefabPaginationBar.controlled(
@@ -325,6 +330,7 @@ class _AlphaCreateScreenState extends ConsumerState<AlphaCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alpha'),
@@ -332,7 +338,7 @@ class _AlphaCreateScreenState extends ConsumerState<AlphaCreateScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.formPadding,
           children: [
             TextFormField(
               controller: _nameController,
@@ -342,15 +348,11 @@ class _AlphaCreateScreenState extends ConsumerState<AlphaCreateScreen> {
                 return null;
               },
             ),
-            ElevatedButton(
-              onPressed: _saving ? null : _save,
-              child: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Create'),
+            prefabTheme.saveButtonBuilder(
+              context,
+              'Create',
+              _saving ? null : _save,
+              _saving,
             ),
           ],
         ),
@@ -419,17 +421,18 @@ class _AlphaEditScreenState extends ConsumerState<AlphaEditScreen> {
         _prefillControllers(item);
       }
     });
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alpha'),
       ),
       body: asyncItem.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: prefabTheme.formPadding,
             children: [
               TextFormField(
                 controller: _nameController,
@@ -439,15 +442,11 @@ class _AlphaEditScreenState extends ConsumerState<AlphaEditScreen> {
                   return null;
                 },
               ),
-              ElevatedButton(
-                onPressed: _saving ? null : _save,
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
+              prefabTheme.saveButtonBuilder(
+                context,
+                'Save',
+                _saving ? null : _save,
+                _saving,
               ),
             ],
           ),

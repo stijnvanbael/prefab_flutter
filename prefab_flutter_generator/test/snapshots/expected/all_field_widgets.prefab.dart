@@ -182,6 +182,7 @@ class WidgetDemoDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final widgetDemoAsync = ref.watch(widgetDemoDetailProvider(id));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Widget Demo'),
@@ -195,48 +196,58 @@ class WidgetDemoDetailScreen extends ConsumerWidget {
       ),
       body: widgetDemoAsync.when(
         data: (widgetDemo) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [
-            ListTile(
-              title: const Text('Auto'),
-              subtitle: Text(widgetDemo.auto.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Auto',
+              widgetDemo.auto.toString(),
             ),
-            ListTile(
-              title: const Text('Notes'),
-              subtitle: Text(widgetDemo.notes.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Notes',
+              widgetDemo.notes.toString(),
             ),
-            ListTile(
-              title: const Text('Secret'),
-              subtitle: Text(widgetDemo.secret.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Secret',
+              widgetDemo.secret.toString(),
             ),
-            ListTile(
-              title: const Text('Quantity'),
-              subtitle: Text(widgetDemo.quantity.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Quantity',
+              widgetDemo.quantity.toString(),
             ),
-            ListTile(
-              title: const Text('Day'),
-              subtitle: Text(widgetDemo.day.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Day',
+              widgetDemo.day.toString(),
             ),
-            ListTile(
-              title: const Text('At'),
-              subtitle: Text(widgetDemo.at.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'At',
+              widgetDemo.at.toString(),
             ),
-            ListTile(
-              title: const Text('Moment'),
-              subtitle: Text(widgetDemo.moment.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Moment',
+              widgetDemo.moment.toString(),
             ),
-            ListTile(
-              title: const Text('Status'),
-              subtitle: Text(widgetDemo.status.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Status',
+              widgetDemo.status.toString(),
             ),
-            ListTile(
-              title: const Text('Active'),
-              subtitle: Text(widgetDemo.active.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Active',
+              widgetDemo.active.toString(),
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -249,6 +260,7 @@ class WidgetDemoListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final widgetDemosAsync = ref.watch(widgetDemosProvider);
     final notifier = ref.read(widgetDemosProvider.notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Widget Demo'),
@@ -267,8 +279,9 @@ class WidgetDemoListScreen extends ConsumerWidget {
             child: widgetDemosAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final widgetDemo = page.items[index];
@@ -279,9 +292,9 @@ class WidgetDemoListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
           PrefabPaginationBar.controlled(
@@ -364,6 +377,7 @@ class _WidgetDemoCreateScreenState
 
   @override
   Widget build(BuildContext context) {
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Widget Demo'),
@@ -371,7 +385,7 @@ class _WidgetDemoCreateScreenState
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.formPadding,
           children: [
             TextFormField(
               controller: _autoController,
@@ -521,15 +535,11 @@ class _WidgetDemoCreateScreenState
               value: _activeValue,
               onChanged: (v) => setState(() => _activeValue = v),
             ),
-            ElevatedButton(
-              onPressed: _saving ? null : _save,
-              child: _saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Create'),
+            prefabTheme.saveButtonBuilder(
+              context,
+              'Create',
+              _saving ? null : _save,
+              _saving,
             ),
           ],
         ),
@@ -640,17 +650,18 @@ class _WidgetDemoEditScreenState extends ConsumerState<WidgetDemoEditScreen> {
         _prefillControllers(item);
       }
     });
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Widget Demo'),
       ),
       body: asyncItem.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: prefabTheme.formPadding,
             children: [
               TextFormField(
                 controller: _autoController,
@@ -801,15 +812,11 @@ class _WidgetDemoEditScreenState extends ConsumerState<WidgetDemoEditScreen> {
                 value: _activeValue,
                 onChanged: (v) => setState(() => _activeValue = v),
               ),
-              ElevatedButton(
-                onPressed: _saving ? null : _save,
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
+              prefabTheme.saveButtonBuilder(
+                context,
+                'Save',
+                _saving ? null : _save,
+                _saving,
               ),
             ],
           ),

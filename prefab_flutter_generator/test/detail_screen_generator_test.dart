@@ -133,9 +133,9 @@ void main() {
       outputs: {
         'a|lib/item.detail_screen.dart': decodedMatches(
           allOf(
-            contains("Text('Only detail')"),
-            contains("Text('Everywhere')"),
-            isNot(contains("Text('Only list')")),
+            contains("'Only detail'"),
+            contains("'Everywhere'"),
+            isNot(contains("'Only list'")),
           ),
         ),
       },
@@ -176,9 +176,9 @@ void main() {
           outputs: {
             'a|lib/product.detail_screen.dart': decodedMatches(
               allOf(
-                contains("const Text('Name')"),
+                contains("'Name'"),
                 contains('product.name.toString()'),
-                contains("const Text('Price')"),
+                contains("'Price'"),
                 contains('product.price.toString()'),
               ),
             ),
@@ -264,7 +264,7 @@ void main() {
         _assets('a', 'lib/order.dart', _orderSource),
         outputs: {
           'a|lib/order.detail_screen.dart': decodedMatches(
-            contains("const Text('Customer Name')"),
+            contains("'Customer Name'"),
           ),
         },
       );
@@ -318,8 +318,8 @@ void main() {
         outputs: {
           'a|lib/item.detail_screen.dart': decodedMatches(
             allOf(
-              contains("Text(item.note?.toString() ?? '\u2014')"),
-              contains('Text(item.name.toString())'),
+              contains("item.note?.toString() ?? '\u2014'"),
+              contains('item.name.toString()'),
             ),
           ),
         },

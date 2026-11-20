@@ -21,9 +21,12 @@ void main() => runApp(
     );
 
 class ExampleApp extends StatefulWidget {
-  const ExampleApp({super.key, this.initialLocation = '/products'});
+  const ExampleApp({super.key, this.initialLocation = '/products', this.theme});
 
   final String initialLocation;
+
+  /// Overrides the app theme (the tests use it to set a [PrefabTheme]).
+  final ThemeData? theme;
 
   @override
   State<ExampleApp> createState() => _ExampleAppState();
@@ -36,6 +39,13 @@ class _ExampleAppState extends State<ExampleApp> {
   @override
   Widget build(BuildContext context) => MaterialApp.router(
         title: 'Prefab Flutter Example',
+        theme: widget.theme ??
+            ThemeData(
+              extensions: const [
+                // Generated screens read their layout from PrefabTheme.
+                PrefabTheme(listPadding: EdgeInsets.symmetric(vertical: 8)),
+              ],
+            ),
         routerConfig: _router,
       );
 }

@@ -156,26 +156,30 @@ class ItemDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final itemAsync = ref.watch(itemDetailProvider(id));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Item'),
       ),
       body: itemAsync.when(
         data: (item) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [
-            ListTile(
-              title: const Text('Secret'),
-              subtitle: Text(item.secret.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Secret',
+              item.secret.toString(),
             ),
-            ListTile(
-              title: const Text('Note'),
-              subtitle: Text(item.note?.toString() ?? '—'),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Note',
+              item.note?.toString() ?? '—',
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -188,6 +192,7 @@ class ItemListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final itemsAsync = ref.watch(itemsProvider);
     final notifier = ref.read(itemsProvider.notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Item'),
@@ -198,8 +203,9 @@ class ItemListScreen extends ConsumerWidget {
             child: itemsAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final item = page.items[index];
@@ -210,9 +216,9 @@ class ItemListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
           PrefabPaginationBar.controlled(

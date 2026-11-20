@@ -33,6 +33,7 @@ abstract class FormScreenArtifact extends Artifact {
     Libs.materialUi,
     Libs.riverpod,
     Libs.goRouter,
+    Libs.widgets,
   };
 
   /// `required this.orderId, required this.orderLineId`.
@@ -121,6 +122,7 @@ abstract class FormScreenArtifact extends Artifact {
     String saveButtonLabel,
     StringBuffer buffer,
   ) {
+    buffer.writeln('    final prefabTheme = PrefabTheme.of(context);');
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
@@ -128,7 +130,7 @@ abstract class FormScreenArtifact extends Artifact {
     buffer.writeln('      body: Form(');
     buffer.writeln('        key: _formKey,');
     buffer.writeln('        child: ListView(');
-    buffer.writeln('          padding: const EdgeInsets.all(16),');
+    buffer.writeln('          padding: prefabTheme.formPadding,');
     buffer.writeln('          children: [');
     for (final field in manifest.formFields) {
       _writeFormField(field, buffer);
@@ -162,21 +164,22 @@ abstract class FormScreenArtifact extends Artifact {
     buffer.writeln('        _prefillControllers(item);');
     buffer.writeln('      }');
     buffer.writeln('    });');
+    buffer.writeln('    final prefabTheme = PrefabTheme.of(context);');
     buffer.writeln('    return Scaffold(');
     buffer.writeln('      appBar: AppBar(');
     buffer.writeln("        title: const Text('${manifest.title}'),");
     buffer.writeln('      ),');
     buffer.writeln('      body: asyncItem.when(');
     buffer.writeln(
-      '        loading: () => const Center(child: CircularProgressIndicator()),',
+      '        loading: () => prefabTheme.loadingBuilder(context),',
     );
     buffer.writeln(
-      '        error: (e, _) => Center(child: Text(e.toString())),',
+      '        error: (e, st) => prefabTheme.errorBuilder(context, e, st),',
     );
     buffer.writeln('        data: (_) => Form(');
     buffer.writeln('          key: _formKey,');
     buffer.writeln('          child: ListView(');
-    buffer.writeln('            padding: const EdgeInsets.all(16),');
+    buffer.writeln('            padding: prefabTheme.formPadding,');
     buffer.writeln('            children: [');
     for (final field in manifest.formFields) {
       _writeFormField(field, buffer);
@@ -190,16 +193,11 @@ abstract class FormScreenArtifact extends Artifact {
   }
 
   void _writeSaveButton(String saveButtonLabel, StringBuffer buffer) {
-    buffer.writeln('            ElevatedButton(');
-    buffer.writeln('              onPressed: _saving ? null : _save,');
-    buffer.writeln('              child: _saving');
-    buffer.writeln('                  ? const SizedBox(');
-    buffer.writeln('                      width: 20,');
-    buffer.writeln('                      height: 20,');
-    buffer.writeln(
-        '                      child: CircularProgressIndicator(strokeWidth: 2),');
-    buffer.writeln('                    )');
-    buffer.writeln("                  : const Text('$saveButtonLabel'),");
+    buffer.writeln('            prefabTheme.saveButtonBuilder(');
+    buffer.writeln('              context,');
+    buffer.writeln("              '$saveButtonLabel',");
+    buffer.writeln('              _saving ? null : _save,');
+    buffer.writeln('              _saving,');
     buffer.writeln('            ),');
   }
 

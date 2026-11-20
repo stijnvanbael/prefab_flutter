@@ -402,7 +402,7 @@ class Product {
         _assets('a', 'lib/product.dart', _productSource),
         outputs: {
           'a|lib/product.list_screen.dart': decodedMatches(
-            contains("Text('No items found')"),
+            contains('prefabTheme.emptyBuilder(context)'),
           ),
         },
       );

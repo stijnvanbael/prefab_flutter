@@ -174,6 +174,7 @@ class GammaDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gammaAsync = ref.watch(gammaDetailProvider(id));
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gamma'),
@@ -206,16 +207,18 @@ class GammaDetailScreen extends ConsumerWidget {
       ),
       body: gammaAsync.when(
         data: (gamma) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: prefabTheme.detailPadding,
           children: [
-            ListTile(
-              title: const Text('Name'),
-              subtitle: Text(gamma.name.toString()),
+            prefabTheme.detailFieldBuilder(
+              context,
+              'Name',
+              gamma.name.toString(),
             ),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (error, stackTrace) =>
+            prefabTheme.errorBuilder(context, error, stackTrace),
       ),
     );
   }
@@ -228,6 +231,7 @@ class GammaListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final gammasAsync = ref.watch(gammasProvider);
     final notifier = ref.read(gammasProvider.notifier);
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gamma'),
@@ -238,8 +242,9 @@ class GammaListScreen extends ConsumerWidget {
             child: gammasAsync.when(
               skipLoadingOnReload: true,
               data: (page) => page.items.isEmpty
-                  ? const Center(child: Text('No items found'))
+                  ? prefabTheme.emptyBuilder(context)
                   : ListView.builder(
+                      padding: prefabTheme.listPadding,
                       itemCount: page.items.length,
                       itemBuilder: (context, index) {
                         final gamma = page.items[index];
@@ -249,9 +254,9 @@ class GammaListScreen extends ConsumerWidget {
                         );
                       },
                     ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => prefabTheme.loadingBuilder(context),
               error: (error, stackTrace) =>
-                  Center(child: Text('Error: $error')),
+                  prefabTheme.errorBuilder(context, error, stackTrace),
             ),
           ),
           PrefabPaginationBar.controlled(
@@ -325,17 +330,18 @@ class _GammaEditScreenState extends ConsumerState<GammaEditScreen> {
         _prefillControllers(item);
       }
     });
+    final prefabTheme = PrefabTheme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gamma'),
       ),
       body: asyncItem.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
+        loading: () => prefabTheme.loadingBuilder(context),
+        error: (e, st) => prefabTheme.errorBuilder(context, e, st),
         data: (_) => Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: prefabTheme.formPadding,
             children: [
               TextFormField(
                 controller: _nameController,
@@ -345,15 +351,11 @@ class _GammaEditScreenState extends ConsumerState<GammaEditScreen> {
                   return null;
                 },
               ),
-              ElevatedButton(
-                onPressed: _saving ? null : _save,
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
+              prefabTheme.saveButtonBuilder(
+                context,
+                'Save',
+                _saving ? null : _save,
+                _saving,
               ),
             ],
           ),
