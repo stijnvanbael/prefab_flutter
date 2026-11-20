@@ -2,6 +2,7 @@ import 'package:prefab_flutter/prefab_flutter.dart';
 
 import '../manifest/field_manifest.dart';
 import 'code.dart';
+import 'extension_point.dart';
 
 /// How one resolved [FieldWidget] appears in the create and edit forms.
 ///
@@ -94,7 +95,8 @@ class FieldDisplays {
       displays.firstWhere((d) => d.accepts(field));
 }
 
-/// Shows every field with `toString()`, nullable ones with an em dash.
+/// Shows every field with `toString()`. Nullable fields are handled by the
+/// `nullable_fields` feature through the `fieldValue` point.
 class DefaultFieldDisplay extends FieldDisplay {
   const DefaultFieldDisplay();
 
@@ -102,10 +104,35 @@ class DefaultFieldDisplay extends FieldDisplay {
   bool accepts(FieldManifest field) => true;
 
   @override
-  String text(FieldManifest field, String receiver) => field.isNullable
-      ? "$receiver.${field.name}?.toString() ?? '—'"
-      : '$receiver.${field.name}.toString()';
+  String text(FieldManifest field, String receiver) =>
+      '$receiver.${field.name}.toString()';
 }
 
 /// The field displays used by the detail and list screens.
 final fieldDisplays = FieldDisplays(const [DefaultFieldDisplay()]);
+
+/// A feature's way to show a field value in a detail screen or list tile; the
+/// `fieldValue` extension point of those screens holds these. The first
+/// contribution (by order, then feature name) that [accepts] a field wins
+/// over the [FieldDisplay] registry.
+class FieldValue {
+  const FieldValue({required this.accepts, required this.text});
+
+  final bool Function(FieldManifest field) accepts;
+
+  /// Dart expression of type `String` showing `receiver.field`.
+  final String Function(FieldManifest field, String receiver) text;
+}
+
+/// The text expression for [field]: a contributed [FieldValue] if one accepts
+/// it, else the [fieldDisplays] entry.
+String fieldValueText(
+  ValuePoint<FieldValue> point,
+  FieldManifest field,
+  String receiver,
+) {
+  for (final v in point.values) {
+    if (v.accepts(field)) return v.text(field, receiver);
+  }
+  return fieldDisplays.resolve(field).text(field, receiver);
+}

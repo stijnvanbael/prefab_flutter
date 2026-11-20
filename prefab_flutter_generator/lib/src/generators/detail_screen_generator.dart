@@ -2,7 +2,9 @@ import '../core/artifact.dart';
 import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
+import '../core/extension_point.dart';
 import '../core/field_registries.dart';
+import '../features/features.dart';
 import '../manifest/entity_manifest.dart';
 import '../manifest/entity_paths.dart';
 import '../manifest/field_manifest.dart';
@@ -20,7 +22,8 @@ import 'breadcrumbs.dart';
 ///   [@Delete] is present.
 class DetailScreenGenerator extends ArtifactGenerator {
   DetailScreenGenerator()
-      : super('DetailScreenGenerator', const [DetailScreenArtifact.create]);
+      : super('DetailScreenGenerator', const [DetailScreenArtifact.create],
+            features: registeredFeatures);
 }
 
 /// The `{Entity}DetailScreen` widget of one entity.
@@ -28,6 +31,10 @@ class DetailScreenArtifact extends Artifact {
   DetailScreenArtifact(this.entity);
 
   final EntityContext entity;
+
+  /// How a field value is shown in its tile. Orders in use: 10 nullable
+  /// fields.
+  final fieldValue = ValuePoint<FieldValue>('detailScreen.fieldValue');
 
   static Iterable<Artifact> create(EntityContext entity) =>
       [DetailScreenArtifact(entity)];
@@ -199,7 +206,7 @@ class DetailScreenArtifact extends Artifact {
   ) {
     buffer.writeln('            ListTile(');
     buffer.writeln("              title: const Text('${field.label}'),");
-    final value = fieldDisplays.resolve(field).text(field, entityLower);
+    final value = fieldValueText(fieldValue, field, entityLower);
     buffer.writeln('              subtitle: Text($value),');
     buffer.writeln('            ),');
   }

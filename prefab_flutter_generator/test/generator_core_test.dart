@@ -186,9 +186,10 @@ import 'dart:async';''');
       isNullable: true,
     );
 
-    test('the default field display marks nullable fields with a dash', () {
+    test('the default field display is toString(); nullable_fields adds the dash',
+        () {
       expect(fieldDisplays.resolve(field).text(field, 'p'),
-          "p.price?.toString() ?? '—'");
+          'p.price.toString()');
     });
 
     test('FieldEmitters resolve explicit widgets and auto inference', () {
