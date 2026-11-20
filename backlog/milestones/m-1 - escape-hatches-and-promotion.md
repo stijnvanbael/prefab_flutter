@@ -14,7 +14,7 @@ Scope:
   the codebase; the generator detects it, stops generating it, and the rest
   wires to the promoted version (PF-42), with a command that writes the
   artifact to a file (PF-49)
-- Custom field widgets, used in forms and detail views (PF-43)
+- Custom field widgets, used in forms and detail views (PF-65)
 - Custom actions on list and detail screens (PF-44)
 - Hand-written screens and routes plugged into the generated navigation (PF-45)
 - Theming hooks for generated screens (PF-46)

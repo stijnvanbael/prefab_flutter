@@ -35,5 +35,5 @@ Migrate search, sort and pagination (PF-13) first: it touches the list screen (`
 - The module's `dart:async` and widget imports come from its own fragments.
 - AC#6: the hasSearch/hasSort/searchableFields/sortableFields getters moved into the module. The raw flags (`FieldManifest.searchable`/`sortable`, `EntityManifest.paged`) stay in the manifest, because `FieldManifest` is built in one place with the defaults of every field; the developer guide explains this.
 - Not done: a separate documentation page per feature. The user guide is already split per topic (PF-40), so list query behaviour stays where it is described today.
-- Follow-ups for the other feature groups: PF-43 (field widgets), PF-44 (validators), PF-45 (nullable fields), PF-46 (nested resources and breadcrumbs), PF-47 (create, update, delete), PF-48 (views).
+- Follow-ups for the other feature groups: PF-59 (field widgets), PF-60 (validators), PF-61 (nullable fields), PF-62 (nested resources and breadcrumbs), PF-63 (create, update, delete), PF-64 (views).
 <!-- SECTION:NOTES:END -->
