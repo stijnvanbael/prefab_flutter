@@ -247,20 +247,6 @@ class EntityManifest {
   /// All fields that should appear in the form screen (non-hidden, non-parent).
   List<FieldManifest> get formFields => visibleFields;
 
-  /// Visible fields that take part in the list search.
-  List<FieldManifest> get searchableFields =>
-      visibleFields.where((f) => f.searchable).toList();
-
-  /// Visible fields offered in the list sort menu.
-  List<FieldManifest> get sortableFields =>
-      visibleFields.where((f) => f.sortable).toList();
-
-  /// Whether the list screen shows a search bar.
-  bool get hasSearch => searchableFields.isNotEmpty;
-
-  /// Whether the list screen shows a sort menu.
-  bool get hasSort => sortableFields.isNotEmpty;
-
   /// Name of the first visible field, used as the item label in delete dialogs.
   /// Falls back to the id field when no visible fields are declared.
   String get firstLabelFieldName =>

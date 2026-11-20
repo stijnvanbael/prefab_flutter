@@ -60,6 +60,13 @@ front matter and the `<!-- SECTION:... -->` / `<!-- AC:... -->` markers.
 unique ids, Known limitations only reference open tasks, milestones exist).
 CI runs it; run it yourself before every push.
 
+## GENERATOR FEATURES
+
+New generator behaviour goes into a feature module under
+`prefab_flutter_generator/lib/src/features/<feature>/`, not into the artifact
+templates in `lib/src/generators/`. Follow "Adding a feature" in
+`docs/developer_guide.md`.
+
 ## AVOIDING MERGE CONFLICTS
 
 Several agents work on backlog tasks at the same time, each on its own branch.

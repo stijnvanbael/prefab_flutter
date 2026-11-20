@@ -1,4 +1,5 @@
 import '../core/artifact_generator.dart';
+import '../features/features.dart';
 import 'api_client_generator.dart';
 import 'detail_screen_generator.dart';
 import 'form_screen_generator.dart';
@@ -21,5 +22,5 @@ class PrefabGenerator extends ArtifactGenerator {
           ListScreenArtifact.create,
           createFormScreenArtifacts,
           RoutesArtifact.create,
-        ]);
+        ], features: registeredFeatures);
 }

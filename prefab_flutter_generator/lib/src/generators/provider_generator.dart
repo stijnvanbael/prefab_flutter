@@ -2,6 +2,8 @@ import '../core/artifact.dart';
 import '../core/artifact_generator.dart';
 import '../core/code.dart';
 import '../core/entity_context.dart';
+import '../core/extension_point.dart';
+import '../features/features.dart';
 import '../manifest/entity_manifest.dart';
 
 /// Generates Riverpod providers for every class annotated with [@View].
@@ -21,7 +23,8 @@ import '../manifest/entity_manifest.dart';
 ///   entity is nested more than one level deep.
 class ProviderGenerator extends ArtifactGenerator {
   ProviderGenerator()
-      : super('ProviderGenerator', const [createProviderArtifacts]);
+      : super('ProviderGenerator', const [createProviderArtifacts],
+            features: registeredFeatures);
 }
 
 /// The provider artifacts of one entity: its detail provider, list provider
@@ -76,6 +79,64 @@ abstract class _ProviderArtifact extends Artifact {
     }
   }
 
+  void _writeApiClientProvider(StringBuffer buffer) {
+    final entity = manifest.entityName;
+    final entityLower = manifest.entityNameLower;
+    buffer.writeln(
+        'final ${entityLower}ApiClientProvider = Provider.autoDispose<${entity}ApiClient>(');
+    buffer.writeln(
+        '  (ref) => ${entity}ApiClient(ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));');
+  }
+}
+
+/// The `{entity}DetailProvider` of one entity.
+class DetailProviderArtifact extends _ProviderArtifact {
+  DetailProviderArtifact(super.entity);
+
+  @override
+  ArtifactId get id =>
+      ArtifactId(ArtifactKind.detailProvider, manifest.entityName);
+
+  @override
+  String get primaryName => '${manifest.entityNameLower}DetailProvider';
+
+  @override
+  Code emit() {
+    final buffer = StringBuffer();
+    _writeDetailProvider(buffer);
+    return _code(buffer, const {});
+  }
+}
+
+/// The `{entity}sProvider` and its notifier of one entity.
+class ListProviderArtifact extends _ProviderArtifact {
+  ListProviderArtifact(super.entity);
+
+  @override
+  ArtifactId get id =>
+      ArtifactId(ArtifactKind.listProvider, manifest.entityName);
+
+  @override
+  String get primaryName => '${manifest.entityNameLower}sProvider';
+
+  /// Fields and getters of the notifier, after `_client` (indent 2).
+  /// Orders in use: 10 list query.
+  final state = ExtensionPoint('listProvider.state');
+
+  /// Statements at the start of `build` (indent 4).
+  final onBuild = ExtensionPoint('listProvider.onBuild');
+
+  /// Methods after `_load` (indent 2), separated by blank lines.
+  final methods = ExtensionPoint('listProvider.methods');
+
+  /// Arguments of `_client.list(...)`, after the ancestor ids. Orders in use:
+  /// 10 search, 20 sort, 30 descending, 40 page, 50 page size.
+  final fetchArguments = ValuePoint<NamedArgument>('listProvider.fetchArguments');
+
+  @override
+  List<String> get declaredNames =>
+      [primaryName, '${manifest.entityName}sNotifier'];
+
   void _writeListProvider(StringBuffer buffer) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
@@ -118,18 +179,9 @@ abstract class _ProviderArtifact extends Artifact {
     }
   }
 
-  void _writeApiClientProvider(StringBuffer buffer) {
-    final entity = manifest.entityName;
-    final entityLower = manifest.entityNameLower;
-    buffer.writeln(
-        'final ${entityLower}ApiClientProvider = Provider.autoDispose<${entity}ApiClient>(');
-    buffer.writeln(
-        '  (ref) => ${entity}ApiClient(ref.watch(prefabDioProvider), ref.watch(prefabListAdapterProvider)));');
-  }
-
   /// Writes the members shared by the plain and the family list notifier:
-  /// the list query state (search, sort, page), `build`, `_load`, the query
-  /// setters and the create / update / delete mutations.
+  /// the state and methods features contribute (list query), `build`,
+  /// `_load` and the create / update / delete mutations.
   ///
   /// [buildSignature] is the parameter list of `build` (`'int arg'` for a
   /// family notifier, empty otherwise); [parentArg] is the named parent
@@ -145,10 +197,7 @@ abstract class _ProviderArtifact extends Artifact {
     final hasParent = manifest.hasParent;
     final listArgs = [
       if (hasParent) parentArg,
-      'search: _search',
-      'sort: _sort',
-      'descending: _descending',
-      if (manifest.paged) ...['page: _page', 'pageSize: _pageSize'],
+      for (final argument in fetchArguments.values) '$argument',
     ].join(', ');
     final clientTrailing = hasParent ? ', $parentArg' : '';
     final detailKeyArgs = manifest.detailKeyExpr(
@@ -158,28 +207,13 @@ abstract class _ProviderArtifact extends Artifact {
     buffer.writeln(
         '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');
     buffer.writeln();
-    buffer.writeln('  String _search = \'\';');
-    buffer.writeln('  String? _sort;');
-    buffer.writeln('  bool _descending = false;');
-    buffer.writeln('  int _page = 0;');
-    if (manifest.paged) buffer.writeln('  int? _pageSize;');
-    buffer.writeln('  Timer? _searchDebounce;');
-    buffer.writeln();
-    buffer.writeln('  /// The search text currently applied to the list.');
-    buffer.writeln('  String get search => _search;');
-    buffer.writeln();
-    buffer.writeln('  /// The field the list is sorted by, or `null`.');
-    buffer.writeln('  String? get sort => _sort;');
-    buffer.writeln();
-    buffer.writeln('  /// Whether the list is sorted descending.');
-    buffer.writeln('  bool get descending => _descending;');
-    buffer.writeln();
-    buffer.writeln('  /// Zero-based index of the current page.');
-    buffer.writeln('  int get page => _page;');
-    buffer.writeln();
+    if (!state.isEmpty) {
+      buffer.writeln(state.render(2));
+      buffer.writeln();
+    }
     buffer.writeln('  @override');
     buffer.writeln('  Future<PrefabPage<$entity>> build($buildSignature) {');
-    buffer.writeln('    ref.onDispose(() => _searchDebounce?.cancel());');
+    if (!onBuild.isEmpty) buffer.writeln(onBuild.render(4));
     buffer.writeln('    return _client.list($listArgs);');
     buffer.writeln('  }');
     buffer.writeln();
@@ -189,44 +223,9 @@ abstract class _ProviderArtifact extends Artifact {
     buffer.writeln(
         '    state = await AsyncValue.guard(() => _client.list($listArgs));');
     buffer.writeln('  }');
-    buffer.writeln();
-    buffer.writeln('  /// Applies [query] after a short pause in typing and');
-    buffer.writeln('  /// returns to the first page.');
-    buffer.writeln('  void setSearch(String query) {');
-    buffer.writeln('    _searchDebounce?.cancel();');
-    buffer.writeln(
-        '    _searchDebounce = Timer(const Duration(milliseconds: 300), () {');
-    buffer.writeln('      if (query == _search) return;');
-    buffer.writeln('      _search = query;');
-    buffer.writeln('      _page = 0;');
-    buffer.writeln('      _load();');
-    buffer.writeln('    });');
-    buffer.writeln('  }');
-    buffer.writeln();
-    buffer.writeln(
-        '  /// Sorts by [field] (`null` clears the sort) and reloads.');
-    buffer.writeln(
-        '  Future<void> setSort(String? field, {bool descending = false}) {');
-    buffer.writeln('    _sort = field;');
-    buffer.writeln('    _descending = descending;');
-    buffer.writeln('    _page = 0;');
-    buffer.writeln('    return _load();');
-    buffer.writeln('  }');
-    if (manifest.paged) {
+    if (!methods.isEmpty) {
       buffer.writeln();
-      buffer.writeln('  /// Loads the zero-based page [page].');
-      buffer.writeln('  Future<void> goToPage(int page) {');
-      buffer.writeln('    _page = page;');
-      buffer.writeln('    return _load();');
-      buffer.writeln('  }');
-      buffer.writeln();
-      buffer.writeln(
-          '  /// Changes the page size and returns to the first page.');
-      buffer.writeln('  Future<void> setPageSize(int pageSize) {');
-      buffer.writeln('    _pageSize = pageSize;');
-      buffer.writeln('    _page = 0;');
-      buffer.writeln('    return _load();');
-      buffer.writeln('  }');
+      buffer.writeln(methods.render(2));
     }
     if (manifest.hasCreate) {
       buffer.writeln();
@@ -255,47 +254,17 @@ abstract class _ProviderArtifact extends Artifact {
       buffer.writeln('  }');
     }
   }
-}
-
-/// The `{entity}DetailProvider` of one entity.
-class DetailProviderArtifact extends _ProviderArtifact {
-  DetailProviderArtifact(super.entity);
-
-  @override
-  ArtifactId get id =>
-      ArtifactId(ArtifactKind.detailProvider, manifest.entityName);
-
-  @override
-  String get primaryName => '${manifest.entityNameLower}DetailProvider';
-
-  @override
-  Code emit() {
-    final buffer = StringBuffer();
-    _writeDetailProvider(buffer);
-    return _code(buffer, const {});
-  }
-}
-
-/// The `{entity}sProvider` and its notifier of one entity.
-class ListProviderArtifact extends _ProviderArtifact {
-  ListProviderArtifact(super.entity);
-
-  @override
-  ArtifactId get id =>
-      ArtifactId(ArtifactKind.listProvider, manifest.entityName);
-
-  @override
-  String get primaryName => '${manifest.entityNameLower}sProvider';
-
-  @override
-  List<String> get declaredNames =>
-      [primaryName, '${manifest.entityName}sNotifier'];
 
   @override
   Code emit() {
     final buffer = StringBuffer();
     _writeListProvider(buffer);
-    return _code(buffer, {Libs.dartAsync, Libs.widgets});
+    return _code(buffer, {
+      ...state.imports,
+      ...onBuild.imports,
+      ...methods.imports,
+      Libs.widgets,
+    });
   }
 }
 
