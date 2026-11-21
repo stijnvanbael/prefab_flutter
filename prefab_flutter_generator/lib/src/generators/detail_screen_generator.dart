@@ -61,6 +61,10 @@ class DetailScreenArtifact extends Artifact {
   /// Fields shown as tiles, in order. Orders in use: 10 views.
   final detailFields = ValuePoint<FieldManifest>('detailScreen.detailFields');
 
+  /// Widgets before the field tiles (indent 12): the job status banner.
+  /// Orders in use: 10 job status.
+  final beforeFields = ExtensionPoint('detailScreen.beforeFields');
+
   /// Tiles after the field tiles (indent 12): links to hand-written child
   /// screens. Orders in use: 10 entity screens.
   final afterFields = ExtensionPoint('detailScreen.afterFields');
@@ -89,6 +93,7 @@ class DetailScreenArtifact extends Artifact {
         ...appBarBottom.imports,
         ...appBarActions.imports,
         entity.sourceFileName,
+        ...beforeFields.imports,
         ...afterFields.imports,
       },
     );
@@ -165,6 +170,7 @@ class DetailScreenArtifact extends Artifact {
     buffer.writeln('          padding: prefabTheme.detailPadding,');
     buffer.writeln('          children: [');
 
+    if (!beforeFields.isEmpty) buffer.writeln(beforeFields.render(12));
     for (final field in visibleFields) {
       _writeFieldTile(field, entityLower, buffer);
     }

@@ -50,6 +50,13 @@ class ListScreenArtifact extends Artifact {
   /// item in the local variable named [itemName]. Orders in use: 50 actions.
   final itemActions = ExtensionPoint('listScreen.itemActions');
 
+  /// A widget expression shown in front of the trailing slot of every list
+  /// item (indent 0), written with the item in the local variable named
+  /// [itemName]: the job status indicator. Single-valued. Orders in use: 10
+  /// job status.
+  final itemStatus =
+      ExtensionPoint('listScreen.itemStatus', maxContributions: 1);
+
   /// Fields shown in the list tile slots, in the order title, subtitle,
   /// trailing (at most three are used). Orders in use: 10 views.
   final itemTile = ValuePoint<FieldManifest>('listScreen.itemTile');
@@ -116,6 +123,7 @@ class ListScreenArtifact extends Artifact {
         ...aboveList.imports,
         ...belowList.imports,
         ...itemActions.imports,
+        ...itemStatus.imports,
         ...floatingActionButton.imports,
         ..._displayImports,
         Libs.materialUi,
@@ -210,13 +218,19 @@ class ListScreenArtifact extends Artifact {
     final slots = itemTile.values;
     const slotNames = ['title', 'subtitle', 'trailing'];
     for (var i = 0; i < slotNames.length; i++) {
-      if (i >= slots.length) {
-        buffer.writeln('              ${slotNames[i]}: null,');
-        continue;
+      String? slot;
+      if (i < slots.length) {
+        final value = fieldValueWidget(fieldValue, slots[i], entityLower);
+        _displayImports.addAll(value.imports);
+        slot = value.text;
       }
-      final value = fieldValueWidget(fieldValue, slots[i], entityLower);
-      _displayImports.addAll(value.imports);
-      buffer.writeln('              ${slotNames[i]}: ${value.text},');
+      if (slotNames[i] == 'trailing' && !itemStatus.isEmpty) {
+        // The status indicator goes in front of the trailing field.
+        final status = itemStatus.render(0);
+        slot = 'Row(mainAxisSize: MainAxisSize.min, children: [\n'
+            '$status,\n${slot == null ? '' : '$slot,\n'}])';
+      }
+      buffer.writeln('              ${slotNames[i]}: ${slot ?? 'null'},');
     }
     if (itemActions.isEmpty) {
       buffer.writeln('              actions: const [],');

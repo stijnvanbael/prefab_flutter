@@ -26,7 +26,7 @@ Collection names are plural (`productsProvider`), single-entity names singular.
 | | `update` | `Future<Product> update(Product product)` (needs `@Update`) |
 | | `delete` | `Future<void> delete(Product product)` (needs `@Delete`) |
 | API client provider | `productApiClientProvider` | `Provider.autoDispose<ProductApiClient>` |
-| Detail provider | `productDetailProvider` | `FutureProvider.autoDispose.family<Product, int>`, keyed by the id |
+| Detail provider | `productDetailProvider` | `FutureProvider.autoDispose.family<Product, int>`, keyed by the id (a `StreamProvider` for a `@Streaming` or `@JobStatus` entity, read the same way) |
 | List provider | `productsProvider` | `AsyncNotifierProvider.autoDispose<ProductsNotifier, PrefabPage<Product>>` |
 | List notifier | `ProductsNotifier` | getters `search`, `sort`, `descending`, `page` |
 | | `setSearch` | `void setSearch(String query)` (debounced 300 ms, back to page 0) |

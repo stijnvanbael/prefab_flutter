@@ -119,7 +119,8 @@ class OperationScreenArtifact extends Artifact {
     out.writeln('      await ref.read($provider.notifier)'
         '.${operation.methodName}(widget.id, parameters);');
     out.writeln('      if (!mounted) return;');
-    out.writeln('      context.pop();');
+    // `true` tells a list item that started a job to open it (PF-57).
+    out.writeln('      context.pop(${operation.startsJob ? 'true' : ''});');
     out.writeln('    } catch (e) {');
     out.writeln('      if (!mounted) return;');
     out.writeln('      setState(() => _saving = false);');

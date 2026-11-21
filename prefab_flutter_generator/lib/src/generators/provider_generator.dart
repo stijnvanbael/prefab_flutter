@@ -195,6 +195,14 @@ class ListProviderArtifact extends _ProviderArtifact {
       '${manifest.entityNameLower}.${manifest.idFieldName}${manifest.idBang}',
       (a) => a.name);
 
+  /// The call that fetches the current page of the list: `_client.list(...)`
+  /// with the ancestor ids and the fetch arguments. Use it lazily, after
+  /// every feature contributed its arguments.
+  String get fetchCall => '_client.list(${[
+        if (!key.isEmpty) key.namedArgs(),
+        for (final argument in fetchArguments.values) '$argument',
+      ].join(', ')})';
+
   @override
   List<String> get declaredNames =>
       [primaryName, '${manifest.entityName}sNotifier'];
@@ -225,8 +233,7 @@ class ListProviderArtifact extends _ProviderArtifact {
       buffer.writeln();
       _writeNotifierBody(manifest, buffer,
           key: key,
-          buildSignature: '$parentParamType arg',
-          parentArg: key.namedArgs());
+          buildSignature: '$parentParamType arg');
       buffer.writeln('}');
     } else {
       // List provider (no family arg).
@@ -239,7 +246,7 @@ class ListProviderArtifact extends _ProviderArtifact {
       buffer.writeln(
           'class ${entity}sNotifier extends AutoDisposeAsyncNotifier<PrefabPage<$entity>> {');
       _writeNotifierBody(manifest, buffer,
-          key: key, buildSignature: '', parentArg: '');
+          key: key, buildSignature: '');
       buffer.writeln('}');
     }
   }
@@ -249,22 +256,15 @@ class ListProviderArtifact extends _ProviderArtifact {
   /// `_load` and the create / update / delete mutations.
   ///
   /// [buildSignature] is the parameter list of `build` (`'int arg'` for a
-  /// family notifier, empty otherwise); [parentArg] is the named parent
-  /// argument passed to the API client (`'postId: postId'`, or empty).
+  /// family notifier, empty otherwise).
   void _writeNotifierBody(
     EntityManifest manifest,
     StringBuffer buffer, {
     required FamilyKey key,
     required String buildSignature,
-    required String parentArg,
   }) {
     final entity = manifest.entityName;
     final entityLower = manifest.entityNameLower;
-    final hasParent = !key.isEmpty;
-    final listArgs = [
-      if (hasParent) parentArg,
-      for (final argument in fetchArguments.values) '$argument',
-    ].join(', ');
     buffer.writeln(
         '  ${entity}ApiClient get _client => ref.read(${entityLower}ApiClientProvider);');
     buffer.writeln();
@@ -275,14 +275,14 @@ class ListProviderArtifact extends _ProviderArtifact {
     buffer.writeln('  @override');
     buffer.writeln('  Future<PrefabPage<$entity>> build($buildSignature) {');
     if (!onBuild.isEmpty) buffer.writeln(onBuild.render(4));
-    buffer.writeln('    return _client.list($listArgs);');
+    buffer.writeln('    return $fetchCall;');
     buffer.writeln('  }');
     buffer.writeln();
     buffer.writeln('  Future<void> _load() async {');
     buffer.writeln(
         '    state = const AsyncLoading<PrefabPage<$entity>>().copyWithPrevious(state);');
     buffer.writeln(
-        '    state = await AsyncValue.guard(() => _client.list($listArgs));');
+        '    state = await AsyncValue.guard(() => $fetchCall);');
     buffer.writeln('  }');
     if (!methods.isEmpty) {
       buffer.writeln();

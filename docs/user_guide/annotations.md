@@ -126,6 +126,7 @@ class Invoice { ... }
 | `confirm` | The question of a confirmation dialog; without it the operation runs at once. Only for operations without `parameters` |
 | `parameters` | A class with `@Field` fields (same field widgets and validators as an entity), an unnamed constructor and a `toJson()` method. Its JSON is the request body |
 | `order` | Sort key among the operations and the [actions](actions.md), default `0` |
+| `startsJob` | The operation starts a long-running job of an entity with a [`@JobStatus`](#jobstatus-field) field: a list item opens the detail screen afterwards. Default `false` |
 
 Every operation adds:
 
@@ -147,6 +148,13 @@ Every operation adds:
 
 A promoted detail screen does not show the operations; the build warns, and
 `on: {Place.item}` still works.
+
+`@Update(path: ..., startsJob: true)` marks an operation that starts a
+long-running server job (see [`@JobStatus`](#jobstatus-field)): after it ran,
+the item menu of a list opens the entity's detail screen, which shows the job
+running (for an operation with `parameters`, after the form was saved). On the
+detail screen the user stays where they are and the banner switches to
+running. `startsJob` needs a `@JobStatus` field and a `path`.
 
 ### `@Delete` (class)
 
@@ -176,6 +184,77 @@ annotation nothing changes. The URL and the event format are described in
   entity).
 
 The stream is open only while a screen listens to one of these providers.
+
+### `@JobStatus` (field)
+
+Marks the field that holds the **status of a long-running server job** (a
+generated summary, an import, a report): the server creates the entity, keeps
+working on it for seconds or minutes and changes the status when it is done or
+has failed. Prefab models such jobs as resources with a status. Without the
+annotation nothing changes.
+
+```dart
+enum ReportStatus { queued, running, done, failed }
+
+@Entity()
+class Report {
+  final int? id;
+  @Field()
+  final String title;
+  @JobStatus()
+  @Field()
+  final ReportStatus status;
+  @Field(readOnly: true)
+  final String? error;      // the server's failure message
+  ...
+}
+```
+
+| Parameter | Type | Default | Meaning |
+|---|---|---|---|
+| `running` | `Set<Enum>?` | inferred | The values that mean the server is still working |
+| `done` | `Set<Enum>?` | inferred | The values that mean the job finished successfully |
+| `failed` | `Set<Enum>?` | inferred | The values that mean the job failed |
+| `message` | `String?` | `error`, `errorMessage`, `failureReason`, `failureMessage` or `failure`, if the entity has such a `String` field | The name of the field with the server's failure message |
+| `pollInterval` | `Duration` | 3 seconds | How often the providers refresh while a job runs |
+
+The field must be of a non-nullable enum type and a `@Field` (it is shown in
+the list and the detail screen). It is owned by the server, so it is never in a
+form or a request body, as with `@Field(readOnly: true)`.
+
+**Values.** A value that no parameter names is classified by its name:
+running for `queued`, `pending`, `waiting`, `scheduled`, `running`,
+`inProgress`, `started`, `processing`, `active`; done for `done`, `completed`,
+`complete`, `succeeded`, `success`, `finished`, `ready`; failed for `failed`,
+`failure`, `error`, `errored`. Any other value (`cancelled`, `draft`) must be
+named in `running:`, `done:` or `failed:`, otherwise the build fails and lists
+the values. At least one value must mean running.
+
+**What the screens show.**
+
+* A **list item** shows a `PrefabJobIndicator` in front of its trailing
+  widget: a progress indicator while the job runs, a check mark when it is done
+  and an error icon when it failed.
+* The **detail screen** starts with a `PrefabJobBanner`: a progress bar while
+  the job runs, "Done", or "Failed" with the value of the message field.
+
+**Refreshing.** While a job runs the providers load the entity again every
+`pollInterval` and stop when no job is running any more (a reload of the page
+or the screen starts polling again):
+
+* the **list notifier** reloads the page without a loading state while any item
+  of the page is running (a refresh that fails is ignored and tried again);
+* the **detail provider** becomes a `StreamProvider` (still read with
+  `ref.watch(reportDetailProvider(id))`) that emits the entity again while it
+  runs.
+
+An entity that is also [`@Streaming`](#streaming-class) does not poll: it
+follows the live events, and only the indicator and banner are added. The
+status values of events are classified like those of a response.
+
+A promoted list or detail screen does not show the indicator or the banner;
+the build warns. The runtime pieces (`PrefabJobState`, `PrefabJobPoller`,
+`prefabPolledDetail`) are in [Runtime widgets](runtime-widgets.md).
 
 ### `@Field` (field)
 

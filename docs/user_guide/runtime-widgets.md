@@ -15,6 +15,8 @@
 | `PrefabPage<T>` | yes (API client, notifier, list screen) | A page of items with total count and page metadata |
 | `PrefabTheme` | yes (list, detail and form screens) | `ThemeExtension` with the layout decisions of generated screens, see [Theming](#theming) |
 | `PrefabNewItemsBanner` | yes (list screen of `@Streaming` entities) | "N new items" banner with a Refresh button |
+| `PrefabJobIndicator` / `PrefabJobBanner` / `PrefabJobState` | yes (list and detail screens of `@JobStatus` entities) | Running, done and failed state of a job: a small indicator for list items, a banner with the failure message for the detail screen |
+| `PrefabJobPoller` / `prefabPolledDetail` | yes (providers of `@JobStatus` entities) | Refresh the list notifier, or the detail provider, every interval while a job runs; stop when it is final, ignore failed refreshes |
 | `PrefabEventSource` / `prefabEventsProvider` / `PrefabEvent` | yes (providers of `@Streaming` entities) | SSE client with reconnect (signals `PrefabEvent.reconnected()` so lists and details reload), shared per URL; the events of a collection, see [Live updates](rest-contract.md#live-updates-streaming) |
 | `PrefabBackend` / `prefabBackendProvider` | yes (API client) | Query parameters, page response, sort and id encoding of REST requests; Prefab and Simple presets |
 
