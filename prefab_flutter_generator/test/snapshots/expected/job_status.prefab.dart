@@ -649,7 +649,12 @@ class RendersNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Render>> {
 
   /// Applies a live event to the loaded page. Created items that do
   /// not belong on this page are counted in `PrefabPage.newItems`.
+  /// After a reconnect the list is reloaded: events may have been missed.
   void _onEvent(PrefabEvent event) {
+    if (event.type == PrefabEventType.reconnected) {
+      if (!state.isLoading) _load();
+      return;
+    }
     final page = state.valueOrNull;
     if (page == null) return;
     state = AsyncData(applyPrefabEvent<Render>(
