@@ -142,9 +142,11 @@ class OperationsFeature extends Feature {
                 icon: o.icon,
                 name: o.path,
                 order: o.order,
-                call: o.hasParameters
-                    ? "context.push('${entity.paths.itemPath(manifest, '\${$itemId}')}/${o.path}')"
-                    : _run(o, '${lower}sProvider$listArg', itemId),
+                call: _itemCall(
+                  o,
+                  itemPath: entity.paths.itemPath(manifest, '\${$itemId}'),
+                  run: _run(o, '${lower}sProvider$listArg', itemId),
+                ),
               ),
           ]);
           return Code(renderMenuEntries(items),
@@ -169,6 +171,26 @@ class OperationsFeature extends Feature {
         order: 6,
       );
     }
+  }
+
+  /// The call of the menu entry of an operation in a list item. An operation
+  /// that starts a job (PF-57) opens the detail screen of the item after it
+  /// ran; the form of an operation with parameters tells it saved by popping
+  /// with `true`.
+  String _itemCall(OperationManifest o,
+      {required String itemPath, required String run}) {
+    final push = "context.push('$itemPath/${o.path}')";
+    if (!o.startsJob) return o.hasParameters ? push : run;
+    final open = [
+      '(started) {',
+      '  if (started == true && context.mounted) {',
+      "    context.push('$itemPath');",
+      '  }',
+      '}',
+    ].join('\n');
+    return o.hasParameters
+        ? "context.push<bool>('$itemPath/${o.path}').then($open)"
+        : '$run.then($open)';
   }
 
   /// The expression that confirms and runs an operation without parameters.

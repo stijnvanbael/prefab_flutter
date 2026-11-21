@@ -6,11 +6,17 @@ import 'package:prefab_flutter_widgets/prefab_flutter_widgets.dart';
 import 'mock_backend.dart';
 import 'product.prefab.dart';
 import 'reply.prefab.dart';
+import 'report.prefab.dart';
 import 'review.prefab.dart';
 
 GoRouter createRouter({String initialLocation = '/products'}) => GoRouter(
       initialLocation: initialLocation,
-      routes: [...$productRoutes, ...$reviewRoutes, ...$replyRoutes],
+      routes: [
+        ...$productRoutes,
+        ...$reviewRoutes,
+        ...$replyRoutes,
+        ...$reportRoutes,
+      ],
     );
 
 void main() => runApp(

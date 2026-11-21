@@ -221,11 +221,13 @@ Extension points that exist today (all contributions are at column 0):
 
 | Artifact | Point | Holds | Orders in use |
 |---|---|---|---|
+| detail screen | `beforeFields` (indent 12) | `Code` | 10 job status |
 | detail screen | `afterFields` (indent 12) | `Code` | 10 entity screens |
 | routes | `detailChildRoutes` (screens below the detail route) | `ValuePoint<DetailChildRoute>` | 5 update (edit), 6 operations, 10 entity screens |
 | routes | `listChildRoutes` (screens below the list route, before the detail route) | `ValuePoint<ListChildRoute>` | 10 create |
 | list screen | `buildStatements` (indent 4) | `Code` | 10 list query |
 | list screen | `appBarActions`, `aboveList`, `belowList` (indent 10; `aboveList` replaces `{{providerRef}}`) | `Code` | 10 list query (`appBarActions`), 50 actions; 20 streaming (`aboveList`) |
+| list screen | `itemStatus` (widget expression shown in front of the trailing slot of each item, single-valued) | `Code` | 10 job status |
 | list screen | `floatingActionButton` (indent 6, one widget expression, single-valued) | `Code` | 10 create |
 | list screen | `itemActions` (indent 14, `PopupMenuEntry<void>` expressions) | `Code` | 40 operations, 50 actions |
 | detail screen | `appBarActions` (indent 10) | `Code` | 10 update (Edit), 20 delete, 40 operations, 50 actions |
@@ -235,8 +237,8 @@ Extension points that exist today (all contributions are at column 0):
 | list screen | `itemTile` | `ValuePoint<FieldManifest>` (title, subtitle, trailing) | 10 places |
 | detail screen | `detailFields` | `ValuePoint<FieldManifest>` | 10 places |
 | list screen, detail screen | `fieldValue` | `ValuePoint<FieldValue>` | 10 nullable fields |
-| list notifier | `state`, `onBuild`, `methods` (indent 2, 4, 2) | `Code` | 10 list query (`state`, `onBuild`); 50 streaming (`onBuild`); `methods`: 10 list query, 20 create, 30 update, 40 delete, 50 operations, 50 streaming |
-| detail provider | `declaration` (replaces the whole provider, single-valued) | `Code` | 10 streaming |
+| list notifier | `state`, `onBuild`, `methods` (indent 2, 4, 2) | `Code` | 10 list query (`state`, `onBuild`); 20 job status (`state`, `onBuild`); 50 streaming (`onBuild`); `methods`: 10 list query, 20 create, 30 update, 40 delete, 50 operations, 50 streaming, 60 job status |
+| detail provider | `declaration` (replaces the whole provider, single-valued) | `Code` | 10 streaming, 20 job status (not for a `@Streaming` entity) |
 | list notifier | `fetchArguments` | `ValuePoint<NamedArgument>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |
 | API client | `methods` (indent 2, after `getById`; use `addLazy`, the `familyKey` is added by another feature) | `Code` | 10 create, 20 update, 30 delete, 40 operations, 50 streaming |
 | API client | `listQueryParameters` | `ValuePoint<QueryParameter>` | 10 search, 20 sort, 30 descending, 40 page, 50 page size |

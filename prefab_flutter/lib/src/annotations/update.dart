@@ -28,6 +28,10 @@ import '../enums/place.dart';
 /// class Invoice { ... }
 /// ```
 ///
+/// With [startsJob] the operation starts a long-running server job (see
+/// [@JobStatus]): after it ran, the item menu of a list opens the job's
+/// detail screen, which shows it running.
+///
 /// [parameters] is a class with `@Field` fields (the same field widgets and
 /// validators as an entity), a constructor that takes them and a `toJson()`
 /// method; its JSON is the request body.
@@ -40,6 +44,7 @@ class Update {
     this.confirm,
     this.parameters,
     this.order = 0,
+    this.startsJob = false,
   });
 
   /// The URL segment after the id of a named operation (`send` for
@@ -70,4 +75,11 @@ class Update {
 
   /// Operations are sorted by [order], then by label.
   final int order;
+
+  /// Whether the operation starts a job of an entity with a [@JobStatus]
+  /// field. After the operation ran (and its form, if it has [parameters],
+  /// was saved) the item menu of a list opens the entity's detail screen; the
+  /// detail screen stays where it is and shows the job running. Only for a
+  /// named operation ([path] is set).
+  final bool startsJob;
 }

@@ -1,0 +1,113 @@
+class SummaryApiClient
+  SummaryApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Summary>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Summary> getById(int id);
+  Future<Summary> create(Summary summary);
+  Future<void> delete(Summary summary);
+  Future<void> regenerate(int id);
+class SourceApiClient
+  SourceApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Source>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Source> getById(int id);
+  Future<void> delete(Source source);
+class UploadApiClient
+  UploadApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Upload>> list( {required int sourceId, String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Upload> getById(int id, {required int sourceId});
+  Future<void> delete(Upload upload, {required int sourceId});
+class RenderApiClient
+  RenderApiClient(this._dio, [this._adapter = const PrefabBackend()]);
+  Future<PrefabPage<Render>> list( {String? search, String? sort, bool descending = false, int page = 0, int? pageSize});
+  Future<Render> getById(int id);
+  Future<void> delete(Render render);
+  String eventsUrl();
+final summaryDetailProvider = StreamProvider.autoDispose.family<Summary, int>;
+final summarysProvider = AsyncNotifierProvider.autoDispose<SummarysNotifier, PrefabPage<Summary>>;
+class SummarysNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Summary>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Summary>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> create(Summary summary);
+  Future<void> regenerate(int id);
+final summaryApiClientProvider = Provider.autoDispose<SummaryApiClient>;
+final sourceDetailProvider = FutureProvider.autoDispose.family<Source, int>;
+final sourcesProvider = AsyncNotifierProvider.autoDispose<SourcesNotifier, PrefabPage<Source>>;
+class SourcesNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Source>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Source>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+final sourceApiClientProvider = Provider.autoDispose<SourceApiClient>;
+final uploadDetailProvider = StreamProvider.autoDispose.family<Upload, (int, int)>;
+final uploadsProvider = AsyncNotifierProvider.autoDispose.family<UploadsNotifier, PrefabPage<Upload>, int>;
+class UploadsNotifier extends AutoDisposeFamilyAsyncNotifier<PrefabPage<Upload>, int>
+  int get sourceId;
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Upload>> build(int arg);
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+final uploadApiClientProvider = Provider.autoDispose<UploadApiClient>;
+final renderDetailProvider = StreamProvider.autoDispose.family<Render, int>;
+final rendersProvider = AsyncNotifierProvider.autoDispose<RendersNotifier, PrefabPage<Render>>;
+class RendersNotifier extends AutoDisposeAsyncNotifier<PrefabPage<Render>>
+  String get search;
+  String? get sort;
+  bool get descending;
+  int get page;
+  Future<PrefabPage<Render>> build();
+  void setSearch(String query);
+  Future<void> setSort(String? field, {bool descending = false});
+  Future<void> goToPage(int page);
+  Future<void> setPageSize(int pageSize);
+  Future<void> reload();
+final renderApiClientProvider = Provider.autoDispose<RenderApiClient>;
+class SummaryDetailScreen extends ConsumerWidget
+  final int id;
+  const SummaryDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class SourceDetailScreen extends ConsumerWidget
+  final int id;
+  const SourceDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class UploadDetailScreen extends ConsumerWidget
+  final int id;
+  final int sourceId;
+  const UploadDetailScreen( {super.key, required this.id, required this.sourceId});
+  Widget build(BuildContext context, WidgetRef ref);
+class RenderDetailScreen extends ConsumerWidget
+  final int id;
+  const RenderDetailScreen({super.key, required this.id});
+  Widget build(BuildContext context, WidgetRef ref);
+class SummaryListScreen extends ConsumerWidget
+  const SummaryListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class SourceListScreen extends ConsumerWidget
+  const SourceListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class UploadListScreen extends ConsumerWidget
+  final int sourceId;
+  const UploadListScreen({super.key, required this.sourceId});
+  Widget build(BuildContext context, WidgetRef ref);
+class RenderListScreen extends ConsumerWidget
+  const RenderListScreen({super.key});
+  Widget build(BuildContext context, WidgetRef ref);
+class SummaryCreateScreen extends ConsumerStatefulWidget
+  const SummaryCreateScreen({super.key});
+  ConsumerState<SummaryCreateScreen> createState();
+List<RouteBase> get $jobStatusRoutes;

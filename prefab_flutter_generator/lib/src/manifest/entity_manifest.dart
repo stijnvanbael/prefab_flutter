@@ -17,6 +17,8 @@ final _fieldChecker = TypeChecker.typeNamed(Field, inPackage: 'prefab_flutter');
 final _idChecker = TypeChecker.typeNamed(Id, inPackage: 'prefab_flutter');
 final _versionChecker =
     TypeChecker.typeNamed(Version, inPackage: 'prefab_flutter');
+final _jobStatusChecker =
+    TypeChecker.typeNamed(JobStatus, inPackage: 'prefab_flutter');
 final _entityChecker = TypeChecker.typeNamed(Entity, inPackage: 'prefab_flutter');
 final _parentChecker = TypeChecker.typeNamed(Parent, inPackage: 'prefab_flutter');
 
@@ -686,7 +688,9 @@ class EntityManifest {
         isNullable:
             field.type.nullabilitySuffix == NullabilitySuffix.question,
         places: places,
-        readOnly: reader.peek('readOnly')?.boolValue ?? false,
+        // The server owns the status of a job (PF-57): never in a form.
+        readOnly: (reader.peek('readOnly')?.boolValue ?? false) ||
+            _jobStatusChecker.hasAnnotationOf(field),
         formModes: _readFormModes(formReader),
         // peek: tolerate older annotation sources without these flags.
         searchable: reader.peek('searchable')?.boolValue ?? false,

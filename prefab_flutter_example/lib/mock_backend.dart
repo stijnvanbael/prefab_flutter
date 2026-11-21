@@ -43,8 +43,29 @@ class MockBackendAdapter implements HttpClientAdapter {
     'products/2/reviews/10/replies': [
       {'id': 20, 'reviewId': 10, 'text': 'Agreed'},
     ],
+    // Reports are jobs (PF-57): the server works on them for a while.
+    'reports': [
+      {'id': 1, 'title': 'Weekly summary', 'status': 'done'},
+      {'id': 2, 'title': 'Chapter quiz', 'status': 'running'},
+      {
+        'id': 3,
+        'title': 'Legacy import',
+        'status': 'failed',
+        'error': 'The source file could not be parsed.',
+      },
+    ],
   };
   int _nextId = 100;
+
+  /// How many reads of a running report (list or detail) it takes until the
+  /// job is final: the mock backend has no clock, polling advances the job.
+  /// A report whose title contains `fail` ends `failed`, the others `done`.
+  int pollsUntilDone = 2;
+
+  /// How many times the reports were read (list and detail requests).
+  int reportReads = 0;
+
+  final _jobReads = <Object?, int>{};
 
   /// The open `/products/stream` connections. Every change of a product is
   /// sent to them as a server-sent event, as a `@Streaming` Prefab backend
@@ -96,17 +117,17 @@ class MockBackendAdapter implements HttpClientAdapter {
 
     // Resolve to a table key and optional id. Paths alternate collection and
     // id segments: /products/1/reviews/2/replies/3.
-    const collections = {'products', 'reviews', 'replies'};
+    const collections = {'products', 'reviews', 'replies', 'reports'};
     // Named operations (PF-54): POST /products/{id}/{operation}.
     if (parts.length == 3 &&
-        parts[0] == 'products' &&
+        (parts[0] == 'products' || parts[0] == 'reports') &&
         !collections.contains(parts[2])) {
-      return _operation(parts[1], parts[2], body);
+      return _operation(parts[0], parts[1], parts[2], body);
     }
     if (parts.isEmpty ||
         [for (var i = 0; i < parts.length; i += 2) parts[i]]
             .any((c) => !collections.contains(c)) ||
-        parts[0] != 'products') {
+        (parts[0] != 'products' && parts[0] != 'reports')) {
       return _json(404, {'error': 'not found'});
     }
     final isItem = parts.length.isEven;
@@ -117,6 +138,7 @@ class MockBackendAdapter implements HttpClientAdapter {
 
     switch (options.method) {
       case 'GET':
+        if (table == 'reports') _advanceJobs(rows);
         if (id == 'autocomplete') {
           // Suggestions for a text filter: the distinct values of `field`
           // that contain `q`.
@@ -142,6 +164,8 @@ class MockBackendAdapter implements HttpClientAdapter {
           row['createdAt'] = DateTime.now().toIso8601String();
         }
         if (table == 'products') row['version'] = 0;
+        // A created report starts a job.
+        if (table == 'reports') row['status'] = 'running';
         // The parent id field of the created row, named after the parent.
         if (parts.length >= 3) {
           final parentField = parts[parts.length - 3] == 'products'
@@ -186,10 +210,21 @@ class MockBackendAdapter implements HttpClientAdapter {
 
   /// `POST /products/{id}/discontinue` takes the product out of stock;
   /// `POST /products/{id}/discount` (body `{percent, reason}`) lowers the
-  /// price, up to 90 percent.
-  ResponseBody _operation(String id, String operation, Object? body) {
-    final row = _find(_tables['products']!, id);
-    if (row == null) return _json(404, {'detail': 'Product not found'});
+  /// price, up to 90 percent; `POST /reports/{id}/regenerate` starts the
+  /// report job again.
+  ResponseBody _operation(
+      String collection, String id, String operation, Object? body) {
+    final row = _find(_tables[collection]!, id);
+    if (row == null) return _json(404, {'detail': 'Not found'});
+    if (collection == 'reports') {
+      // `regenerate` starts the job again.
+      if (operation != 'regenerate') return _json(404, {});
+      row
+        ..['status'] = 'running'
+        ..remove('error');
+      _jobReads.remove(row['id']);
+      return _json(200, row);
+    }
     switch (operation) {
       case 'discontinue':
         if (row['inStock'] == false) {
@@ -258,6 +293,27 @@ class MockBackendAdapter implements HttpClientAdapter {
       'detail': 'The product is invalid.',
       'errors': errors,
     });
+  }
+
+  /// A read of the reports moves every running job one step on: after
+  /// [pollsUntilDone] reads it is `done`, or `failed` with a message when its
+  /// title contains `fail`.
+  void _advanceJobs(List<Map<String, dynamic>> rows) {
+    reportReads++;
+    for (final row in rows) {
+      if (row['status'] != 'running') continue;
+      final reads = (_jobReads[row['id']] ?? 0) + 1;
+      _jobReads[row['id']] = reads;
+      if (reads < pollsUntilDone) continue;
+      _jobReads.remove(row['id']);
+      if ('${row['title']}'.toLowerCase().contains('fail')) {
+        row
+          ..['status'] = 'failed'
+          ..['error'] = 'The report could not be generated.';
+      } else {
+        row['status'] = 'done';
+      }
+    }
   }
 
   /// Applies the list contract of the Prefab preset of `PrefabBackend`: `q`

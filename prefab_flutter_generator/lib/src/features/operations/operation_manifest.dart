@@ -7,6 +7,8 @@ import '../../manifest/entity_manifest.dart';
 import '../../manifest/field_manifest.dart';
 
 final _updateChecker = TypeChecker.typeNamed(Update, inPackage: 'prefab_flutter');
+final _jobStatusChecker =
+    TypeChecker.typeNamed(JobStatus, inPackage: 'prefab_flutter');
 
 /// Method names of the generated classes that an operation must not shadow.
 const _reservedNames = {
@@ -25,6 +27,7 @@ class OperationManifest {
     required this.confirm,
     required this.order,
     this.parameters,
+    this.startsJob = false,
   });
 
   /// The URL segment after the id (`mark-paid`).
@@ -46,6 +49,10 @@ class OperationManifest {
 
   /// The parameters of the operation, or `null` for an operation without.
   final OperationParameters? parameters;
+
+  /// Whether the operation starts a job (`@Update.startsJob`, PF-57): the
+  /// list item menu opens the detail screen after it ran.
+  final bool startsJob;
 
   /// The Dart name of the API client and notifier methods (`markPaid`).
   String get methodName {
@@ -72,6 +79,8 @@ class OperationManifest {
         final extras = [
           for (final n in const ['label', 'icon', 'confirm', 'parameters'])
             if (!(annotation.getField(n)?.isNull ?? true)) n,
+          if (annotation.getField('startsJob')?.toBoolValue() ?? false)
+            'startsJob',
         ];
         if (extras.isNotEmpty) {
           throw InvalidGenerationSourceError(
@@ -150,6 +159,16 @@ class OperationManifest {
       parameters = OperationParameters.read(element, entity, path);
     }
 
+    final startsJob = annotation.getField('startsJob')?.toBoolValue() ?? false;
+    if (startsJob &&
+        !entity.fields.any((f) => _jobStatusChecker.hasAnnotationOf(f))) {
+      throw InvalidGenerationSourceError(
+        problem('startsJob: true needs a field annotated with @JobStatus, '
+            'which tells the state of the job the operation starts.'),
+        element: entity,
+      );
+    }
+
     final label = annotation.getField('label')?.toStringValue() ??
         _labelFromPath(path);
     return OperationManifest(
@@ -160,6 +179,7 @@ class OperationManifest {
       confirm: annotation.getField('confirm')?.toStringValue(),
       order: annotation.getField('order')?.toIntValue() ?? 0,
       parameters: parameters,
+      startsJob: startsJob,
     );
   }
 

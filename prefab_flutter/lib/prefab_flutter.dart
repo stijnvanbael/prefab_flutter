@@ -11,6 +11,7 @@ export 'src/annotations/entity_action.dart';
 export 'src/annotations/entity_screen.dart';
 export 'src/annotations/field.dart';
 export 'src/annotations/id.dart';
+export 'src/annotations/job_status.dart';
 export 'src/annotations/parent.dart';
 export 'src/annotations/promoted.dart';
 export 'src/annotations/streaming.dart';

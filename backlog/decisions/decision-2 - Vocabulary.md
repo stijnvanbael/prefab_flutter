@@ -41,6 +41,7 @@ list or extend it in this record first.
 | **Parent** | The entity another entity is nested under. | `@Parent(Entity)` |
 | **Operation** | A change the server performs on an entity: create, update, delete, or a named operation (`send`). Names as in Prefab. | `@Create`, `@Update`, `@Delete`, `@Update(path:)`; API client and notifier methods |
 | **Live update** | A change of an entity the backend pushes as a server-sent event (created, updated, deleted); the generated providers apply it. | `@Streaming`, `PrefabEvent`, `prefabEventsProvider` |
+| **Job** | An entity the server keeps working on for a while after creating it (a generated summary, an import). Its status field says whether it is running, done or failed; the screens show the state and refresh until it is final. | `@JobStatus`, `PrefabJobState`, `PrefabJobBanner` |
 | **Screen** | A full page. Generated: list screen, detail screen, create screen, edit screen. Hand-written: entity screen. | `{Entity}ListScreen`, `{Entity}DetailScreen`, `{Entity}CreateScreen`, `{Entity}EditScreen`, `@EntityScreen` |
 | **Place** | A part of the generated screens where a field or an action appears: `list` (the list screen's app bar), `item` (each item of the list), `detail` (the detail screen), `form` (the create and edit screens). | `Place`; the `on:` parameter |
 | **Action** | A hand-written function started from a generated screen. | `@EntityAction` |

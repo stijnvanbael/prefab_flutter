@@ -2,7 +2,7 @@
 
 See the [root README](../README.md) and the [user guide](../docs/user_guide.md).
 
-A runnable example for [prefab_flutter](../README.md). It has three annotated
+A runnable example for [prefab_flutter](../README.md). It has annotated
 entities and an in-memory mock backend, so no server is needed.
 
 - `lib/product.dart`: a top-level `Product` entity (`@Entity`, `@Create`, `@Update`, `@Delete`, `@Field`) showing
@@ -17,6 +17,13 @@ entities and an in-memory mock backend, so no server is needed.
   `Product` is also `@Streaming`: the mock backend serves `/products/stream` and
   sends an event for every change, so the list and detail screens update live
   (`test/streaming_test.dart`), and catch up when the stream drops and reconnects (the mock backend can drop its streams and change data silently).
+- `lib/report.dart`: a `Report` job entity (PF-57). Its `@JobStatus` field makes list
+  items show a progress indicator, a check mark or an error icon, and the detail
+  screen start with a banner (with the server's message when the job failed).
+  Both refresh every two seconds until the job is final. The mock backend has no
+  clock: every read of a running report moves its job on, and a report whose title
+  contains "fail" ends failed. `@Update(path: 'regenerate', startsJob: true)` starts
+  the job again and opens the report from the list. See `test/job_status_test.dart`.
 - `lib/review.dart`: a nested `Review` entity (`@Parent(Product)`), served under
   `/products/:productId/reviews`, with a `numberInput` rating validated with
   `Validator.min` / `Validator.max`.
