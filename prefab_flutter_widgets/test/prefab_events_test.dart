@@ -188,7 +188,12 @@ void main() {
         url: '/p',
         initialDelay: const Duration(milliseconds: 1),
       );
-      final events = await source.events().take(2).toList();
+      // A reconnect is announced to the listeners (PF-74).
+      final events = await source
+          .events()
+          .where((e) => e.type != PrefabEventType.reconnected)
+          .take(2)
+          .toList();
       expect(events.map((e) => e.data['id']), [1, 2]);
       expect(adapter.requests.length, 2);
     });

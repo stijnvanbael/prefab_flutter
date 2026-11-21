@@ -17,7 +17,8 @@ final _streamingChecker =
 /// The API client gets `eventsUrl` (the URL of the event stream, from the
 /// backend adapter), the detail provider becomes a `StreamProvider` that
 /// follows the events of its entity, the list notifier applies the events to
-/// the page it holds (`reload` refreshes it) and the list screen shows a
+/// the page it holds (`reload` refreshes it; a reconnect of the stream
+/// reloads the list and the detail) and the list screen shows a
 /// "new items" banner for created items that were not inserted. Orders used
 /// on the shared extension points: 50 on the API client methods, 10 on the
 /// detail provider declaration, 50 on the list notifier `onBuild` and
@@ -102,7 +103,12 @@ class StreamingFeature extends Feature {
           [
             '/// Applies a live event to the loaded page. Created items that do',
             '/// not belong on this page are counted in `PrefabPage.newItems`.',
+            '/// After a reconnect the list is reloaded: events may have been missed.',
             'void _onEvent(PrefabEvent event) {',
+            '  if (event.type == PrefabEventType.reconnected) {',
+            '    if (!state.isLoading) _load();',
+            '    return;',
+            '  }',
             '  final page = state.valueOrNull;',
             '  if (page == null) return;',
             '  state = AsyncData(applyPrefabEvent<$type>(',

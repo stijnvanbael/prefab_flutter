@@ -16,7 +16,7 @@ entities and an in-memory mock backend, so no server is needed.
   (`test/edit_conflict_test.dart`).
   `Product` is also `@Streaming`: the mock backend serves `/products/stream` and
   sends an event for every change, so the list and detail screens update live
-  (`test/streaming_test.dart`).
+  (`test/streaming_test.dart`), and catch up when the stream drops and reconnects (the mock backend can drop its streams and change data silently).
 - `lib/review.dart`: a nested `Review` entity (`@Parent(Product)`), served under
   `/products/:productId/reviews`, with a `numberInput` rating validated with
   `Validator.min` / `Validator.max`.

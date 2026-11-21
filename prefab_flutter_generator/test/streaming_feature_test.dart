@@ -56,4 +56,16 @@ void main() {
       );
     });
   });
+
+  group('PF-74 AC#1 - catch up after a reconnect', () {
+    test('the list notifier reloads when the stream reconnects', () async {
+      await _expectOutput(
+        true,
+        allOf([
+          contains('event.type == PrefabEventType.reconnected'),
+          contains('if (!state.isLoading) _load();'),
+        ]),
+      );
+    });
+  });
 }
